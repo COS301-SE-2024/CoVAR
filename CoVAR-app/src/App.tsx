@@ -1,5 +1,5 @@
 import React from 'react';
-import LoginSignup from './loginSignup';
+import LoginSignup from './login/loginSignup';
 import { createTheme } from '@mui/material/styles';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 
@@ -46,7 +46,7 @@ const App: React.FC = () => {
     <Router>
       <div>
         <Routes>
-          <Route path="/loginSignup" element={< LoginSignup />} />
+          <Route path="/login" element={< LoginSignup />} />
           <Route path="/" element={<h2>Home Page</h2>} />
         </Routes>
       </div>

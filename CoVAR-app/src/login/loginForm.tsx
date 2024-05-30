@@ -1,11 +1,10 @@
 import React from 'react';
-import { theme } from './App';
+import { theme } from '../App';
 import { ThemeProvider } from '@mui/material/styles';
 import { Container, Box, Typography, TextField, Button, Link, CssBaseline, Card } from '@mui/material';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 
-
-const Signup = () => {
+const Login = () => {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
@@ -19,7 +18,7 @@ const Signup = () => {
         <Card sx={{ backgroundColor: '#2F3E46', padding: 4, borderRadius: 1, borderStyle: 'solid', borderWidth: 1, borderColor: '#CAD2C5' }}>
           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <Typography variant="h4" component="h2" gutterBottom>
-              Sign Up
+              Sign In
             </Typography>
             <Box component="form" sx={{ width: '100%', mt: 1 }}>
               <TextField
@@ -103,4 +102,4 @@ const Signup = () => {
   );
 };
 
-export default Signup;
+export default Login;

@@ -1,10 +1,11 @@
 import React from 'react';
-import { theme } from './App';
+import { theme } from '../App';
 import { ThemeProvider } from '@mui/material/styles';
 import { Container, Box, Typography, TextField, Button, Link, CssBaseline, Card } from '@mui/material';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 
-const Login = () => {
+
+const Signup = () => {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
@@ -18,7 +19,7 @@ const Login = () => {
         <Card sx={{ backgroundColor: '#2F3E46', padding: 4, borderRadius: 1, borderStyle: 'solid', borderWidth: 1, borderColor: '#CAD2C5' }}>
           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <Typography variant="h4" component="h2" gutterBottom>
-              Sign In
+              Sign Up
             </Typography>
             <Box component="form" sx={{ width: '100%', mt: 1 }}>
               <TextField
@@ -47,7 +48,7 @@ const Login = () => {
                   },
                 }}
               />
-              <TextField
+             <TextField
                 margin="normal"
                 required
                 fullWidth
@@ -73,10 +74,34 @@ const Login = () => {
                   },
                 }}
               />
+              <TextField
+                margin="normal"
+                required
+                fullWidth
+                name="passwordConfirm"
+                label="Confirm Password"
+                type="password"
+                id="passwordConfirm"
+                autoComplete="current-password"
+                InputLabelProps={{
+                  style: { color: '#CAD2C5' },
+                }}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '& fieldset': {
+                      borderColor: '#CAD2C5',
+                    },
+                    '&:hover fieldset': {
+                      borderColor: '#CAD2C5',
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: '#52796F',
+                    },
+                  },
+                }}
+              />
               <Box sx={{ textAlign: 'left', width: '100%', mt: 1 }}>
-                <Link href="#" variant="body2" sx={{ color: 'text.secondary' }}>
-                  Forgot your password?
-                </Link>
+                  Use 8 or more characters with a mix of letters, numbers & symbols
               </Box>
               <Button
                 type="submit"
@@ -84,14 +109,14 @@ const Login = () => {
                 variant="contained"
                 sx={{ mt: 3, mb: 2, backgroundColor: 'primary.main' }}
               >
-                Log in
+                Sign Up
               </Button>
               <Box display="flex" justifyContent="center" alignItems="center" mt={2}>
                 <Typography variant="body2" sx={{ color: 'text.primary' }}>
-                  Don't have an account?
+                  Already have an account?
                 </Typography>
                 <Link href="#" variant="body2" sx={{ color: 'text.secondary', ml: 1 }}>
-                  Sign up
+                  Log In
                 </Link>
               </Box>
             </Box>
@@ -102,4 +127,4 @@ const Login = () => {
   );
 };
 
-export default Login;
+export default Signup;

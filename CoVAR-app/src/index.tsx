@@ -4,6 +4,12 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 
+const link = document.createElement('link');
+link.href = 'https://fonts.googleapis.com/css2?family=Urbanist:wght@400;500;700&display=swap';
+link.rel = 'stylesheet';
+
+document.head.appendChild(link);
+
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
 );

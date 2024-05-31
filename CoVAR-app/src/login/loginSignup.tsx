@@ -4,8 +4,8 @@ import Signup from "./signupForm"
 
 const loginSignup = () => {
     return (
-        // < Login />
-        < Signup />
+        < Login />
+        // < Signup />
     );
 };
 

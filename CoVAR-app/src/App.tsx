@@ -3,6 +3,8 @@ import LoginSignup from './login/loginSignup';
 import Dashboard from './dashboard/dashboard';
 import AdminTools from './adminTools/adminTools';
 import Evaluate from './evaluate/evaluate';
+import Account from './account/account';
+import Settings from './settings/settings';
 import { createTheme } from '@mui/material/styles';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 
@@ -51,8 +53,10 @@ const App: React.FC = () => {
         <Routes>
           <Route path="/login" element={< LoginSignup />} />
           <Route path="/" element={<Dashboard />} />
-          <Route path="/admin-tools" element={<AdminTools />} />
           <Route path="/evaluate" element={<Evaluate />} />
+          <Route path="/account" element={<Account />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="/admin-tools" element={<AdminTools />} />
         </Routes>
       </div>
     </Router>

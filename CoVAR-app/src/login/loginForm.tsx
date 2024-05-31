@@ -3,8 +3,22 @@ import { theme } from '../App';
 import { ThemeProvider } from '@mui/material/styles';
 import { Container, Box, Typography, TextField, Button, Link, CssBaseline, Card } from '@mui/material';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
+import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { auth } from '../firebase/firebaseConfig';
+import GoogleIcon from "../icons/GoogleIcon";
 
 const Login = () => {
+  const signInWithGoogle = async () => {
+    try {
+      const googleProvider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, googleProvider);
+      console.log(result.user);
+      return result;
+    } catch (error) {
+      console.error(error);
+      // Handle errors here
+    }
+  };
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
@@ -85,6 +99,14 @@ const Login = () => {
                 sx={{ mt: 3, mb: 2, backgroundColor: 'primary.main' }}
               >
                 Log in
+              </Button>
+              <Button
+                type="submit"
+                fullWidth
+                variant="contained"
+                sx={{ mt: 3, mb: 2, backgroundColor: 'primary.main' }}
+                onClick={signInWithGoogle}
+              ><GoogleIcon />Login In with Google
               </Button>
               <Box display="flex" justifyContent="center" alignItems="center" mt={2}>
                 <Typography variant="body2" sx={{ color: 'text.primary' }}>

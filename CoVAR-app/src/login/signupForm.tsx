@@ -3,9 +3,81 @@ import { theme } from '../App';
 import { ThemeProvider } from '@mui/material/styles';
 import { Container, Box, Typography, TextField, Button, Link, CssBaseline, Card } from '@mui/material';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
+import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
+import GoogleIcon from "../icons/GoogleIcon";
+import { getFirestore, doc, setDoc } from "firebase/firestore";
+import { db, auth } from '../firebase/firebaseConfig';
 
+interface User {
+  uid: string;
+  email: string | null;
+  displayName: string | null;
+}
+
+const addUserToFirestore = async (user: User) => {
+  try {
+    const userRef = doc(db, "users", user.uid);
+    const userData = {
+      uid: user.uid,
+      email: user.email,
+      name: user.displayName || "",
+      createdAt: new Date()
+    };
+    await setDoc(userRef, userData);
+    console.log("User added to Firestore: ", user.uid);
+  } catch (error) {
+    console.error("Error adding user to Firestore: ", error);
+  }
+};
 
 const Signup = () => {
+  const signInWithGoogle = async () => {
+    try {
+      const googleProvider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, googleProvider);
+      console.log(result.user);
+      return result;
+    } catch (error) {
+      console.error(error);
+      // Handle errors here
+    }
+  };
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    console.log('Form submitted');
+    const data = new FormData(event.currentTarget);
+    const email = data.get('email') as string;
+    const password = data.get('password') as string;
+    const passwordConfirm = data.get('passwordConfirm') as string;
+
+    if (typeof email === 'string' && typeof password === 'string' && typeof passwordConfirm === 'string') {
+      console.log('Email:', email);
+      console.log('Password:', password);
+      console.log('Confirm Password:', passwordConfirm);
+
+      if (password === passwordConfirm) {
+        signUpWithEmail(email, password);
+      } else {
+        console.error('Passwords do not match.');
+      }
+    } else {
+      console.error('Invalid form data');
+    }
+  };
+
+  const signUpWithEmail = (email: string, password: string) => {
+    createUserWithEmailAndPassword(auth, email, password)
+      .then((userCredential) => {
+        const user = userCredential.user;
+        addUserToFirestore(user as User);
+      })
+      .catch((error) => {
+        console.error("Error signing up: ", error);
+      });
+  };
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
@@ -21,7 +93,7 @@ const Signup = () => {
             <Typography variant="h4" component="h2" gutterBottom>
               Sign Up
             </Typography>
-            <Box component="form" sx={{ width: '100%', mt: 1 }}>
+            <Box component="form" onSubmit={handleSubmit} sx={{ width: '100%', mt: 1 }}>
               <TextField
                 margin="normal"
                 required
@@ -48,7 +120,7 @@ const Signup = () => {
                   },
                 }}
               />
-             <TextField
+              <TextField
                 margin="normal"
                 required
                 fullWidth
@@ -101,7 +173,7 @@ const Signup = () => {
                 }}
               />
               <Box sx={{ textAlign: 'left', width: '100%', mt: 1 }}>
-                  Use 8 or more characters with a mix of letters, numbers & symbols
+                Use 8 or more characters with a mix of letters, numbers & symbols
               </Box>
               <Button
                 type="submit"
@@ -110,6 +182,13 @@ const Signup = () => {
                 sx={{ mt: 3, mb: 2, backgroundColor: 'primary.main' }}
               >
                 Sign Up
+              </Button>
+              <Button
+                fullWidth
+                variant="contained"
+                sx={{ mt: 3, mb: 2, backgroundColor: 'primary.main' }}
+                onClick={signInWithGoogle}
+              ><GoogleIcon />Sign In with Google
               </Button>
               <Box display="flex" justifyContent="center" alignItems="center" mt={2}>
                 <Typography variant="body2" sx={{ color: 'text.primary' }}>

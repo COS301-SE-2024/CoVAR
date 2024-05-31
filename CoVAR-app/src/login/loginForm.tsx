@@ -7,7 +7,12 @@ import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { auth } from '../firebase/firebaseConfig';
 import GoogleIcon from "../icons/GoogleIcon";
 
-const Login = () => {
+interface LoginProps {
+  toggleForm: () => void;
+}
+
+
+const Login: React.FC<LoginProps> = ({ toggleForm }) => {
   const signInWithGoogle = async () => {
     try {
       const googleProvider = new GoogleAuthProvider();
@@ -106,13 +111,13 @@ const Login = () => {
                 variant="contained"
                 sx={{ mt: 3, mb: 2, backgroundColor: 'primary.main' }}
                 onClick={signInWithGoogle}
-              ><GoogleIcon />Login In with Google
+              ><GoogleIcon />Continue with Google
               </Button>
               <Box display="flex" justifyContent="center" alignItems="center" mt={2}>
                 <Typography variant="body2" sx={{ color: 'text.primary' }}>
                   Don't have an account?
                 </Typography>
-                <Link href="#" variant="body2" sx={{ color: 'text.secondary', ml: 1 }}>
+                <Link href="#" variant="body2" sx={{ color: 'text.secondary', ml: 1 }} onClick={toggleForm}>
                   Sign up
                 </Link>
               </Box>

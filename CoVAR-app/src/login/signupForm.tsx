@@ -4,9 +4,9 @@ import { ThemeProvider } from '@mui/material/styles';
 import { Container, Box, Typography, TextField, Button, Link, CssBaseline, Card } from '@mui/material';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
-import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
+import { createUserWithEmailAndPassword } from "firebase/auth";
 import GoogleIcon from "../icons/GoogleIcon";
-import { getFirestore, doc, setDoc } from "firebase/firestore";
+import { doc, setDoc } from "firebase/firestore";
 import { db, auth } from '../firebase/firebaseConfig';
 
 interface User {
@@ -31,7 +31,11 @@ const addUserToFirestore = async (user: User) => {
   }
 };
 
-const Signup = () => {
+interface SignupProps {
+  toggleForm: () => void;
+}
+
+const Signup: React.FC<SignupProps> = ({ toggleForm }) => {
   const signInWithGoogle = async () => {
     try {
       const googleProvider = new GoogleAuthProvider();
@@ -81,8 +85,8 @@ const Signup = () => {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <Container maxWidth="xl" sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-        <Box sx={{ textAlign: 'center', marginRight: 'auto', marginLeft: 'auto' }}>
+      <Container maxWidth="xl" sx={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <Box sx={{ textAlign: 'center', margin: '20px auto', width: '100%' }}>
           <Typography variant="h1" color="textPrimary" gutterBottom>
             CoVAR
           </Typography>
@@ -173,7 +177,9 @@ const Signup = () => {
                 }}
               />
               <Box sx={{ textAlign: 'left', width: '100%', mt: 1 }}>
-                Use 8 or more characters with a mix of letters, numbers & symbols
+                <Typography variant="body2">
+                  Use 8 or more characters with a mix of letters, numbers & symbols
+                </Typography>
               </Box>
               <Button
                 type="submit"
@@ -188,22 +194,23 @@ const Signup = () => {
                 variant="contained"
                 sx={{ mt: 3, mb: 2, backgroundColor: 'primary.main' }}
                 onClick={signInWithGoogle}
-              ><GoogleIcon />Sign In with Google
+              ><GoogleIcon />Sign Up with Google
               </Button>
               <Box display="flex" justifyContent="center" alignItems="center" mt={2}>
                 <Typography variant="body2" sx={{ color: 'text.primary' }}>
                   Already have an account?
                 </Typography>
-                <Link href="#" variant="body2" sx={{ color: 'text.secondary', ml: 1 }}>
-                  Log In
+                <Link href="#" variant="body2" sx={{ color: 'text.secondary', ml: 1 }} onClick={toggleForm}>
+                  Log in
                 </Link>
               </Box>
             </Box>
           </Box>
-        </Card>
+          </Card>
       </Container>
     </ThemeProvider>
   );
 };
 
 export default Signup;
+

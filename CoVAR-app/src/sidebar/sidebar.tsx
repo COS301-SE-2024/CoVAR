@@ -25,31 +25,31 @@ const Sidebar: React.FC = () => {
         <LockIcon sx={{ fontSize: 'inherit', marginRight: 1, color: '#52796F' }} /> CoVAR {/* Lock icon added here */}
       </Typography>
       <List>
-        <ListItem button component={Link} to="/" sx={{ ...sidebarItemStyles, backgroundColor: location.pathname === '/' ? '#52796F' : 'inherit' }}>
+        <ListItem button component={Link} to="/" sx={{ ...sidebarItemStyles, backgroundColor: location.pathname === '/' ? '#52796F !important' : 'inherit' }}>
           <ListItemIcon>
             <DashboardIcon sx={iconStyles} />
           </ListItemIcon>
           <ListItemText primary="Dashboard" />
         </ListItem>
-        <ListItem button component={Link} to="/evaluate" sx={{ ...sidebarItemStyles, backgroundColor: location.pathname === '/evaluate' ? '#52796F' : 'inherit' }}>
+        <ListItem button component={Link} to="/evaluate" sx={{ ...sidebarItemStyles, backgroundColor: location.pathname === '/evaluate' ? '#52796F !important' : 'inherit' }}>
           <ListItemIcon>
             <AssessmentIcon sx={iconStyles} />
           </ListItemIcon>
           <ListItemText primary="Evaluate" />
         </ListItem>
-        <ListItem button component={Link} to="/account" sx={{ ...sidebarItemStyles, backgroundColor: location.pathname === '/account' ? '#52796F' : 'inherit' }}>
+        <ListItem button component={Link} to="/account" sx={{ ...sidebarItemStyles, backgroundColor: location.pathname === '/account' ? '#52796F !important' : 'inherit' }}>
           <ListItemIcon>
             <AccountCircleIcon sx={iconStyles} />
           </ListItemIcon>
           <ListItemText primary="Account" />
         </ListItem>
-        <ListItem button component={Link} to="/settings" sx={{ ...sidebarItemStyles, backgroundColor: location.pathname === '/settings' ? '#52796F' : 'inherit' }}>
+        <ListItem button component={Link} to="/settings" sx={{ ...sidebarItemStyles, backgroundColor: location.pathname === '/settings' ? '#52796F !important' : 'inherit' }}>
           <ListItemIcon>
             <SettingsIcon sx={iconStyles} />
           </ListItemIcon>
           <ListItemText primary="Settings" />
         </ListItem>
-        <ListItem button component={Link} to="/admin-tools" sx={{ ...sidebarItemStyles, backgroundColor: location.pathname === '/admin-tools' ? '#52796F' : 'inherit' }}>
+        <ListItem button component={Link} to="/admin-tools" sx={{ ...sidebarItemStyles, backgroundColor: location.pathname === '/admin-tools' ? '#52796F !important' : 'inherit' }}>
           <ListItemIcon>
             <AdminPanelSettingsIcon sx={iconStyles} />
           </ListItemIcon>

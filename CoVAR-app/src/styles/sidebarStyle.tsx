@@ -25,6 +25,7 @@ export const sidebarItemStyles: SxProps = {
   '&:hover': {
     backgroundColor: '#3E4E56',
   },
+  borderRadius: 1,
 };
 
 export const iconStyles: SxProps = {

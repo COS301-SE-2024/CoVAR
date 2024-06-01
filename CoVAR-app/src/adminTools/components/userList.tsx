@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { CircularProgress, Button } from '@mui/material';
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import { doc, getDoc, updateDoc, collection, getDocs } from 'firebase/firestore';
-import { auth, db } from '../../firebase/firebaseConfig';
+import { db } from '../../firebase/firebaseConfig';
 import { Timestamp } from 'firebase/firestore';
 
 type User = {

@@ -1,11 +1,11 @@
 // import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render } from '@testing-library/react';
 import App from '../App';
 
 jest.mock('../App', () => {
   return {
     __esModule: true,
-    default: jest.fn(), // Mocking the default export (App component)
+    default: jest.fn(),
     initializeApp: jest.fn(),
     getAuth: jest.fn(),
     getFirestore: jest.fn(),
@@ -15,6 +15,6 @@ jest.mock('../App', () => {
 describe('App', () => {
   test('is true', () => {
     render(<App />);
-    expect(true).toBeTruthy;
+    expect(true).toEqual(true);
   });
 });

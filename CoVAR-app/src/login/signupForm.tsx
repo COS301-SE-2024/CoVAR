@@ -1,13 +1,13 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { theme } from '../App';
 import { ThemeProvider } from '@mui/material/styles';
 import { Container, Box, Typography, TextField, Button, Link, CssBaseline, Card } from '@mui/material';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
-import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import { doCreateUserWithEmailAndPassword, doSignInWithGoogle } from '../firebase/auth';
 import GoogleIcon from "../icons/GoogleIcon";
 import { doc, setDoc } from "firebase/firestore";
-import { db, auth } from '../firebase/firebaseConfig';
+import { db } from '../firebase/firebaseConfig';
 
 interface User {
   uid: string;
@@ -17,12 +17,13 @@ interface User {
 
 const addUserToFirestore = async (user: User) => {
   try {
-    const userRef = doc(db, "users", user.uid);
+    const userRef = doc(db, "user", user.uid); 
     const userData = {
       uid: user.uid,
       email: user.email,
       name: user.displayName || "",
-      createdAt: new Date()
+      createdAt: new Date(),
+      role: "client"
     };
     await setDoc(userRef, userData);
     console.log("User added to Firestore: ", user.uid);
@@ -36,12 +37,15 @@ interface SignupProps {
 }
 
 const Signup: React.FC<SignupProps> = ({ toggleForm }) => {
+  const navigate = useNavigate();
+
   const signInWithGoogle = async () => {
     try {
-      const googleProvider = new GoogleAuthProvider();
-      const result = await signInWithPopup(auth, googleProvider);
-      console.log(result.user);
-      return result;
+      const result = await doSignInWithGoogle();
+      if (result.user) {
+        await addUserToFirestore(result.user as User); // Ensure to await Firestore addition
+        navigate('/'); // Navigate to the home page
+      }
     } catch (error) {
       console.error(error);
       // Handle errors here
@@ -50,36 +54,24 @@ const Signup: React.FC<SignupProps> = ({ toggleForm }) => {
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    console.log('Form submitted');
     const data = new FormData(event.currentTarget);
     const email = data.get('email') as string;
     const password = data.get('password') as string;
     const passwordConfirm = data.get('passwordConfirm') as string;
 
-    if (typeof email === 'string' && typeof password === 'string' && typeof passwordConfirm === 'string') {
-      console.log('Email:', email);
-      console.log('Password:', password);
-      console.log('Confirm Password:', passwordConfirm);
-
-      if (password === passwordConfirm) {
-        signUpWithEmail(email, password);
-      } else {
-        console.error('Passwords do not match.');
-      }
-    } else {
-      console.error('Invalid form data');
+    if (password !== passwordConfirm) {
+      console.error('Passwords do not match.');
+      return;
     }
-  };
 
-  const signUpWithEmail = (email: string, password: string) => {
-    createUserWithEmailAndPassword(auth, email, password)
-      .then((userCredential) => {
-        const user = userCredential.user;
-        addUserToFirestore(user as User);
-      })
-      .catch((error) => {
-        console.error("Error signing up: ", error);
-      });
+    try {
+      const userCredential = await doCreateUserWithEmailAndPassword(email, password);
+      const user = userCredential.user;
+      await addUserToFirestore(user as User); // Ensure to await Firestore addition
+      navigate('/'); // Navigate to the home page
+    } catch (error) {
+      console.error("Error signing up: ", error);
+    }
   };
 
   return (
@@ -107,20 +99,12 @@ const Signup: React.FC<SignupProps> = ({ toggleForm }) => {
                 name="email"
                 autoComplete="email"
                 autoFocus
-                InputLabelProps={{
-                  style: { color: '#CAD2C5' },
-                }}
+                InputLabelProps={{ style: { color: '#CAD2C5' } }}
                 sx={{
                   '& .MuiOutlinedInput-root': {
-                    '& fieldset': {
-                      borderColor: '#CAD2C5',
-                    },
-                    '&:hover fieldset': {
-                      borderColor: '#CAD2C5',
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: '#52796F',
-                    },
+                    '& fieldset': { borderColor: '#CAD2C5' },
+                    '&:hover fieldset': { borderColor: '#CAD2C5' },
+                    '&.Mui-focused fieldset': { borderColor: '#52796F' },
                   },
                 }}
               />
@@ -133,20 +117,12 @@ const Signup: React.FC<SignupProps> = ({ toggleForm }) => {
                 type="password"
                 id="password"
                 autoComplete="current-password"
-                InputLabelProps={{
-                  style: { color: '#CAD2C5' },
-                }}
+                InputLabelProps={{ style: { color: '#CAD2C5' } }}
                 sx={{
                   '& .MuiOutlinedInput-root': {
-                    '& fieldset': {
-                      borderColor: '#CAD2C5',
-                    },
-                    '&:hover fieldset': {
-                      borderColor: '#CAD2C5',
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: '#52796F',
-                    },
+                    '& fieldset': { borderColor: '#CAD2C5' },
+                    '&:hover fieldset': { borderColor: '#CAD2C5' },
+                    '&.Mui-focused fieldset': { borderColor: '#52796F' },
                   },
                 }}
               />
@@ -159,20 +135,12 @@ const Signup: React.FC<SignupProps> = ({ toggleForm }) => {
                 type="password"
                 id="passwordConfirm"
                 autoComplete="current-password"
-                InputLabelProps={{
-                  style: { color: '#CAD2C5' },
-                }}
+                InputLabelProps={{ style: { color: '#CAD2C5' } }}
                 sx={{
                   '& .MuiOutlinedInput-root': {
-                    '& fieldset': {
-                      borderColor: '#CAD2C5',
-                    },
-                    '&:hover fieldset': {
-                      borderColor: '#CAD2C5',
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: '#52796F',
-                    },
+                    '& fieldset': { borderColor: '#CAD2C5' },
+                    '&:hover fieldset': { borderColor: '#CAD2C5' },
+                    '&.Mui-focused fieldset': { borderColor: '#52796F' },
                   },
                 }}
               />
@@ -194,7 +162,8 @@ const Signup: React.FC<SignupProps> = ({ toggleForm }) => {
                 variant="contained"
                 sx={{ mt: 3, mb: 2, backgroundColor: 'primary.main' }}
                 onClick={signInWithGoogle}
-              ><GoogleIcon />Sign Up with Google
+              >
+                <GoogleIcon />Sign Up with Google
               </Button>
               <Box display="flex" justifyContent="center" alignItems="center" mt={2}>
                 <Typography variant="body2" sx={{ color: 'text.primary' }}>
@@ -206,11 +175,10 @@ const Signup: React.FC<SignupProps> = ({ toggleForm }) => {
               </Box>
             </Box>
           </Box>
-          </Card>
+        </Card>
       </Container>
     </ThemeProvider>
   );
 };
 
 export default Signup;
-

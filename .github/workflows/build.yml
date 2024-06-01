@@ -1,0 +1,52 @@
+
+name: Build Codebase
+on:
+  push:
+    branches: [ main, develop ]
+
+  pull_request:
+    branches: [ main, develop ]
+
+permissions:
+  contents: read
+
+jobs:
+  start:
+    name: Initial Setup
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Starting Job
+        run: |
+          echo "Beginning to Build ${{ github.repository }}"
+
+  run_tests:
+    name: Build Codebase
+    needs: start
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout "${{ github.repository }}"
+        uses: actions/checkout@v4
+
+      - name: Set up Node v21
+        uses: actions/setup-node@v4
+        with:
+          node-version: '21.x'
+
+      - name: Install dependencies
+        run:  |
+          cd covar-app && npm ci
+
+      - name: Build Codebase
+        run:  |
+          cd covar-app && npm run build
+
+  end:
+    name: The end
+    runs-on: ubuntu-latest
+    needs: [start, run_tests]
+    steps:
+      - name: Ending
+        id: init
+        run: |
+          echo "${{ github.repository }} has been successfully built"

@@ -55,17 +55,6 @@ jobs:
           echo "Coverage Color - ${{ steps.coverageComment.outputs.color }}"
           echo "Summary HTML - ${{ steps.coverageComment.outputs.summaryHtml }}"
 
-      - name: Create the badge
-        uses: schneegans/dynamic-badges-action@v1.6.0
-        with:
-          auth: ${{ secrets.GIST_SECRET }}
-          gistID: 1793e26442bf0058d6c248da850c47f8
-          filename: jest-coverage-comment__main.json
-          label: Coverage
-          message: ${{ steps.coverageComment.outputs.coverage }}%
-          color: ${{ steps.coverageComment.outputs.color }}
-          namedLogo: typescript
-
   end:
     name: The end
     runs-on: ubuntu-latest

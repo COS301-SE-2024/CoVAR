@@ -17,7 +17,7 @@ interface User {
 
 const addUserToFirestore = async (user: User) => {
   try {
-    const userRef = doc(db, "users", user.uid); // Ensure the collection name is "users" or as desired
+    const userRef = doc(db, "user", user.uid); 
     const userData = {
       uid: user.uid,
       email: user.email,

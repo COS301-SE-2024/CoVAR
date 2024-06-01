@@ -7,11 +7,17 @@ import GoogleIcon from "../icons/GoogleIcon";
 import { doSignInWithEmailAndPassword, doSignInWithGoogle } from '../firebase/auth';
 import { useAuth } from '../contexts/authContext';
 import { useNavigate } from 'react-router-dom';
+import { doc, setDoc } from "firebase/firestore";
+import { db } from '../firebase/firebaseConfig';
 
 interface LoginProps {
   toggleForm: () => void;
 }
-
+interface User {
+  uid: string;
+  email: string | null;
+  displayName: string | null;
+}
 const Login: React.FC<LoginProps> = ({ toggleForm }) => {
   const { userLoggedIn } = useAuth();
   const navigate = useNavigate();
@@ -26,7 +32,22 @@ const Login: React.FC<LoginProps> = ({ toggleForm }) => {
       navigate('/');
     }
   }, [userLoggedIn, navigate]);
-
+  const addUserToFirestore = async (user: User) => {
+    try {
+      const userRef = doc(db, "user", user.uid); 
+      const userData = {
+        uid: user.uid,
+        email: user.email,
+        name: user.displayName || "",
+        createdAt: new Date(),
+        role: "client"
+      };
+      await setDoc(userRef, userData);
+      console.log("User added to Firestore: ", user.uid);
+    } catch (error) {
+      console.error("Error adding user to Firestore: ", error);
+    }
+  };
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!isSigningIn) {
@@ -47,6 +68,7 @@ const Login: React.FC<LoginProps> = ({ toggleForm }) => {
       setIsSigningIn(true);
       try {
         const result = await doSignInWithGoogle();
+        await addUserToFirestore(result.user as User); // Ensure to await Firestore addition
         console.log(result.user);
         navigate('/'); // Navigate to dashboard after successful Google login
         return result;

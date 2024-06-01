@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Button, List, ListItem, ListItemText, CircularProgress } from '@mui/material';
-import { doc, getDoc, updateDoc, collection, getDocs, Firestore } from 'firebase/firestore';
-import { db } from '../../firebase/firebaseConfig';
-
+import { CircularProgress, Button } from '@mui/material';
+import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
+import { doc, getDoc, updateDoc, collection, getDocs } from 'firebase/firestore';
+import { auth, db } from '../../firebase/firebaseConfig';
 import { Timestamp } from 'firebase/firestore';
 
 type User = {
@@ -21,11 +21,10 @@ const UserList = () => {
     useEffect(() => {
         const fetchUsers = async () => {
             try {
-                const querySnapshot = await getDocs(collection(db, 'users'));
+                const querySnapshot = await getDocs(collection(db, 'user'));
                 const usersList: User[] = [];
-
                 for (const userDoc of querySnapshot.docs) {
-                    const userRef = doc(db, 'users', userDoc.id);
+                    const userRef = doc(db, 'user', userDoc.id);
                     const userSnap = await getDoc(userRef);
 
                     if (userSnap.exists()) {
@@ -34,11 +33,10 @@ const UserList = () => {
                         console.log('No such document for user:', userDoc.id);
                     }
                 }
-
                 setUsers(usersList);
                 setLoading(false);
             } catch (error) {
-                console.error('Error fetching users:', error);
+                console.error('Error fetching user:', error);
                 setLoading(false);
             }
         };
@@ -48,7 +46,7 @@ const UserList = () => {
 
     const handleRoleToggle = async (user: User) => {
         const newRole = user.role === 'VA' ? 'Client' : 'VA';
-        const userRef = doc(db, 'users', user.id);
+        const userRef = doc(db, 'user', user.id);
 
         try {
             await updateDoc(userRef, { role: newRole });
@@ -58,28 +56,65 @@ const UserList = () => {
         }
     };
 
+    const columns: GridColDef[] = [
+        { field: 'name', headerName: 'Name', width: 400, headerAlign: 'left', resizable:false },
+        { field: 'email', headerName: 'Email', width: 400, headerAlign: 'left', resizable:false },
+        { field: 'role', headerName: 'Role', width: 250, headerAlign: 'left', resizable:false},
+        
+        {
+            field: 'actions',
+            headerName: 'Actions',
+            width: 150,
+            headerAlign: 'center',
+            disableColumnMenu: true, 
+            renderCell: (params: GridRenderCellParams) => (
+                <Button
+                    variant="contained"
+                    color={params.row.role === 'VA' ? 'secondary' : 'primary'}
+                    onClick={() => handleRoleToggle(params.row)}
+                >
+                    {params.row.role === 'VA' ? 'Unassign' : 'Assign VA'}
+                </Button>
+            ),
+        },
+    ];
+
     if (loading) {
         return <CircularProgress />;
     }
 
     return (
-        <List>
-            {users.map(user => (
-                <ListItem key={user.id}>
-                    <ListItemText
-                        primary={user.name}
-                        secondary={`Email: ${user.email}, Role: ${user.role}, Created At: ${user.createdAt.toDate().toLocaleString()}`}
-                    />
-                    <Button
-                        variant="contained"
-                        color={user.role === 'VA' ? 'secondary' : 'primary'}
-                        onClick={() => handleRoleToggle(user)}
-                    >
-                        {user.role === 'VA' ? 'Unassign' : 'Assign VA'}
-                    </Button>
-                </ListItem>
-            ))}
-        </List>
+        <div style={{ height: 600, width: '100%' }}>
+        <DataGrid
+            rows={users}
+            columns={columns}
+            
+            sx={{
+                height: 600,
+                width: '100%',
+                
+                '& .MuiDataGrid-root': {
+                    bgcolor: '#2F3E46',
+                    color: 'white',
+                },
+                '& .MuiDataGrid-columnHeaders': {
+                    backgroundColor: '#1F282E', 
+                    color: 'black',
+                },
+                '& .MuiDataGrid-cell': {
+                    color: 'white',
+                    borderColor: '#1F282E', 
+                },
+                '& .MuiDataGrid-row:hover': {
+                    backgroundColor: '#36454F',
+                },
+                '& .MuiButtonBase-root': {
+                    color: 'white',
+                },
+                
+            }}
+        />
+    </div>
     );
 };
 

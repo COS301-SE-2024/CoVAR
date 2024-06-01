@@ -7,6 +7,7 @@
     "@emotion/styled": "^11.11.5",
     "@mui/icons-material": "^5.15.19",
     "@mui/material": "^5.15.19",
+    "@mui/x-data-grid": "^7.6.1",
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/user-event": "^13.5.0",
     "@types/jest": "^27.5.2",
@@ -22,13 +23,13 @@
     "web-vitals": "^2.1.4"
   },
   "devDependencies": {
-    "react-scripts": "5.0.1",
     "@babel/plugin-proposal-private-property-in-object": "^7.16.7",
     "@testing-library/react": "^15.0.7",
     "@typescript-eslint/eslint-plugin": "^7.11.0",
     "@typescript-eslint/parser": "^7.11.0",
     "eslint": "^8.57.0",
-    "eslint-plugin-react": "^7.34.2"
+    "eslint-plugin-react": "^7.34.2",
+    "react-scripts": "5.0.1"
   },
   "scripts": {
     "dev": "react-scripts start",

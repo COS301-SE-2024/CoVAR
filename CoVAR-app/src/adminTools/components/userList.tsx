@@ -45,7 +45,7 @@ const UserList = () => {
     }, []);
 
     const handleRoleToggle = async (user: User) => {
-        const newRole = user.role === 'VA' ? 'Client' : 'VA';
+        const newRole = user.role === 'VA' ? 'client' : 'VA';
         const userRef = doc(db, 'user', user.id);
 
         try {

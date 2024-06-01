@@ -26,7 +26,7 @@
   "scripts": {
     "dev": "react-scripts start",
     "build": "react-scripts build",
-    "test": "react-scripts test",
+    "test": "react-scripts test --coverage --watchAll=false",
     "lint": "eslint . --ext .jsx,.ts,.tsx",
     "eject": "react-scripts eject"
   },

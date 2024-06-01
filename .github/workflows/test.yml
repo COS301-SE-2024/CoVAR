@@ -35,11 +35,11 @@ jobs:
 
       - name: Install dependencies
         run:  |
-          cd covar-app && npm ci
+          cd CoVAR-app && npm ci
 
       - name: Test Codebase
         run:  |
-          cd covar-app && npm run test
+          cd CoVAR-app && npm run test
 
 
       - name: Jest Coverage Comment
@@ -47,7 +47,7 @@ jobs:
         uses: MishaKav/jest-coverage-comment@main
         with:
           hide-comment: true
-          coverage-summary-path: ./covar-app/coverage/coverage-summary.json
+          coverage-summary-path: ./CoVAR-app/coverage/coverage-summary.json
 
       - name: Check the output coverage
         run: |

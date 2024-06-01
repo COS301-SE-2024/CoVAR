@@ -33,11 +33,11 @@ jobs:
 
       - name: Install dependencies
         run:  |
-          cd covar-app && npm ci
+          cd CoVAR-app && npm ci
 
       - name: Lint Codebase
         run:  |
-          cd covar-app && npm run lint
+          cd CoVAR-app && npm run lint
   end:
     name: The end
     runs-on: ubuntu-latest

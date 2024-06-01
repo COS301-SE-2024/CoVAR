@@ -35,11 +35,11 @@ jobs:
 
       - name: Install dependencies
         run:  |
-          cd covar-app && npm ci
+          cd CoVAR-app && npm ci
 
       - name: Build Codebase
         run:  |
-          cd covar-app && npm run build
+          cd CoVAR-app && npm run build
 
   end:
     name: The end

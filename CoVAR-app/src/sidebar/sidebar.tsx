@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation,useNavigate } from 'react-router-dom';
 import { Box, List, ListItem, ListItemText, ListItemIcon, Typography, Button } from '@mui/material';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import AssessmentIcon from '@mui/icons-material/Assessment';
@@ -15,10 +15,23 @@ import {
   logoStyles, 
   logoutButtonStyles 
 } from '../styles/sidebarStyle';
+import { doSignOut } from '../firebase/auth';
+import { useAuth } from '../contexts/authContext/index';
 
 const Sidebar: React.FC = () => {
+  const { currentUser, userLoggedIn, loading } = useAuth();
+  console.log(currentUser, userLoggedIn, loading);
+  const navigate = useNavigate();
   const location = useLocation();
-
+  const signOut = async () => {
+    try {
+      await doSignOut();
+      navigate('/login');
+    } catch (error) {
+      console.error(error);
+      // Handle errors here
+    }
+  };
   return (
     <Box sx={sidebarStyles}>
       <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', ...logoStyles }}>
@@ -63,6 +76,7 @@ const Sidebar: React.FC = () => {
         component={Link} 
         to="/login" 
         sx={logoutButtonStyles}
+        onClick={signOut}
       >
         Logout
       </Button>

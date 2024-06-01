@@ -109,12 +109,7 @@ const UserList = () => {
                     color: 'white',
                     borderColor: '#1F282E', 
                 },
-                '& .MuiDataGrid-row:hover': {
-                    backgroundColor: '#36454F',
-                },
-                '& .MuiButtonBase-root': {
-                    color: 'white',
-                },
+               
                 
             }}
         />

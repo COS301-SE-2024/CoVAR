@@ -8,7 +8,7 @@ import ListExample from './listExample';
 
 const Dashboard: React.FC = () => {
   return (
-    <Box sx={dashboardContainerStyles}>
+    <Box>
       <Sidebar />
       <Box sx={mainContentStyles}>
         <Grid container spacing={2}>

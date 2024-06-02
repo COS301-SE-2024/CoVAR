@@ -1,29 +1,85 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { theme } from '../App';
 import { ThemeProvider } from '@mui/material/styles';
 import { Container, Box, Typography, TextField, Button, Link, CssBaseline, Card } from '@mui/material';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
-import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
-import { auth } from '../firebase/firebaseConfig';
 import GoogleIcon from "../icons/GoogleIcon";
+import { doSignInWithEmailAndPassword, doSignInWithGoogle } from '../firebase/auth';
+import { useAuth } from '../contexts/authContext';
+import { useNavigate } from 'react-router-dom';
+import { doc, setDoc } from "firebase/firestore";
+import { db } from '../firebase/firebaseConfig';
 
 interface LoginProps {
   toggleForm: () => void;
 }
-
-
+interface User {
+  uid: string;
+  email: string | null;
+  displayName: string | null;
+}
 const Login: React.FC<LoginProps> = ({ toggleForm }) => {
-  const signInWithGoogle = async () => {
+  const { userLoggedIn } = useAuth();
+  const navigate = useNavigate();
+
+  const [email, setEmail] = React.useState('');
+  const [password, setPassword] = React.useState('');
+  const [error, setError] = React.useState('');
+  const [isSigningIn, setIsSigningIn] = React.useState(false);
+
+  useEffect(() => {
+    if (userLoggedIn) {
+      navigate('/');
+    }
+  }, [userLoggedIn, navigate]);
+  const addUserToFirestore = async (user: User) => {
     try {
-      const googleProvider = new GoogleAuthProvider();
-      const result = await signInWithPopup(auth, googleProvider);
-      console.log(result.user);
-      return result;
+      const userRef = doc(db, "user", user.uid); 
+      const userData = {
+        uid: user.uid,
+        email: user.email,
+        name: user.displayName || "",
+        createdAt: new Date(),
+        role: "client"
+      };
+      await setDoc(userRef, userData);
+      console.log("User added to Firestore: ", user.uid);
     } catch (error) {
-      console.error(error);
-      // Handle errors here
+      console.error("Error adding user to Firestore: ", error);
     }
   };
+  const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!isSigningIn) {
+      setIsSigningIn(true);
+      try {
+        await doSignInWithEmailAndPassword(email, password);
+        navigate('/'); // Navigate to dashboard after successful login
+      } catch (error) {
+        console.error(error);
+        setIsSigningIn(false);
+        setError('Failed to sign in. Please check your credentials.');
+      }
+    }
+  };
+
+  const signInWithGoogle = async () => {
+    if (!isSigningIn) {
+      setIsSigningIn(true);
+      try {
+        const result = await doSignInWithGoogle();
+        await addUserToFirestore(result.user as User); // Ensure to await Firestore addition
+        console.log(result.user);
+        navigate('/'); // Navigate to dashboard after successful Google login
+        return result;
+      } catch (error) {
+        console.error(error);
+        setIsSigningIn(false);
+        setError('Failed to sign in with Google.');
+      }
+    }
+  };
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
@@ -39,7 +95,7 @@ const Login: React.FC<LoginProps> = ({ toggleForm }) => {
             <Typography variant="h4" component="h2" gutterBottom>
               Sign In
             </Typography>
-            <Box component="form" sx={{ width: '100%', mt: 1 }}>
+            <Box component="form" sx={{ width: '100%', mt: 1 }} onSubmit={onSubmit}>
               <TextField
                 margin="normal"
                 required
@@ -52,6 +108,8 @@ const Login: React.FC<LoginProps> = ({ toggleForm }) => {
                 InputLabelProps={{
                   style: { color: '#CAD2C5' },
                 }}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 sx={{
                   '& .MuiOutlinedInput-root': {
                     '& fieldset': {
@@ -78,6 +136,8 @@ const Login: React.FC<LoginProps> = ({ toggleForm }) => {
                 InputLabelProps={{
                   style: { color: '#CAD2C5' },
                 }}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 sx={{
                   '& .MuiOutlinedInput-root': {
                     '& fieldset': {
@@ -106,12 +166,12 @@ const Login: React.FC<LoginProps> = ({ toggleForm }) => {
                 Log in
               </Button>
               <Button
-                type="submit"
                 fullWidth
                 variant="contained"
                 sx={{ mt: 3, mb: 2, backgroundColor: 'primary.main' }}
                 onClick={signInWithGoogle}
-              ><GoogleIcon />Continue with Google
+              >
+                <GoogleIcon />Continue with Google
               </Button>
               <Box display="flex" justifyContent="center" alignItems="center" mt={2}>
                 <Typography variant="body2" sx={{ color: 'text.primary' }}>
@@ -121,6 +181,11 @@ const Login: React.FC<LoginProps> = ({ toggleForm }) => {
                   Sign up
                 </Link>
               </Box>
+              {error && (
+                <Typography variant="body2" color="error" sx={{ mt: 2 }}>
+                  {error}
+                </Typography>
+              )}
             </Box>
           </Box>
         </Card>

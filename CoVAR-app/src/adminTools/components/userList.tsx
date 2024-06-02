@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { CircularProgress, Button } from '@mui/material';
+import { CircularProgress, Button, Typography } from '@mui/material';
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import { doc, getDoc, updateDoc, collection, getDocs } from 'firebase/firestore';
 import { db } from '../../firebase/firebaseConfig';
@@ -66,21 +66,46 @@ const UserList = () => {
             headerAlign: 'left', 
             align: 'left', 
             disableColumnMenu: true,
-            renderCell: (params: GridRenderCellParams) => (
-                <Button
-                    variant="contained"
-                    sx={{
-                        backgroundColor: params.row.role === 'VA' ? '#EE1D52' : '#84A98C',
-                        color: '#CAD2C5',
-                        '&:hover': {
-                            backgroundColor: params.row.role === 'VA' ? '#D11C45' : '#749F82',
-                        },
-                    }}
-                    onClick={() => handleRoleToggle(params.row)}
-                >
-                    {params.row.role === 'VA' ? 'Unassign' : 'Assign VA'}
-                </Button>
-            ),
+            renderCell: (params: GridRenderCellParams) => {
+                if (params.row.role === 'admin') {
+                    return (
+                        <Typography
+                            variant="body2"
+                            sx={{
+                                marginTop: '8px',
+                                backgroundColor: '#52796F',
+                                color: '#CAD2C5',
+                                borderRadius: '4px',
+                                textAlign: 'center',
+                                width: '110px',
+                                height: '36.5px',
+                                display: 'flex',             
+                                alignItems: 'center',        
+                                justifyContent: 'center',     
+                            }}
+                        >
+                            ADMIN
+                        </Typography>
+                    );
+                } else {
+                    return (
+                        <Button
+                            variant="contained"
+                            sx={{
+                                backgroundColor: params.row.role === 'VA' ? '#EE1D52' : '#84A98C',
+                                color: '#CAD2C5',
+                                width: '110px',
+                                '&:hover': {
+                                    backgroundColor: params.row.role === 'VA' ? '#D11C45' : '#749F82',
+                                },
+                            }}
+                            onClick={() => handleRoleToggle(params.row)}
+                        >
+                            {params.row.role === 'VA' ? 'Unassign' : 'Assign VA'}
+                        </Button>
+                    );
+                }
+            },
         },
     ];
 

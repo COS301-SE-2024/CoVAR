@@ -7,7 +7,7 @@ import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import SettingsIcon from '@mui/icons-material/Settings';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
-import LockIcon from '@mui/icons-material/Lock'; // Added LockIcon import
+import LockIcon from '@mui/icons-material/Lock'; 
 import { 
   sidebarStyles, 
   sidebarItemStyles, 
@@ -29,7 +29,7 @@ const Sidebar: React.FC = () => {
       navigate('/login');
     } catch (error) {
       console.error(error);
-      // Handle errors here
+
     }
   };
   return (

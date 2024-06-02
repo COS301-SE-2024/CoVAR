@@ -7,7 +7,7 @@ import GoogleIcon from "../icons/GoogleIcon";
 import { doSignInWithEmailAndPassword, doSignInWithGoogle } from '../firebase/auth';
 import { useAuth } from '../contexts/authContext';
 import { useNavigate } from 'react-router-dom';
-import { doc, setDoc } from "firebase/firestore";
+import { doc, setDoc,getDoc } from "firebase/firestore";
 import { db } from '../firebase/firebaseConfig';
 
 interface LoginProps {
@@ -35,15 +35,21 @@ const Login: React.FC<LoginProps> = ({ toggleForm }) => {
   const addUserToFirestore = async (user: User) => {
     try {
       const userRef = doc(db, "user", user.uid); 
-      const userData = {
-        uid: user.uid,
-        email: user.email,
-        name: user.displayName || "",
-        createdAt: new Date(),
-        role: "client"
-      };
-      await setDoc(userRef, userData);
-      console.log("User added to Firestore: ", user.uid);
+      const userSnapshot = await getDoc(userRef); // Check if the document exists
+  
+      if (!userSnapshot.exists()) {
+        const userData = {
+          uid: user.uid,
+          email: user.email,
+          name: user.displayName || "",
+          createdAt: new Date(),
+          role: "client"
+        };
+        await setDoc(userRef, userData);
+        console.log("User added to Firestore: ", user.uid);
+      } else {
+        console.log("User already exists in Firestore: ", user.uid);
+      }
     } catch (error) {
       console.error("Error adding user to Firestore: ", error);
     }

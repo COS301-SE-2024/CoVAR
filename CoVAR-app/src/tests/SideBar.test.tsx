@@ -3,20 +3,30 @@ import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import Sidebar from '../sidebar/sidebar';
 
-// Mock firebase/app
-// jest.mock('firebase/app', () => ({
-//     __esModule: true,
-//     initializeApp: jest.fn(),
-// }));
+// Mock Firebase services
 
-// // Mock firebase/auth
-// jest.mock('firebase/auth', () => ({
-//     __esModule: true,
-//     getAuth: jest.fn().mockReturnValue({
-//         onAuthStateChanged: jest.fn(),
-//     }),
-//     GoogleAuthProvider: jest.fn().mockImplementation(() => ({})), // Mock GoogleAuthProvider
-// }));
+jest.mock('../sidebar/components/userRole', () => ({
+  __esModule: true, // this property makes it work
+  default: jest.fn().mockReturnValue('admin'), // Mock the user role
+}));
+
+jest.mock('firebase/app', () => ({
+  initializeApp: jest.fn(),
+}));
+
+jest.mock('firebase/auth', () => ({
+  getAuth: jest.fn(() => ({
+    currentUser: {
+      email: 'test@example.com',
+    },
+    signOut: jest.fn(),
+  })),
+  GoogleAuthProvider: jest.fn(),
+}));
+
+jest.mock('firebase/firestore', () => ({
+  getFirestore: jest.fn(),
+}));
 
 // // Mock firebase/firestore
 // jest.mock('firebase/firestore', () => ({

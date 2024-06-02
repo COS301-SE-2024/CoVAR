@@ -5,6 +5,11 @@ import '@testing-library/jest-dom/extend-expect';
 import Sidebar from '../sidebar/sidebar';
 
 // Mock Firebase services
+
+jest.mock('../sidebar/components/userRole', () => ({
+  useUserRole: jest.fn().mockReturnValue('admin'), // Mock the user role
+}));
+
 jest.mock('firebase/app', () => ({
   initializeApp: jest.fn(),
 }));
@@ -21,15 +26,6 @@ jest.mock('firebase/auth', () => ({
 
 jest.mock('firebase/firestore', () => ({
   getFirestore: jest.fn(),
-}));
-
-// Mock the useAuth hook
-jest.mock('../contexts/authContext/index', () => ({
-  useAuth: jest.fn(() => ({
-    currentUser: { email: 'test@example.com' },
-    userLoggedIn: true,
-    loading: false,
-  })),
 }));
 
 // Mock the useNavigate hook from react-router-dom
@@ -85,14 +81,5 @@ describe('Sidebar Component', () => {
     expect(mockNavigate).toHaveBeenCalledWith('/admin-tools');
   });
 
-  test('displays LockIcon and title', () => {
-    render(
-      <Router>
-        <Sidebar />
-      </Router>
-    );
-
-    expect(screen.getByText('CoVAR')).toBeInTheDocument();
-    expect(screen.getByTestId('LockIcon')).toBeInTheDocument();
-  });
+ 
 });

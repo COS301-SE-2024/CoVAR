@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { Box, Button, Typography, Paper } from '@mui/material';
-import Sidebar from '../sidebar/sidebar';
 import { mainContentStyles } from '../styles/sidebarStyle';
 // import { dashboardContainerStyles } from '../styles/dashboardStyle';
-import { evaluateContainerStyles, uploadBoxStyles, uploadButtonStyles } from '../styles/evaluateStyle';
+import { uploadBoxStyles, uploadButtonStyles } from '../styles/evaluateStyle';
 
 const Evaluate: React.FC = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -22,8 +21,6 @@ const Evaluate: React.FC = () => {
   };
 
   return (
-    <Box sx={evaluateContainerStyles}>
-      <Sidebar />
       <Box sx={mainContentStyles}>
         <Paper sx={uploadBoxStyles}>
           <Typography variant="h6" sx={{ color: '#CAD2C5', marginBottom: 2 }}>
@@ -57,7 +54,6 @@ const Evaluate: React.FC = () => {
           )}
         </Paper>
       </Box>
-    </Box>
   );
 };
 

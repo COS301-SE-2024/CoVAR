@@ -28,33 +28,32 @@ jest.mock('firebase/firestore', () => ({
   getFirestore: jest.fn(),
 }));
 
-// // Mock firebase/firestore
-// jest.mock('firebase/firestore', () => ({
-//     __esModule: true,
-//     getFirestore: jest.fn(),
+// // Mock the useNavigate hook from react-router-dom
+// jest.mock('react-router-dom', () => ({
+//   ...jest.requireActual('react-router-dom'),
+//   useNavigate: jest.fn(),
 // }));
 
-// // Mock useAuth hook
-// jest.mock('../firebase/firebaseConfig.js', () => ({
-//     useAuth: jest.fn().mockReturnValue({
-//         currentUser: { uid: '123', email: 'test@example.com' },
-//         userLoggedIn: true,
-//         loading: false,
-//     }),
-// }));
+// const mockNavigate = jest.requireMock('react-router-dom').useNavigate;
 
 describe('Sidebar Component', () => {
-    it('renders menu items correctly', () => {
-        render(
-            <MemoryRouter>
-                <Sidebar />
-            </MemoryRouter>
-        );
-        screen.debug();
-        expect(screen.getByText('Dashboard')).toBeInTheDocument();
-        expect(screen.getByText('Evaluate')).toBeInTheDocument();
-        expect(screen.getByText('Account')).toBeInTheDocument();
-        expect(screen.getByText('Settings')).toBeInTheDocument();
-        expect(screen.getByText('Admin Tools')).toBeInTheDocument();
-    });
+  
+
+  test('renders the sidebar with all menu items', () => {
+    render(
+      <Router>
+        <Sidebar />
+      </Router>
+    );
+
+    // Check that each menu item is rendered
+    expect(screen.getByText('Dashboard')).toBeInTheDocument();
+    expect(screen.getByText('Account')).toBeInTheDocument();
+    expect(screen.getByText('Settings')).toBeInTheDocument();
+    expect(screen.getByText('Logout')).toBeInTheDocument();
+  });
+
+  
+
+ 
 });

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Box, Button, Typography, Paper } from '@mui/material';
 import Sidebar from '../sidebar/sidebar';
 import { mainContentStyles } from '../styles/sidebarStyle';
-import { dashboardContainerStyles } from '../styles/dashboardStyle';
+// import { dashboardContainerStyles } from '../styles/dashboardStyle';
 import { evaluateContainerStyles, uploadBoxStyles, uploadButtonStyles } from '../styles/evaluateStyle';
 
 const Evaluate: React.FC = () => {

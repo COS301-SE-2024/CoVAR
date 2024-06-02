@@ -1,10 +1,5 @@
 import { SxProps } from '@mui/material/styles';
 
-export const dashboardContainerStyles: SxProps = {
-  display: 'flex',
-  height: '100vh',
-};
-
 export const chartContainerStyles: SxProps = {
   padding: 2,
   backgroundColor: '#2D3E44',

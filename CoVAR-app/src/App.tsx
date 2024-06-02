@@ -7,6 +7,7 @@ import Account from './account/account';
 import Settings from './settings/settings';
 import { createTheme } from '@mui/material/styles';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import Layout from './layout/layout'; // adjust the path as necessary
 
 const theme = createTheme({
   palette: {
@@ -47,21 +48,20 @@ const theme = createTheme({
 });
 
 const App: React.FC = () => {
-  return (
-    <Router>
-      <div>
+    return (
+      <Router>
         <Routes>
-          <Route path="/login" element={< LoginSignup />} />
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/evaluate" element={<Evaluate />} />
-          <Route path="/account" element={<Account />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="/admin-tools" element={<AdminTools />} />
+          <Route path="/login" element={<LoginSignup />} />
+          <Route path="/" element={<Layout><Dashboard /></Layout>} />
+          <Route path="/evaluate" element={<Layout><Evaluate /></Layout>} />
+          <Route path="/account" element={<Layout><Account /></Layout>} />
+          <Route path="/settings" element={<Layout><Settings /></Layout>} />
+          <Route path="/admin-tools" element={<Layout><AdminTools /></Layout>} />
         </Routes>
-      </div>
-    </Router>
-  );
-};
+      </Router>
+    );
+  };
+  
 
 export default App;
 export { theme };

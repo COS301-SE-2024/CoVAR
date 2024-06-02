@@ -6,7 +6,7 @@ import { Container, Box, Typography, TextField, Button, Link, CssBaseline, Card 
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import { doCreateUserWithEmailAndPassword, doSignInWithGoogle } from '../firebase/auth';
 import GoogleIcon from "../icons/GoogleIcon";
-import { doc, setDoc } from "firebase/firestore";
+import { doc, setDoc ,getDoc} from "firebase/firestore";
 import { db } from '../firebase/firebaseConfig';
 
 interface User {
@@ -18,15 +18,21 @@ interface User {
 const addUserToFirestore = async (user: User) => {
   try {
     const userRef = doc(db, "user", user.uid); 
-    const userData = {
-      uid: user.uid,
-      email: user.email,
-      name: user.displayName || "",
-      createdAt: new Date(),
-      role: "client"
-    };
-    await setDoc(userRef, userData);
-    console.log("User added to Firestore: ", user.uid);
+    const userSnapshot = await getDoc(userRef); // Check if the document exists
+
+    if (!userSnapshot.exists()) {
+      const userData = {
+        uid: user.uid,
+        email: user.email,
+        name: user.displayName || "",
+        createdAt: new Date(),
+        role: "client"
+      };
+      await setDoc(userRef, userData);
+      console.log("User added to Firestore: ", user.uid);
+    } else {
+      console.log("User already exists in Firestore: ", user.uid);
+    }
   } catch (error) {
     console.error("Error adding user to Firestore: ", error);
   }

@@ -5,6 +5,7 @@ import Button from '@mui/material/Button';
 
 export const sidebarStyles: SxProps = {
   width: 250,
+  minWidth : 250,
   backgroundColor: '#2D3E44',
   display: 'flex',
   flexDirection: 'column',

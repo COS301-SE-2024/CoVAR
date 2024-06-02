@@ -3,15 +3,28 @@
 // import Login from '../login/loginForm';
 // import { doSignInWithEmailAndPassword } from '../firebase/auth';
 
-// jest.mock('../login/loginForm', () => {
-//     return {
-//       __esModule: true,
-//       default: jest.fn(),
-//       initializeApp: jest.fn(),
-//       getAuth: jest.fn(),
-//       getFirestore: jest.fn(),
-//     };
-//   });
+// jest.mock('../sidebar/components/userRole', () => ({
+//     __esModule: true, // this property makes it work
+//     default: jest.fn().mockReturnValue('admin'), // Mock the user role
+//   }));
+  
+//   jest.mock('firebase/app', () => ({
+//     initializeApp: jest.fn(),
+//   }));
+  
+//   jest.mock('firebase/auth', () => ({
+//     getAuth: jest.fn(() => ({
+//       currentUser: {
+//         email: 'test@example.com',
+//       },
+//       signOut: jest.fn(),
+//     })),
+//     GoogleAuthProvider: jest.fn(),
+//   }));
+  
+//   jest.mock('firebase/firestore', () => ({
+//     getFirestore: jest.fn(),
+//   }));
 
 // describe('Login Component', () => {
 //     it('renders without crashing', () => {

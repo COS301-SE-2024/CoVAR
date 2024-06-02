@@ -2,7 +2,7 @@ import React from 'react';
 import { Box, Grid, Paper, Typography } from '@mui/material';
 import Sidebar from '../sidebar/sidebar';
 import { mainContentStyles } from '../styles/sidebarStyle';
-import { dashboardContainerStyles, chartContainerStyles, listContainerStyles } from '../styles/dashboardStyle';
+import {chartContainerStyles, listContainerStyles } from '../styles/dashboardStyle';
 import ChartExample from './chartExample';
 import ListExample from './listExample';
 

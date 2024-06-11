@@ -1,0 +1,37 @@
+version: '3'
+services:
+  postgres:
+    image: 'postgres:latest'
+    environment:
+      - POSTGRES_PASSWORD=${PG_PASSWORD}
+  nginx:
+    depends_on:
+      - api
+      - client
+    restart: always
+    build:
+      dockerfile: Dockerfile.dev
+      context: './nginx'
+    ports:
+      - '3050:80'
+  api:
+    build:
+      dockerfile: Dockerfile.dev
+      context: './server'
+    volumes:
+      - /app/node_modules
+      - ./server:/app
+    environment:
+      - PG_USER=${PG_USER}
+      - PG_HOST=${PG_HOST}
+      - PG_DATABASE=${PG_DATABASE}
+      - PG_PASSWORD=${PG_PASSWORD}
+      - PG_PORT=${PG_PORT}
+  client:
+    stdin_open: true
+    build:
+      dockerfile: Dockerfile.dev
+      context: './covar-app'
+    volumes:
+      - /app/node_modules
+      - ./covar-app:/app

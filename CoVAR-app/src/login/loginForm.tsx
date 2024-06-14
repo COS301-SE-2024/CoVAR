@@ -1,24 +1,26 @@
 import React, { useEffect } from 'react';
-import { theme } from '../App';
-import { ThemeProvider } from '@mui/material/styles';
+import { useTheme, ThemeProvider } from '@mui/material/styles';
 import { Container, Box, Typography, TextField, Button, Link, CssBaseline, Card } from '@mui/material';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import GoogleIcon from "../icons/GoogleIcon";
 import { doSignInWithEmailAndPassword, doSignInWithGoogle } from '../firebase/auth';
 import { useAuth } from '../contexts/authContext';
 import { useNavigate } from 'react-router-dom';
-import { doc, setDoc,getDoc } from "firebase/firestore";
+import { doc, setDoc, getDoc } from "firebase/firestore";
 import { db } from '../firebase/firebaseConfig';
 
 interface LoginProps {
   toggleForm: () => void;
 }
+
 interface User {
   uid: string;
   email: string | null;
   displayName: string | null;
 }
+
 const Login: React.FC<LoginProps> = ({ toggleForm }) => {
+  const theme = useTheme(); // Use the theme hook here
   const { userLoggedIn } = useAuth();
   const navigate = useNavigate();
 
@@ -32,6 +34,7 @@ const Login: React.FC<LoginProps> = ({ toggleForm }) => {
       navigate('/');
     }
   }, [userLoggedIn, navigate]);
+
   const addUserToFirestore = async (user: User) => {
     try {
       const userRef = doc(db, "user", user.uid); 
@@ -54,6 +57,7 @@ const Login: React.FC<LoginProps> = ({ toggleForm }) => {
       console.error("Error adding user to Firestore: ", error);
     }
   };
+
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!isSigningIn) {
@@ -94,9 +98,9 @@ const Login: React.FC<LoginProps> = ({ toggleForm }) => {
           <Typography variant="h1" color="textPrimary" gutterBottom>
             CoVAR
           </Typography>
-          <LockOutlinedIcon sx={{ fontSize: 150, color: 'primary.main' }} />
+          <LockOutlinedIcon sx={{ fontSize: 150, color: theme.palette.primary.main }} />
         </Box>
-        <Card sx={{ backgroundColor: '#2F3E46', padding: 4, borderRadius: 1, borderStyle: 'solid', borderWidth: 1, borderColor: '#CAD2C5' }}>
+        <Card sx={{ backgroundColor: theme.palette.background.paper, padding: 4, borderRadius: 1, borderStyle: 'solid', borderWidth: 1, borderColor: theme.palette.divider }}>
           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <Typography variant="h4" component="h2" gutterBottom>
               Sign In
@@ -112,20 +116,20 @@ const Login: React.FC<LoginProps> = ({ toggleForm }) => {
                 autoComplete="email"
                 autoFocus
                 InputLabelProps={{
-                  style: { color: '#CAD2C5' },
+                  style: { color: theme.palette.text.primary },
                 }}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 sx={{
                   '& .MuiOutlinedInput-root': {
                     '& fieldset': {
-                      borderColor: '#CAD2C5',
+                      borderColor: theme.palette.divider,
                     },
                     '&:hover fieldset': {
-                      borderColor: '#CAD2C5',
+                      borderColor: theme.palette.divider,
                     },
                     '&.Mui-focused fieldset': {
-                      borderColor: '#52796F',
+                      borderColor: theme.palette.primary.main,
                     },
                   },
                 }}
@@ -140,26 +144,26 @@ const Login: React.FC<LoginProps> = ({ toggleForm }) => {
                 id="password"
                 autoComplete="current-password"
                 InputLabelProps={{
-                  style: { color: '#CAD2C5' },
+                  style: { color: theme.palette.text.primary },
                 }}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 sx={{
                   '& .MuiOutlinedInput-root': {
                     '& fieldset': {
-                      borderColor: '#CAD2C5',
+                      borderColor: theme.palette.divider,
                     },
                     '&:hover fieldset': {
-                      borderColor: '#CAD2C5',
+                      borderColor: theme.palette.divider,
                     },
                     '&.Mui-focused fieldset': {
-                      borderColor: '#52796F',
+                      borderColor: theme.palette.primary.main,
                     },
                   },
                 }}
               />
               <Box sx={{ textAlign: 'left', width: '100%', mt: 1 }}>
-                <Link href="#" variant="body2" sx={{ color: 'text.secondary' }}>
+                <Link href="#" variant="body2" sx={{ color: theme.palette.text.secondary }}>
                   Forgot your password?
                 </Link>
               </Box>
@@ -167,23 +171,23 @@ const Login: React.FC<LoginProps> = ({ toggleForm }) => {
                 type="submit"
                 fullWidth
                 variant="contained"
-                sx={{ mt: 3, mb: 2, backgroundColor: 'primary.main' }}
+                sx={{ mt: 3, mb: 2, backgroundColor: theme.palette.primary.main }}
               >
                 Log in
               </Button>
               <Button
                 fullWidth
                 variant="contained"
-                sx={{ mt: 3, mb: 2, backgroundColor: 'primary.main' }}
+                sx={{ mt: 3, mb: 2, backgroundColor: theme.palette.primary.main }}
                 onClick={signInWithGoogle}
               >
                 <GoogleIcon />Continue with Google
               </Button>
               <Box display="flex" justifyContent="center" alignItems="center" mt={2}>
-                <Typography variant="body2" sx={{ color: 'text.primary' }}>
+                <Typography variant="body2" sx={{ color: theme.palette.text.primary }}>
                   Don't have an account?
                 </Typography>
-                <Link href="#" variant="body2" sx={{ color: 'text.secondary', ml: 1 }} onClick={toggleForm}>
+                <Link href="#" variant="body2" sx={{ color: theme.palette.text.secondary, ml: 1 }} onClick={toggleForm}>
                   Sign up
                 </Link>
               </Box>

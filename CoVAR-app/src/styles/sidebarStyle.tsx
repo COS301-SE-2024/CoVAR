@@ -1,53 +1,53 @@
-import { SxProps } from '@mui/material/styles';
+import { SxProps, Theme } from '@mui/material/styles';
 import { styled } from '@mui/material/styles';
 import Button from '@mui/material/Button';
 
-
-export const sidebarStyles: SxProps = {
+export const sidebarStyles: SxProps<Theme> = (theme) => ({
   width: 250,
-  minWidth : 250,
-  backgroundColor: '#2D3E44',
+  minWidth: 250,
+  backgroundColor: theme.palette.background.paper,
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'center',
-  paddingTop: 3,
-  paddingBottom: 3,
-};
+  paddingTop: theme.spacing(3),
+  paddingBottom: theme.spacing(3),
+  color: theme.palette.text.primary,
+});
 
-export const mainContentStyles: SxProps = {
+export const mainContentStyles: SxProps<Theme> = (theme) => ({
   flexGrow: 1,
-  backgroundColor: '#1F282E',
-  padding: 3,
-};
+  backgroundColor: theme.palette.background.default,
+  padding: theme.spacing(3),
+});
 
-export const sidebarItemStyles: SxProps = {
+export const sidebarItemStyles: SxProps<Theme> = (theme) => ({
   width: '100%',
-  color: '#CAD2C5',
+  color: theme.palette.text.primary, // Ensure text color is primary
   '&:hover': {
-    backgroundColor: '#3E4E56',
+    backgroundColor: theme.palette.action.hover,
   },
-  borderRadius: 1,
-};
+  borderRadius: theme.shape.borderRadius,
+});
 
-export const iconStyles: SxProps = {
-  color: '#CAD2C5',
-};
+export const iconStyles: SxProps<Theme> = (theme) => ({
+  color: theme.palette.text.primary,
+});
 
-export const logoStyles: SxProps = {
-  color: '#CAD2C5',
-  marginBottom: 2,
-};
+export const logoStyles: SxProps<Theme> = (theme) => ({
+  color: theme.palette.text.primary,
+  marginBottom: theme.spacing(2),
+});
 
-export const logoutButtonStyles: SxProps = {
+export const logoutButtonStyles: SxProps<Theme> = (theme) => ({
   marginTop: 'auto',
-  marginBottom: 2,
+  marginBottom: theme.spacing(2),
   width: '90%',
-  backgroundColor: '#52796F',
-  color: '#CAD2C5',
+  backgroundColor: theme.palette.primary.main,
+  color: theme.palette.primary.contrastText, // Use contrast text color
   '&:hover': {
-    backgroundColor: '#435B60',
+    backgroundColor: theme.palette.primary.dark,
   },
-};
+});
 
 export const GoogleButton = styled(Button)(({ theme }) => ({
   marginTop: theme.spacing(3),
@@ -58,7 +58,7 @@ export const GoogleButton = styled(Button)(({ theme }) => ({
   alignItems: 'center',
   justifyContent: 'center',
   padding: '10px 20px',
-  borderRadius: 4,
+  borderRadius: theme.shape.borderRadius,
   width: '100%',
   maxWidth: '350px',
   '&:hover': {

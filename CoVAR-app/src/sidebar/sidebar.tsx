@@ -8,6 +8,7 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import LockIcon from '@mui/icons-material/Lock';
+import GroupsIcon from '@mui/icons-material/Groups'; 
 import { sidebarStyles, sidebarItemStyles, iconStyles, logoStyles, logoutButtonStyles } from '../styles/sidebarStyle';
 import { doSignOut } from '../firebase/auth';
 import useUserRole from './components/userRole';
@@ -42,7 +43,7 @@ const Sidebar: React.FC = () => {
           </ListItemIcon>
           <ListItemText primary="Dashboard" />
         </ListItem>
-        {(isAdmin || isVA) && ( 
+        {(isAdmin || isVA) && (
           <ListItem button component={Link} to="/evaluate" sx={{ ...sidebarItemStyles, backgroundColor: location.pathname === '/evaluate' ? '#52796F !important' : 'inherit' }}>
             <ListItemIcon>
               <AssessmentIcon sx={iconStyles} />
@@ -55,6 +56,12 @@ const Sidebar: React.FC = () => {
             <AccountCircleIcon sx={iconStyles} />
           </ListItemIcon>
           <ListItemText primary="Account" />
+        </ListItem>
+        <ListItem button component={Link} to="/organisation" sx={{ ...sidebarItemStyles, backgroundColor: location.pathname === '/organisation' ? '#52796F !important' : 'inherit' }}>
+          <ListItemIcon>
+            <GroupsIcon sx={iconStyles} />
+          </ListItemIcon>
+          <ListItemText primary="Organisation" />
         </ListItem>
         <ListItem button component={Link} to="/settings" sx={{ ...sidebarItemStyles, backgroundColor: location.pathname === '/settings' ? '#52796F !important' : 'inherit' }}>
           <ListItemIcon>
@@ -83,8 +90,6 @@ const Sidebar: React.FC = () => {
         Logout
       </Button>
     </Box>
-
-    
   );
 };
 

@@ -5,9 +5,10 @@ import AdminTools from './adminTools/adminTools';
 import Evaluate from './evaluate/evaluate';
 import Account from './account/account';
 import Settings from './settings/settings';
+import Organisation from './organisation/organisation'; 
 import { createTheme } from '@mui/material/styles';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import Layout from './layout/layout'; // adjust the path as necessary
+import Layout from './layout/layout'; 
 
 const theme = createTheme({
   palette: {
@@ -48,20 +49,20 @@ const theme = createTheme({
 });
 
 const App: React.FC = () => {
-    return (
-      <Router>
-        <Routes>
-          <Route path="/login" element={<LoginSignup />} />
-          <Route path="/" element={<Layout><Dashboard /></Layout>} />
-          <Route path="/evaluate" element={<Layout><Evaluate /></Layout>} />
-          <Route path="/account" element={<Layout><Account /></Layout>} />
-          <Route path="/settings" element={<Layout><Settings /></Layout>} />
-          <Route path="/admin-tools" element={<Layout><AdminTools /></Layout>} />
-        </Routes>
-      </Router>
-    );
-  };
-  
+  return (
+    <Router>
+      <Routes>
+        <Route path="/login" element={<LoginSignup />} />
+        <Route path="/" element={<Layout><Dashboard /></Layout>} />
+        <Route path="/evaluate" element={<Layout><Evaluate /></Layout>} />
+        <Route path="/account" element={<Layout><Account /></Layout>} />
+        <Route path="/settings" element={<Layout><Settings /></Layout>} />
+        <Route path="/admin-tools" element={<Layout><AdminTools /></Layout>} />
+        <Route path="/organisation" element={<Layout><Organisation /></Layout>} /> 
+      </Routes>
+    </Router>
+  );
+};
 
 export default App;
 export { theme };

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { CircularProgress, Button, Typography } from '@mui/material';
+import { CircularProgress, Button, Typography, Menu, TextField, MenuItem, ListItemText } from '@mui/material';
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import { doc, getDoc, updateDoc, collection, getDocs } from 'firebase/firestore';
 import { db } from '../../firebase/firebaseConfig';
@@ -16,6 +16,9 @@ type User = {
 const UserList = () => {
     const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
+    const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+    const [selectedUser, setSelectedUser] = useState<User | null>(null);
+    const [searchTerm, setSearchTerm] = useState('');
 
     useEffect(() => {
         const fetchUsers = async () => {
@@ -55,6 +58,29 @@ const UserList = () => {
         }
     };
 
+    const handleMenuOpen = (event: React.MouseEvent<HTMLButtonElement>, user: User) => {
+        setAnchorEl(event.currentTarget);
+        setSelectedUser(user);
+    };
+
+    const handleMenuClose = () => {
+        setAnchorEl(null);
+        setSelectedUser(null);
+        setSearchTerm('');
+    };
+
+    const handleAssignClient = async (clientEmail: string) => {
+        if (selectedUser) {
+            // Add logic to assign the client to the VA.
+            console.log(`Assign ${clientEmail} to ${selectedUser.email}`);
+            handleMenuClose();
+        }
+    };
+
+    const filteredUsers = users.filter(user => 
+        user.email.toLowerCase().includes(searchTerm.toLowerCase()) && user.role !== 'VA'
+    );
+
     const columns: GridColDef[] = [
         { field: 'name', headerName: 'Name', flex: 1, headerAlign: 'left', resizable: false },
         { field: 'email', headerName: 'Email', flex: 1, headerAlign: 'left', resizable: false },
@@ -62,7 +88,7 @@ const UserList = () => {
         {
             field: 'actions',
             headerName: 'Actions',
-            flex: 0.5,
+            flex: 1,
             headerAlign: 'left', 
             align: 'left', 
             disableColumnMenu: true,
@@ -87,21 +113,56 @@ const UserList = () => {
                             ADMIN
                         </Typography>
                     );
+                } else if (params.row.role === 'VA') {
+                    return (
+                        <>
+                            <Button
+                                variant="contained"
+                                sx={{
+                                    backgroundColor: '#EE1D52',
+                                    color: '#CAD2C5',
+                                    width: '110px',
+                                    '&:hover': {
+                                        backgroundColor: '#D11C45',
+                                    },
+                                }}
+                                onClick={() => handleRoleToggle(params.row)}
+                            >
+                                Unassign
+                            </Button>
+                            <Button
+                                variant="contained"
+                                sx={{
+                                    backgroundColor: '#84A98C',
+                                    color: '#CAD2C5',
+                                    width: '120px',
+                                    '&:hover': {
+                                        backgroundColor: '#749F82',
+                                    },
+                                    marginLeft: '0px',
+                                    paddingLeft: '10px',
+                                }}
+                                onClick={(event) => handleMenuOpen(event, params.row)}
+                            >
+                                Assign Client
+                            </Button>
+                        </>
+                    );
                 } else {
                     return (
                         <Button
                             variant="contained"
                             sx={{
-                                backgroundColor: params.row.role === 'VA' ? '#EE1D52' : '#84A98C',
+                                backgroundColor: '#84A98C',
                                 color: '#CAD2C5',
                                 width: '110px',
                                 '&:hover': {
-                                    backgroundColor: params.row.role === 'VA' ? '#D11C45' : '#749F82',
+                                    backgroundColor: '#749F82',
                                 },
                             }}
                             onClick={() => handleRoleToggle(params.row)}
                         >
-                            {params.row.role === 'VA' ? 'Unassign' : 'Assign VA'}
+                            Assign VA
                         </Button>
                     );
                 }
@@ -124,7 +185,7 @@ const UserList = () => {
                 columns={columns}
                 sx={{
                     height: 600,
-                    width: '100%',
+                    flex: '1 auto',
                     '& .MuiDataGrid-root': {
                         bgcolor: '#52796F',
                         color: '#CAD2C5',
@@ -166,6 +227,24 @@ const UserList = () => {
                     },
                 }}
             />
+            <Menu
+                anchorEl={anchorEl}
+                open={Boolean(anchorEl)}
+                onClose={handleMenuClose}
+            >
+                <TextField
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder="Search email"
+                    fullWidth
+                    sx={{ margin: '8px' }}
+                />
+                {filteredUsers.map(user => (
+                    <MenuItem key={user.id} onClick={() => handleAssignClient(user.email)}>
+                        <ListItemText primary={user.email} />
+                    </MenuItem>
+                ))}
+            </Menu>
         </div>
     );
 };

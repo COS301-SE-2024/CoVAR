@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { CircularProgress, Button, Typography, Menu, TextField, MenuItem, ListItemText } from '@mui/material';
+import { CircularProgress, Button, Typography, Menu, TextField, MenuItem, ListItemText, Autocomplete } from '@mui/material';
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import { doc, getDoc, updateDoc, collection, getDocs } from 'firebase/firestore';
 import { db } from '../../firebase/firebaseConfig';
@@ -77,7 +77,7 @@ const UserList = () => {
         }
     };
 
-    const filteredUsers = users.filter(user => 
+    const filteredUsers = users.filter(user =>
         user.email.toLowerCase().includes(searchTerm.toLowerCase()) && user.role !== 'VA'
     );
 
@@ -89,8 +89,8 @@ const UserList = () => {
             field: 'actions',
             headerName: 'Actions',
             flex: 1,
-            headerAlign: 'left', 
-            align: 'left', 
+            headerAlign: 'left',
+            align: 'left',
             disableColumnMenu: true,
             renderCell: (params: GridRenderCellParams) => {
                 if (params.row.role === 'admin') {
@@ -105,9 +105,9 @@ const UserList = () => {
                                 textAlign: 'center',
                                 width: '110px',
                                 height: '36.5px',
-                                display: 'flex',             
-                                alignItems: 'center',        
-                                justifyContent: 'center',     
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
                             }}
                         >
                             ADMIN
@@ -125,8 +125,10 @@ const UserList = () => {
                                     '&:hover': {
                                         backgroundColor: '#D11C45',
                                     },
+
                                 }}
                                 onClick={() => handleRoleToggle(params.row)}
+                                style={{ marginRight: '8px' }}
                             >
                                 Unassign
                             </Button>
@@ -140,7 +142,7 @@ const UserList = () => {
                                         backgroundColor: '#749F82',
                                     },
                                     marginLeft: '0px',
-                                    paddingLeft: '10px',
+
                                 }}
                                 onClick={(event) => handleMenuOpen(event, params.row)}
                             >
@@ -189,34 +191,34 @@ const UserList = () => {
                     '& .MuiDataGrid-root': {
                         bgcolor: '#52796F',
                         color: '#CAD2C5',
-                        borderColor: '#52796F', 
+                        borderColor: '#52796F',
                     },
                     '& .MuiDataGrid-columnHeader': {
-                        backgroundColor: '#2F3E46', 
-                        color: '#CAD2C5', 
+                        backgroundColor: '#2F3E46',
+                        color: '#CAD2C5',
                     },
                     '& .MuiDataGrid-columnHeaderTitle': {
-                        color: '#CAD2C5', 
+                        color: '#CAD2C5',
                     },
                     '& .MuiDataGrid-columnSeparator': {
-                        color: '#52796F', 
+                        color: '#52796F',
                     },
                     '& .MuiDataGrid-cell': {
                         color: '#CAD2C5',
-                        borderColor: '#52796F', 
+                        borderColor: '#52796F',
                     },
                     '& .MuiDataGrid-footerContainer': {
-                        backgroundColor: '#2F3E46', 
-                        color: '#CAD2C5', 
+                        backgroundColor: '#2F3E46',
+                        color: '#CAD2C5',
                     },
                     '& .MuiTablePagination-root': {
-                        color: '#CAD2C5', 
+                        color: '#CAD2C5',
                     },
                     '& .MuiSvgIcon-root': {
                         color: '#CAD2C5',
                     },
                     '& .MuiDataGrid-toolbarContainer button': {
-                        color: '#CAD2C5', 
+                        color: '#CAD2C5',
                     },
                     '& .MuiDataGrid-topContainer, & .MuiDataGrid-container--top': {
                         backgroundColor: '#52796F',
@@ -232,18 +234,25 @@ const UserList = () => {
                 open={Boolean(anchorEl)}
                 onClose={handleMenuClose}
             >
-                <TextField
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    placeholder="Search email"
-                    fullWidth
-                    sx={{ margin: '8px' }}
+                <Autocomplete
+                    freeSolo
+                    disableClearable
+                    options={filteredUsers.map((user) => user.email)}
+                    renderInput={(params) => (
+                        <TextField
+                            {...params}
+                            label="Search email"
+                            InputProps={{
+                                ...params.InputProps,
+                                type: 'search',
+                            }}
+                            sx={{ margin: '4px', width: '200px' }}
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    )}
+                    onChange={(event, value) => handleAssignClient(value as string)}
                 />
-                {filteredUsers.map(user => (
-                    <MenuItem key={user.id} onClick={() => handleAssignClient(user.email)}>
-                        <ListItemText primary={user.email} />
-                    </MenuItem>
-                ))}
             </Menu>
         </div>
     );

@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { CircularProgress, Button, Typography, Menu, TextField, MenuItem, ListItemText, Autocomplete } from '@mui/material';
+import { CircularProgress, Button, Typography, Menu, TextField, MenuItem, ListItemText, Autocomplete, Alert } from '@mui/material';
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import axios from 'axios';
+import CheckIcon from '@mui/icons-material/Check';
 
 type User = {
     user_id: string;
@@ -19,7 +20,7 @@ type Organization = {
 
 const UserList = () => {
     const [users, setUsers] = useState<User[]>([]);
-    
+
     if (!Array.isArray(users)) {
         setUsers([]);
     }
@@ -31,6 +32,7 @@ const UserList = () => {
     const [assignedOrganizations, setAssignedOrganizations] = useState<Organization[]>([]);
     const [unassignAnchorEl, setUnassignAnchorEl] = useState<null | HTMLElement>(null);
     const [organizations, setOrganizations] = useState<Organization[]>([]);
+    const [alert, setAlert] = useState<{visible: boolean, message: string}>({visible: false, message: ''});
 
 
     useEffect(() => {
@@ -91,6 +93,10 @@ const UserList = () => {
             setAssignedClients(assignedClients.data);
             const assignedOrganizations = await axios.get(`/api/users/${user.user_id}/assigned_organizations`);
             setAssignedOrganizations(assignedOrganizations.data);
+            
+            
+
+
             // console.log('Assigned clients:', assignedClients.data);
             // console.log('Assigned organizations:', assignedOrganizations.data);
 
@@ -115,6 +121,11 @@ const UserList = () => {
             try {
                 await axios.post(`/api/users/${selectedUser.user_id}/assign`, { clientUsername });
                 handleMenuClose();
+
+                setAlert({
+                    visible: true,
+                    message: `Successfully assigned ${clientUsername} to ${selectedUser.username}.`
+                });
             } catch (error) {
                 console.error('Error assigning client:', error);
             }
@@ -128,6 +139,13 @@ const UserList = () => {
                 setAssignedClients(assignedClients.filter(client => client.username !== clientUsername));
                 setAssignedOrganizations(assignedOrganizations.filter(org => org.name !== clientUsername));
                 handleUnassignMenuClose();
+
+                setAlert({
+                    visible: true,
+                    message: `Successfully unassigned ${clientUsername} from ${selectedUser.username}.`
+                });
+    
+                
             } catch (error) {
                 console.error('Error unassigning client:', error);
             }
@@ -260,7 +278,18 @@ const UserList = () => {
     }
 
     return (
+        
         <div style={{ height: 600, width: '100%' }}>
+            {alert.visible && (
+            <Alert
+                icon={<CheckIcon fontSize="inherit" />}
+                severity="success"
+                onClose={() => setAlert({visible: false, message: ''})}
+            >
+                {alert.message}
+            </Alert>
+
+        )}
             <DataGrid
                 rows={users}
                 columns={columns}

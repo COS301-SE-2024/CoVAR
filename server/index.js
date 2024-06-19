@@ -122,6 +122,7 @@ app.get('/users/:id/assigned_organizations' , async (req, res) => {
     const { id } = req.params;
     try {
         const organizations = await pgClient.query('SELECT * FROM organizations WHERE organization_id IN (SELECT organization FROM assignment WHERE va = $1)', [id]);
+        console.log(organizations.rows);
         res.send(organizations.rows);
     } catch (err) {
         console.error(err.message);
@@ -131,15 +132,26 @@ app.get('/users/:id/assigned_organizations' , async (req, res) => {
 );
 
 
-// Unassign a client from a VA
+
+// Unassign a client or organization from a VA
 app.post('/users/:id/unassign', async (req, res) => {
     const { id } = req.params; // user_id
     const { clientUsername } = req.body;
     try {
+        // Check if the clientUsername is an organization
+        const organizationResult = await pgClient.query('SELECT organization_id FROM organizations WHERE name = $1', [clientUsername]);
+        if (organizationResult.rows.length > 0) {
+            const organizationId = organizationResult.rows[0].organization_id;
+            await pgClient.query('DELETE FROM assignment WHERE va = $1 AND organization = $2', [id, organizationId]);
+            return res.send('Organization unassigned successfully');
+        }
+
+        // If not an organization, check if the clientUsername is a normal user
         const clientResult = await pgClient.query('SELECT user_id FROM users WHERE username = $1', [clientUsername]);
         if (clientResult.rows.length === 0) {
             return res.status(404).send('Client not found');
         }
+
         const clientId = clientResult.rows[0].user_id;
         await pgClient.query('DELETE FROM assignment WHERE va = $1 AND client = $2', [id, clientId]);
         res.send('Client unassigned successfully');

@@ -1,44 +1,46 @@
 import React, { useEffect, useState } from 'react';
 import { CircularProgress, Button, Typography, Menu, TextField, MenuItem, ListItemText, Autocomplete } from '@mui/material';
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
-import { doc, getDoc, updateDoc, collection, getDocs } from 'firebase/firestore';
-import { db } from '../../firebase/firebaseConfig';
-import { Timestamp } from 'firebase/firestore';
+import axios from 'axios';
 
 type User = {
-    id: string;
-    email: string;
-    name: string;
+    user_id: string;
+    username: string;
     role: string;
-    createdAt: Timestamp;
+    organization: string | null; // Allow null for users without an organization
 };
+
+type Organization = {
+    organization_id: string;
+    name: string;
+    owner: string;
+};
+
 
 const UserList = () => {
     const [users, setUsers] = useState<User[]>([]);
+    
+    if (!Array.isArray(users)) {
+        setUsers([]);
+    }
     const [loading, setLoading] = useState(true);
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const [selectedUser, setSelectedUser] = useState<User | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
+    const [assignedClients, setAssignedClients] = useState<User[]>([]);
+    const [assignedOrganizations, setAssignedOrganizations] = useState<Organization[]>([]);
+    const [unassignAnchorEl, setUnassignAnchorEl] = useState<null | HTMLElement>(null);
+    const [organizations, setOrganizations] = useState<Organization[]>([]);
+
 
     useEffect(() => {
         const fetchUsers = async () => {
             try {
-                const querySnapshot = await getDocs(collection(db, 'user'));
-                const usersList: User[] = [];
-                for (const userDoc of querySnapshot.docs) {
-                    const userRef = doc(db, 'user', userDoc.id);
-                    const userSnap = await getDoc(userRef);
-
-                    if (userSnap.exists()) {
-                        usersList.push({ id: userDoc.id, ...userSnap.data() } as User);
-                    } else {
-                        console.log('No such document for user:', userDoc.id);
-                    }
-                }
-                setUsers(usersList);
+                const response = await axios.get('/api/users/all');
+                setUsers(response.data);
                 setLoading(false);
             } catch (error) {
-                console.error('Error fetching user:', error);
+                console.error('Error fetching users:', error);
                 setLoading(false);
             }
         };
@@ -46,13 +48,31 @@ const UserList = () => {
         fetchUsers();
     }, []);
 
+    useEffect(() => {
+        const fetchOrganizations = async () => {
+            try {
+                const response = await axios.get('/api/organizations/all');
+                setOrganizations(response.data);
+            } catch (error) {
+                console.error('Error fetching organizations:', error);
+            }
+        };
+
+        fetchOrganizations();
+    }, []);
+
     const handleRoleToggle = async (user: User) => {
+        if (!user) {
+            console.error('User is null');
+            return;
+        }
+
         const newRole = user.role === 'VA' ? 'client' : 'VA';
-        const userRef = doc(db, 'user', user.id);
+        console.log('Updating user role:', user.user_id, user.role, '->', newRole);
 
         try {
-            await updateDoc(userRef, { role: newRole });
-            setUsers(users.map(u => (u.id === user.id ? { ...u, role: newRole } : u)));
+            await axios.patch(`/api/users/${user.user_id}/role`, { role: newRole });
+            setUsers(users.map(u => (u.user_id === user.user_id ? { ...u, role: newRole } : u)));
         } catch (error) {
             console.error('Error updating user role:', error);
         }
@@ -63,32 +83,78 @@ const UserList = () => {
         setSelectedUser(user);
     };
 
+    const handleUnassignMenuOpen = async (event: React.MouseEvent<HTMLButtonElement>, user: User) => {
+        setUnassignAnchorEl(event.currentTarget);
+        setSelectedUser(user);
+        try {
+            const assignedClients = await axios.get(`/api/users/${user.user_id}/assigned_clients`);
+            setAssignedClients(assignedClients.data);
+            const assignedOrganizations = await axios.get(`/api/users/${user.user_id}/assigned_organizations`);
+            setAssignedOrganizations(assignedOrganizations.data);
+            // console.log('Assigned clients:', assignedClients.data);
+            // console.log('Assigned organizations:', assignedOrganizations.data);
+
+        } catch (error) {
+            console.error('Error fetching assigned clients:', error);
+        }
+    };
+
     const handleMenuClose = () => {
         setAnchorEl(null);
         setSelectedUser(null);
         setSearchTerm('');
     };
 
-    const handleAssignClient = async (clientEmail: string) => {
+    const handleUnassignMenuClose = () => {
+        setUnassignAnchorEl(null);
+        setSelectedUser(null);
+    };
+
+    const handleAssignClient = async (clientUsername: string) => {
         if (selectedUser) {
-            // Add logic to assign the client to the VA.
-            console.log(`Assign ${clientEmail} to ${selectedUser.email}`);
-            handleMenuClose();
+            try {
+                await axios.post(`/api/users/${selectedUser.user_id}/assign`, { clientUsername });
+                handleMenuClose();
+            } catch (error) {
+                console.error('Error assigning client:', error);
+            }
+        }
+    };
+
+    const handleUnassignClient = async (clientUsername: string) => {
+        if (selectedUser) {
+            try {
+                await axios.post(`/api/users/${selectedUser.user_id}/unassign`, { clientUsername });
+                setAssignedClients(assignedClients.filter(client => client.username !== clientUsername));
+                setAssignedOrganizations(assignedOrganizations.filter(org => org.name !== clientUsername));
+                handleUnassignMenuClose();
+            } catch (error) {
+                console.error('Error unassigning client:', error);
+            }
         }
     };
 
     const filteredUsers = users.filter(user =>
-        user.email.toLowerCase().includes(searchTerm.toLowerCase()) && user.role !== 'VA'
+        user.username.toLowerCase().includes(searchTerm.toLowerCase()) && user.role !== 'VA'
     );
 
+    const filteredOrganizations = organizations.filter(org =>
+        org.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    const assignOptions = [...filteredUsers.map(user => user.username), ...filteredOrganizations.map(org => org.name)];
+    const unAssignOptions = [...assignedClients.map(client => client.username), ...assignedOrganizations.map(org => org.name)];
+
+
+
     const columns: GridColDef[] = [
-        { field: 'name', headerName: 'Name', flex: 1, headerAlign: 'left', resizable: false },
-        { field: 'email', headerName: 'Email', flex: 1, headerAlign: 'left', resizable: false },
+        { field: 'username', headerName: 'Username', flex: 1, headerAlign: 'left', resizable: false },
         { field: 'role', headerName: 'Role', flex: 1, headerAlign: 'left', resizable: false },
+        { field: 'organization', headerName: 'Organization', flex: 1, headerAlign: 'left', resizable: false },
         {
             field: 'actions',
             headerName: 'Actions',
-            flex: 1,
+            flex: 2,
             headerAlign: 'left',
             align: 'left',
             disableColumnMenu: true,
@@ -125,7 +191,6 @@ const UserList = () => {
                                     '&:hover': {
                                         backgroundColor: '#D11C45',
                                     },
-
                                 }}
                                 onClick={() => handleRoleToggle(params.row)}
                                 style={{ marginRight: '8px' }}
@@ -142,11 +207,25 @@ const UserList = () => {
                                         backgroundColor: '#749F82',
                                     },
                                     marginLeft: '0px',
-
                                 }}
                                 onClick={(event) => handleMenuOpen(event, params.row)}
                             >
                                 Assign Client
+                            </Button>
+                            <Button
+                                variant="contained"
+                                sx={{
+                                    backgroundColor: '#D96E15',
+                                    color: '#CAD2C5',
+                                    width: '150px',
+                                    '&:hover': {
+                                        backgroundColor: '#FF8C00',
+                                    },
+                                    marginLeft: '8px',
+                                }}
+                                onClick={(event) => handleUnassignMenuOpen(event, params.row)}
+                            >
+                                Un-Assign Client
                             </Button>
                         </>
                     );
@@ -185,6 +264,7 @@ const UserList = () => {
             <DataGrid
                 rows={users}
                 columns={columns}
+                getRowId={(row) => row.user_id}
                 sx={{
                     height: 600,
                     flex: '1 auto',
@@ -237,11 +317,11 @@ const UserList = () => {
                 <Autocomplete
                     freeSolo
                     disableClearable
-                    options={filteredUsers.map((user) => user.email)}
+                    options={assignOptions}
                     renderInput={(params) => (
                         <TextField
                             {...params}
-                            label="Search email"
+                            label="Search name/organization"
                             InputProps={{
                                 ...params.InputProps,
                                 type: 'search',
@@ -252,6 +332,29 @@ const UserList = () => {
                         />
                     )}
                     onChange={(event, value) => handleAssignClient(value as string)}
+                />
+            </Menu>
+            <Menu
+                anchorEl={unassignAnchorEl}
+                open={Boolean(unassignAnchorEl)}
+                onClose={handleUnassignMenuClose}
+            >
+                <Autocomplete
+                    freeSolo
+                    disableClearable
+                    options={unAssignOptions}
+                    renderInput={(params) => (
+                        <TextField
+                            {...params}
+                            label="Assigned Clients"
+                            InputProps={{
+                                ...params.InputProps,
+                                type: 'search',
+                            }}
+                            sx={{ margin: '4px', width: '200px' }}
+                        />
+                    )}
+                    onChange={(event, value) => handleUnassignClient(value as string)}
                 />
             </Menu>
         </div>

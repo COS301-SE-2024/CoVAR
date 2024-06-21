@@ -7,6 +7,8 @@ import { doCreateUserWithEmailAndPassword, doSignInWithGoogle } from '../firebas
 import GoogleIcon from "../icons/GoogleIcon";
 import { doc, setDoc, getDoc } from "firebase/firestore";
 import { db } from '../firebase/firebaseConfig';
+import axios from 'axios';
+const { v4: uuidv4, validate: uuidValidate } = require('uuid');
 
 interface User {
   uid: string;
@@ -49,15 +51,34 @@ const Signup: React.FC<SignupProps> = ({ toggleForm }) => {
     try {
       const result = await doSignInWithGoogle();
       if (result.user) {
+        const { uid, email, displayName } = result.user;
         await addUserToFirestore(result.user as User); // Ensure to await Firestore addition
-        navigate('/'); // Navigate to the home page
-      }
-    } catch (error) {
-      console.error(error);
-      // Handle errors here
-    }
-  };
+        // Send user data to backend
+        const response = await axios.post('/api/users/create', {
+          uid,
+          email
+      });
 
+      if (response.status === 201) {
+          navigate('/');
+      } else {
+          throw new Error('Failed to create user in PostgreSQL');
+      }
+  }
+} catch (error) {
+  console.error(error);
+  // Handle errors here
+}
+  };
+  // Testing the test route
+const testRoute = async () => {
+  try {
+      const response = await axios.get('/api/test');
+      console.log(response.data);
+  } catch (error) {
+      console.error('Error testing route:', error);
+  }
+};
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
@@ -74,7 +95,17 @@ const Signup: React.FC<SignupProps> = ({ toggleForm }) => {
       const userCredential = await doCreateUserWithEmailAndPassword(email, password);
       const user = userCredential.user;
       await addUserToFirestore(user as User); // Ensure to await Firestore addition
-      navigate('/'); // Navigate to the home page
+      // Send user data to backend
+      const response = await axios.post('/api/users/create', {
+        uid: user.uid,
+        email: user.email
+      });
+
+      if (response.status === 201) {
+        navigate('/'); // Navigate to the home page after successful signup
+      } else {
+        throw new Error('Failed to create user in PostgreSQL');
+      }
     } catch (error) {
       console.error("Error signing up: ", error);
     }

@@ -7,8 +7,6 @@ import Evaluate from './evaluate/evaluate';
 import Account from './account/account';
 import Settings from './settings/settings';
 import Organisation from './organisation/organisation'; 
-import { createTheme } from '@mui/material/styles';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Layout from './layout/layout'; 
 import { CustomThemeProvider } from './styles/customThemeProvider';
 
@@ -35,5 +33,4 @@ const App: React.FC = () => {
 
 export default App;
 
-export { theme };
 

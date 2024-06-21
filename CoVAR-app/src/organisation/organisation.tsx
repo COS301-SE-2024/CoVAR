@@ -5,7 +5,7 @@ import { doc, getDoc, updateDoc, collection, getDocs, addDoc } from 'firebase/fi
 import { db } from '../firebase/firebaseConfig';
 import { Timestamp } from 'firebase/firestore';
 import { Box } from '@mui/system';
-import { mainContentStyles, cardStyles, headingBoxStyles } from '../styles/organisationStyle';
+import { mainContentStyles, cardStyles, headingBoxStyles, textFieldStyles, buttonStyles } from '../styles/organisationStyle';
 
 type User = {
     id: string;
@@ -65,7 +65,7 @@ const Organisation = () => {
                 name: 'New User',
                 role: 'Member',
                 createdAt: Timestamp.now(),
-                organisation: 'YourOrganisation', 
+                organisation: 'YourOrganisation',
             });
             const newUserSnap = await getDoc(newUserRef);
             if (newUserSnap.exists()) {
@@ -117,9 +117,9 @@ const Organisation = () => {
     if (loading) {
         return (
             <Box sx={mainContentStyles}>
-                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
                     <CircularProgress />
-                </div>
+                </Box>
             </Box>
         );
     }
@@ -131,59 +131,57 @@ const Organisation = () => {
                     Organisation
                 </Typography>
             </Box>
-            <div style={{ height: '50vh', width: '100%', overflow: 'auto', marginBottom: '1rem' }}>
+            <Box sx={{ height: '50vh', width: '100%', overflow: 'auto', marginBottom: '1rem' }}>
                 <DataGrid
                     rows={users}
                     columns={columns}
                     sx={{
                         width: '100%',
-                        '& .MuiDataGrid-root': {
-                            bgcolor: '#52796F',
-                            color: '#CAD2C5',
-                            borderColor: '#52796F',
-                        },
+                        // bgcolor: 'primary.main',
+                        color: 'text.primary',
+                        borderColor: 'primary.main',
                         '& .MuiDataGrid-columnHeader': {
-                            backgroundColor: '#2F3E46',
-                            color: '#CAD2C5',
+                            backgroundColor: 'primary.main',
+                            color: 'text.primary',
                         },
                         '& .MuiDataGrid-columnHeaderTitle': {
-                            color: '#CAD2C5',
+                            color: 'text.primary',
                         },
                         '& .MuiDataGrid-columnSeparator': {
-                            color: '#52796F',
+                            color: 'primary.main',
                         },
                         '& .MuiDataGrid-cell': {
-                            color: '#CAD2C5',
-                            borderColor: '#52796F',
+                            color: 'text.primary',
+                            borderColor: 'primary.main',
                         },
                         '& .MuiDataGrid-footerContainer': {
-                            backgroundColor: '#2F3E46',
-                            color: '#CAD2C5',
+                            backgroundColor: 'primary.main',
+                            color: 'text.primary',
                         },
                         '& .MuiTablePagination-root': {
-                            color: '#CAD2C5',
+                            color: 'text.primary',
                         },
                         '& .MuiSvgIcon-root': {
-                            color: '#CAD2C5',
+                            color: 'text.primary',
                         },
                         '& .MuiDataGrid-toolbarContainer button': {
-                            color: '#CAD2C5',
+                            color: 'text.primary',
                         },
                         '& .MuiDataGrid-topContainer, & .MuiDataGrid-container--top': {
-                            backgroundColor: '#52796F',
+                            backgroundColor: 'primary.main',
                         },
                         '& .MuiDataGrid-overlay': {
-                            backgroundColor: '#1F282E',
-                            color: '#CAD2C5',
+                            backgroundColor: 'background.default',
+                            color: 'text.primary',
                         },
                     }}
                 />
-            </div>
-            <Box sx={{ display: 'flex', gap: 30, marginTop: 6 }}>
-                <Card sx={{ ...cardStyles}}>
+            </Box>
+            <Box sx={{ display: 'flex', gap: 3, marginTop: 6 }}>
+                <Card sx={cardStyles}>
                     <CardContent>
                         <Typography variant="h6">Add a Member</Typography>
-                         <TextField
+                        <TextField
                             margin="normal"
                             fullWidth
                             id="email"
@@ -191,71 +189,33 @@ const Organisation = () => {
                             name="email"
                             autoComplete="email"
                             autoFocus
-                            InputLabelProps={{
-                            style: { color: '#CAD2C5' },
-                            }}
+                            InputLabelProps={{ style: { color: 'text.primary' } }}
                             value={newMemberEmail}
                             onChange={(e) => setNewMemberEmail(e.target.value)}
-                            sx={{
-                            '& .MuiOutlinedInput-root': {
-                                '& fieldset': {
-                                borderColor: '#CAD2C5',
-                                },
-                                '&:hover fieldset': {
-                                borderColor: '#CAD2C5',
-                                },
-                                '&.Mui-focused fieldset': {
-                                borderColor: '#52796F',
-                                },
-                            },
-                            }}
+                            sx={textFieldStyles}
                         />
-                        <br />
-                        <br />
-                        <Button
-                            variant="contained"
-                            sx={{ backgroundColor: '#52796F', color: '#CAD2C5', width: '100%' }}
-                            onClick={handleAddMember}
-                        >
+                        <Button variant="contained" sx={buttonStyles} onClick={handleAddMember}>
                             Add Member
                         </Button>
                     </CardContent>
                 </Card>
-                <Card sx={{ ...cardStyles}}>
+                <Card sx={cardStyles}>
                     <CardContent>
                         <Typography variant="h6">Change Organisation Name</Typography>
                         <TextField
                             margin="normal"
                             fullWidth
-                            id="organisationName"
-                            label="New Organisation Name"
+                            id="organisation-name"
+                            label="Organisation Name"
+                            name="organisation-name"
+                            autoComplete="organisation-name"
                             autoFocus
-                            InputLabelProps={{
-                            style: { color: '#CAD2C5' },
-                            }}
+                            InputLabelProps={{ style: { color: 'text.primary' } }}
                             value={organisationName}
                             onChange={(e) => setOrganisationName(e.target.value)}
-                            sx={{
-                            '& .MuiOutlinedInput-root': {
-                                '& fieldset': {
-                                borderColor: '#CAD2C5',
-                                },
-                                '&:hover fieldset': {
-                                borderColor: '#CAD2C5',
-                                },
-                                '&.Mui-focused fieldset': {
-                                borderColor: '#52796F',
-                                },
-                            },
-                            }}
+                            sx={textFieldStyles}
                         />
-                        <br />
-                        <br />
-                        <Button
-                            variant="contained"
-                            sx={{ backgroundColor: '#52796F', color: '#CAD2C5', width: '100%' }}
-                            onClick={handleChangeOrganisationName}
-                        >
+                        <Button variant="contained" sx={buttonStyles} onClick={handleChangeOrganisationName}>
                             Change Name
                         </Button>
                     </CardContent>

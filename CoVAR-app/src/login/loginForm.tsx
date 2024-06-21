@@ -102,7 +102,7 @@ const Login: React.FC<LoginProps> = ({ toggleForm }) => {
         </Box>
         <Card sx={{ backgroundColor: theme.palette.background.paper, padding: 4, borderRadius: 1, borderStyle: 'solid', borderWidth: 1, borderColor: theme.palette.divider }}>
           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <Typography variant="h4" component="h2" gutterBottom>
+            <Typography variant="h4" component="h2" fontWeight={550} gutterBottom>
               Sign In
             </Typography>
             <Box component="form" sx={{ width: '100%', mt: 1 }} onSubmit={onSubmit}>

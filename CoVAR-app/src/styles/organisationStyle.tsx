@@ -8,11 +8,12 @@ export const mainContentStyles: SxProps = {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    height: '100vh',
+    overflow : 'hidden',
 };
 
 export const cardStyles: SxProps = {
-    width: 300,
+    width: 450,
+    height: 220,
     backgroundColor: '#2F3E46',
     color: '#CAD2C5',
     padding: 2,

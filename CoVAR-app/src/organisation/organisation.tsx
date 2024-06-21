@@ -5,7 +5,7 @@ import { doc, getDoc, updateDoc, collection, getDocs, addDoc } from 'firebase/fi
 import { db } from '../firebase/firebaseConfig';
 import { Timestamp } from 'firebase/firestore';
 import { Box } from '@mui/system';
-import { mainContentStyles, cardStyles, headingBoxStyles, textFieldStyles } from '../styles/organisationStyle';
+import { mainContentStyles, cardStyles, headingBoxStyles } from '../styles/organisationStyle';
 
 type User = {
     id: string;
@@ -65,7 +65,7 @@ const Organisation = () => {
                 name: 'New User',
                 role: 'Member',
                 createdAt: Timestamp.now(),
-                organisation: 'YourOrganisation', // Replace with actual organisation ID or name
+                organisation: 'YourOrganisation', 
             });
             const newUserSnap = await getDoc(newUserRef);
             if (newUserSnap.exists()) {
@@ -179,8 +179,8 @@ const Organisation = () => {
                     }}
                 />
             </div>
-            <Box sx={{ display: 'flex', gap: 2, marginTop: 4 }}>
-                <Card sx={{ ...cardStyles, width: 'calc(50% - 16px)' }}>
+            <Box sx={{ display: 'flex', gap: 30, marginTop: 6 }}>
+                <Card sx={{ ...cardStyles}}>
                     <CardContent>
                         <Typography variant="h6">Add a Member</Typography>
                          <TextField
@@ -210,6 +210,8 @@ const Organisation = () => {
                             },
                             }}
                         />
+                        <br />
+                        <br />
                         <Button
                             variant="contained"
                             sx={{ backgroundColor: '#52796F', color: '#CAD2C5', width: '100%' }}
@@ -219,7 +221,7 @@ const Organisation = () => {
                         </Button>
                     </CardContent>
                 </Card>
-                <Card sx={{ ...cardStyles, width: 'calc(50% - 16px)' }}>
+                <Card sx={{ ...cardStyles}}>
                     <CardContent>
                         <Typography variant="h6">Change Organisation Name</Typography>
                         <TextField
@@ -247,6 +249,8 @@ const Organisation = () => {
                             },
                             }}
                         />
+                        <br />
+                        <br />
                         <Button
                             variant="contained"
                             sx={{ backgroundColor: '#52796F', color: '#CAD2C5', width: '100%' }}

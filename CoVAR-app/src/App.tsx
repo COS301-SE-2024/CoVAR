@@ -6,8 +6,11 @@ import AdminTools from './adminTools/adminTools';
 import Evaluate from './evaluate/evaluate';
 import Account from './account/account';
 import Settings from './settings/settings';
-import Layout from './layout/layout'; // adjust the path as necessary
+import Organisation from './organisation/organisation'; 
+import Layout from './layout/layout'; 
 import { CustomThemeProvider } from './styles/customThemeProvider';
+
+
 
 const App: React.FC = () => {
   return (
@@ -21,6 +24,7 @@ const App: React.FC = () => {
             <Route path="/account" element={<Layout><Account /></Layout>} />
             <Route path="/settings" element={<Layout><Settings /></Layout>} />
             <Route path="/admin-tools" element={<Layout><AdminTools /></Layout>} />
+            <Route path="/organisation" element={<Layout><Organisation /></Layout>} /> 
           </Routes>
       </Router>
     </CustomThemeProvider>
@@ -28,3 +32,5 @@ const App: React.FC = () => {
 };
 
 export default App;
+
+

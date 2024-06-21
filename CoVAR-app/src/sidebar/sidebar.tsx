@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useContext} from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Box, List, ListItem, ListItemText, ListItemIcon, Typography, Button } from '@mui/material';
 import DashboardIcon from '@mui/icons-material/Dashboard';
@@ -12,6 +12,7 @@ import GroupsIcon from '@mui/icons-material/Groups';
 import { sidebarStyles, sidebarItemStyles, iconStyles, logoStyles, logoutButtonStyles } from '../styles/sidebarStyle';
 import { doSignOut } from '../firebase/auth';
 import useUserRole from './components/userRole';
+import { ThemeContext } from '../styles/customThemeProvider';
 
 const Sidebar: React.FC = () => {
   const userRole = useUserRole();
@@ -29,6 +30,15 @@ const Sidebar: React.FC = () => {
     } catch (error) {
       console.error(error);
     }
+  };
+
+  const ThemeToggleButton: React.FC = () => {
+    const { toggleTheme } = useContext(ThemeContext);
+    return (
+      <Button onClick={toggleTheme} color="inherit">
+        Toggle Theme
+      </Button>
+    );
   };
 
   return (
@@ -89,6 +99,8 @@ const Sidebar: React.FC = () => {
       >
         Logout
       </Button>
+
+      <ThemeToggleButton />
     </Box>
   );
 };

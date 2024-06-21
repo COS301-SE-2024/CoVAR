@@ -1,32 +1,32 @@
-import { SxProps } from '@mui/material/styles';
+import { SxProps, Theme } from '@mui/material/styles';
 
-export const chartContainerStyles: SxProps = {
-  padding: 2,
-  backgroundColor: '#2D3E44',
-  color: '#CAD2C5',
+export const chartContainerStyles: SxProps<Theme> = (theme) => ({
+  padding: theme.spacing(2),
+  backgroundColor: theme.palette.background.default,
+  color: theme.palette.text.primary,
   display: 'flex',
   flexDirection: 'column',
-  justifyContent: 'center', // Center content horizontally
-  alignItems: 'center', // Center content vertically
+  justifyContent: 'center',
+  alignItems: 'center',
   flex: 1,
   '& .recharts-wrapper': {
     fill: 'none',
   },
   '& .recharts-cartesian-axis-tick': {
-    fill: '#CAD2C5',
+    fill: theme.palette.text.secondary,
   },
   '& .recharts-cartesian-axis-line': {
-    stroke: '#CAD2C5',
+    stroke: theme.palette.divider,
   },
   '& .recharts-cartesian-grid-line': {
-    stroke: '#3E4E56',
+    stroke: theme.palette.divider,
   },
-};
+});
 
-
-export const listContainerStyles: SxProps = {
-  padding: 2,
-  backgroundColor: '#2D3E44',
-  color: '#CAD2C5',
+// Updated listContainerStyles to use theme
+export const listContainerStyles: SxProps<Theme> = (theme) => ({
+  padding: theme.spacing(2),
+  backgroundColor: theme.palette.background.default,
+  color: theme.palette.text.primary,
   height: '100%',
-};
+});

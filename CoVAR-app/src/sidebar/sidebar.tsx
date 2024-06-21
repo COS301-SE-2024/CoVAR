@@ -61,7 +61,7 @@ const Sidebar: React.FC = () => {
           to="/"
           sx={{
             ...sidebarItemStyles,
-            backgroundColor: isActive('/') ? theme.palette.primary.main : 'inherit'
+            backgroundColor: isActive('/') ? theme.palette.primary.main : 'inherit', borderRadius: '10px'
           }}
         >
           <ListItemIcon>
@@ -76,7 +76,7 @@ const Sidebar: React.FC = () => {
             to="/evaluate"
             sx={{
               ...sidebarItemStyles,
-              backgroundColor: isActive('/evaluate') ? theme.palette.primary.main : 'inherit'
+              backgroundColor: isActive('/evaluate') ? theme.palette.primary.main : 'inherit', borderRadius: '10px'
             }}
           >
             <ListItemIcon>
@@ -91,7 +91,7 @@ const Sidebar: React.FC = () => {
           to="/account"
           sx={{
             ...sidebarItemStyles,
-            backgroundColor: isActive('/account') ? theme.palette.primary.main : 'inherit'
+            backgroundColor: isActive('/account') ? theme.palette.primary.main : 'inherit', borderRadius: '10px'
           }}
         >
           <ListItemIcon>
@@ -105,7 +105,7 @@ const Sidebar: React.FC = () => {
           to="/organisation"
           sx={{
             ...sidebarItemStyles,
-            backgroundColor: isActive('/organisation') ? theme.palette.primary.main : 'inherit'
+            backgroundColor: isActive('/organisation') ? theme.palette.primary.main : 'inherit', borderRadius: '10px'
           }}
         >
           <ListItemIcon>
@@ -119,7 +119,7 @@ const Sidebar: React.FC = () => {
           to="/settings"
           sx={{
             ...sidebarItemStyles,
-            backgroundColor: isActive('/settings') ? theme.palette.primary.main : 'inherit'
+            backgroundColor: isActive('/settings') ? theme.palette.primary.main : 'inherit', borderRadius: '10px'
           }}
         >
           <ListItemIcon>
@@ -134,7 +134,7 @@ const Sidebar: React.FC = () => {
             to="/admin-tools"
             sx={{
               ...sidebarItemStyles,
-              backgroundColor: isActive('/admin-tools') ? theme.palette.primary.main : 'inherit'
+              backgroundColor: isActive('/admin-tools') ? theme.palette.primary.main : 'inherit', borderRadius: '10px'
             }}
           >
             <ListItemIcon>

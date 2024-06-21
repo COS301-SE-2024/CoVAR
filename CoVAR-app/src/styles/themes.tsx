@@ -5,8 +5,11 @@ const lightTheme = createTheme({
   palette: {
     mode: 'light',
     primary: {
-      main: '#ADB5BD',
-      dark: '#6C757D',
+      main: '#52796F',
+      dark: '#DEDEDE',
+    },
+    secondary: {
+      main: '#52796F',
     },
     background: {
       default: '#CED4DA',
@@ -17,7 +20,7 @@ const lightTheme = createTheme({
       secondary: '#343A40',
     },
     action: {
-      hover: '#ADB5BD',
+      hover: '#DEDEDE',
     },
   },
   typography: {
@@ -69,6 +72,9 @@ const darkTheme = createTheme({
     primary: {
       main: '#52796F',
       dark: '#405d51',
+    },
+    secondary: {
+      main: '#52796F',
     },
     background: {
       default: '#1F282E',

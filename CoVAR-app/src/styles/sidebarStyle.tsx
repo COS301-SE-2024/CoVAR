@@ -22,11 +22,11 @@ export const mainContentStyles: SxProps<Theme> = (theme) => ({
 
 export const sidebarItemStyles: SxProps<Theme> = (theme) => ({
   width: '100%',
-  color: theme.palette.text.primary, // Ensure text color is primary
+  color: theme.palette.text.primary,
+  borderRadius: theme.shape.borderRadius,
   '&:hover': {
     backgroundColor: theme.palette.action.hover,
   },
-  borderRadius: theme.shape.borderRadius,
 });
 
 export const iconStyles: SxProps<Theme> = (theme) => ({

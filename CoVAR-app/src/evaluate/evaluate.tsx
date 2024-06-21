@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Box, Button, Typography, Paper } from '@mui/material';
 import { mainContentStyles } from '../styles/sidebarStyle';
-// import { dashboardContainerStyles } from '../styles/dashboardStyle';
 import { uploadBoxStyles, uploadButtonStyles } from '../styles/evaluateStyle';
 
 const Evaluate: React.FC = () => {
@@ -15,7 +14,6 @@ const Evaluate: React.FC = () => {
   };
 
   const handleSubmitFile = () => {
-    // Handle file submit
     console.log('File submitted:', selectedFile);
 
   };
@@ -23,7 +21,7 @@ const Evaluate: React.FC = () => {
   return (
       <Box sx={mainContentStyles}>
         <Paper sx={uploadBoxStyles}>
-          <Typography variant="h6" sx={{ color: '#CAD2C5', marginBottom: 2 }}>
+          <Typography variant="h6">
             Upload a Vulnerability Assessment
           </Typography>
           <input
@@ -40,7 +38,7 @@ const Evaluate: React.FC = () => {
           </label>
           {selectedFile && (
             <>
-              <Typography sx={{ marginTop: 1, color: '#CAD2C5' }} variant="body2">
+              <Typography variant="body2">
                 Selected File: {selectedFile.name}
               </Typography>
               <Button

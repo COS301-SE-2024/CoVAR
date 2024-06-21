@@ -5,19 +5,19 @@ const lightTheme = createTheme({
   palette: {
     mode: 'light',
     primary: {
-      main: '#84A98C',
-      dark: '#52796F',
+      main: '#ADB5BD',
+      dark: '#6C757D',
     },
     background: {
-      default: '#F0F4F8',
-      paper: '#FFFFFF',
+      default: '#CED4DA',
+      paper: '#F8F9FA',
     },
     text: {
-      primary: '#1F282E',
-      secondary: '#52796F',
+      primary: '#212529',
+      secondary: '#343A40',
     },
     action: {
-      hover: '#E0E0E0',
+      hover: '#ADB5BD',
     },
   },
   typography: {
@@ -72,7 +72,7 @@ const darkTheme = createTheme({
     },
     background: {
       default: '#1F282E',
-      paper: '#1F282E',
+      paper: '#2D3E44',
     },
     text: {
       primary: '#CAD2C5',
@@ -96,14 +96,14 @@ const darkTheme = createTheme({
     MuiInputBase: {
       styleOverrides: {
         input: {
-          color: '#CAD2C5',
+          color: '#',
         },
       },
     },
     MuiFormLabel: {
       styleOverrides: {
         root: {
-          color: '#CAD2C5',
+          color: '#',
         },
       },
     },

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { CircularProgress, Button, Typography, Card, CardContent, TextField } from '@mui/material';
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
-import { doc, getDoc, updateDoc, collection, getDocs, addDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, collection, getDocs, addDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../firebase/firebaseConfig';
 import { Timestamp } from 'firebase/firestore';
 import { Box } from '@mui/system';
@@ -20,6 +20,8 @@ const Organisation = () => {
     const [loading, setLoading] = useState(true);
     const [newMemberEmail, setNewMemberEmail] = useState('');
     const [organisationName, setOrganisationName] = useState('');
+    const [confirmOrganisationName, setConfirmOrganisationName] = useState('');
+    const [deleteConfirmed, setDeleteConfirmed] = useState(false);
 
     useEffect(() => {
         const fetchUsers = async () => {
@@ -78,9 +80,29 @@ const Organisation = () => {
     };
 
     const handleChangeOrganisationName = async () => {
-        // Implement the logic to change the organisation name
-        console.log('Change organisation name to:', organisationName);
-        setOrganisationName('');
+        // Verify if confirmOrganisationName matches organisationName
+        if (confirmOrganisationName !== organisationName) {
+            console.error('Organisation names do not match. Aborting.');
+            return;
+        }
+
+        try {
+            // Implement the logic to delete the organisation
+            console.log('Disbanding organisation:', organisationName);
+
+            // Example deletion using Firestore
+            const organisationRef = doc(db, 'organizations', 'your-organisation-id');
+            await deleteDoc(organisationRef);
+
+            // After deletion, you may want to clear state or redirect
+
+            // Reset fields after successful deletion
+            setOrganisationName('');
+            setConfirmOrganisationName('');
+            setDeleteConfirmed(false);
+        } catch (error) {
+            console.error('Error deleting organisation:', error);
+        }
     };
 
     const columns: GridColDef[] = [
@@ -137,25 +159,25 @@ const Organisation = () => {
                     columns={columns}
                     sx={{
                         width: '100%',
-                        // bgcolor: 'primary.main',
                         color: 'text.primary',
-                        borderColor: 'primary.main',
+                        fontWeight: 500,
+                        borderColor: 'text.primary',
                         '& .MuiDataGrid-columnHeader': {
-                            backgroundColor: 'primary.main',
+                            backgroundColor: 'background.paper',
                             color: 'text.primary',
                         },
                         '& .MuiDataGrid-columnHeaderTitle': {
                             color: 'text.primary',
                         },
                         '& .MuiDataGrid-columnSeparator': {
-                            color: 'primary.main',
+                            color: 'text.primary',
                         },
                         '& .MuiDataGrid-cell': {
                             color: 'text.primary',
-                            borderColor: 'primary.main',
+                            borderColor: 'text.primary',
                         },
                         '& .MuiDataGrid-footerContainer': {
-                            backgroundColor: 'primary.main',
+                            backgroundColor: 'background.paper',
                             color: 'text.primary',
                         },
                         '& .MuiTablePagination-root': {
@@ -174,14 +196,25 @@ const Organisation = () => {
                             backgroundColor: 'background.default',
                             color: 'text.primary',
                         },
+                        '& .MuiDataGrid-filler': {
+                            backgroundColor: 'background.paper',
+                            color: 'text.primary',
+                        },
+                        '& .MuiDataGrid-scrollbarFiller': {
+                            backgroundColor: 'background.paper',
+                        },
+                        '& .MuiDataGrid-scrollbarFiller--header': {
+                            backgroundColor: 'background.paper',
+                        },
                     }}
                 />
             </Box>
-            <Box sx={{ display: 'flex', gap: 3, marginTop: 6 }}>
+            <Box sx={{ display: 'flex', gap: 10, marginTop: 6 }}>
                 <Card sx={cardStyles}>
                     <CardContent>
-                        <Typography variant="h6">Add a Member</Typography>
+                        <Typography variant="h6" color="text.primary">Add a Member</Typography>
                         <TextField
+                            required
                             margin="normal"
                             fullWidth
                             id="email"
@@ -189,7 +222,8 @@ const Organisation = () => {
                             name="email"
                             autoComplete="email"
                             autoFocus
-                            InputLabelProps={{ style: { color: 'text.primary' } }}
+                            InputLabelProps={{ sx: { color: 'text.primary' } }}
+                            InputProps={{ sx: { color: 'text.primary' } }}
                             value={newMemberEmail}
                             onChange={(e) => setNewMemberEmail(e.target.value)}
                             sx={textFieldStyles}
@@ -201,8 +235,9 @@ const Organisation = () => {
                 </Card>
                 <Card sx={cardStyles}>
                     <CardContent>
-                        <Typography variant="h6">Change Organisation Name</Typography>
+                        <Typography variant="h6" color="text.primary">Change Organisation Name</Typography>
                         <TextField
+                            required
                             margin="normal"
                             fullWidth
                             id="organisation-name"
@@ -210,13 +245,51 @@ const Organisation = () => {
                             name="organisation-name"
                             autoComplete="organisation-name"
                             autoFocus
-                            InputLabelProps={{ style: { color: 'text.primary' } }}
+                            InputLabelProps={{ sx: { color: 'text.primary' } }}
+                            InputProps={{ sx: { color: 'text.primary' } }}
                             value={organisationName}
                             onChange={(e) => setOrganisationName(e.target.value)}
                             sx={textFieldStyles}
                         />
                         <Button variant="contained" sx={buttonStyles} onClick={handleChangeOrganisationName}>
                             Change Name
+                        </Button>
+                    </CardContent>
+                </Card>
+                <Card sx={cardStyles}>
+                    <CardContent>
+                        <Typography variant="h6" color="text.primary">Disband Organisation</Typography>
+                        <TextField
+                            required
+                            margin="normal"
+                            fullWidth
+                            id="confirm-organisation-name"
+                            label="Confirm Organisation Name"
+                            name="confirm-organisation-name"
+                            autoComplete="organisation-name"
+                            autoFocus
+                            InputLabelProps={{ sx: { color: 'text.primary' } }}
+                            InputProps={{ sx: { color: 'text.primary' } }}
+                            value={confirmOrganisationName}
+                            onChange={(e) => setConfirmOrganisationName(e.target.value)}
+                            sx={textFieldStyles}
+                        />
+                        <br></br>
+                        <br></br>
+                        <Button
+                            variant="contained"
+                            sx={{
+                                backgroundColor: '#D11C45',
+                                color: '#FFFFFF',
+                                width: '100%',
+                                '&:hover': {
+                                    backgroundColor: '#B2163B',
+                                },
+                            }}
+                            onClick={handleChangeOrganisationName}
+                            disabled={confirmOrganisationName !== organisationName || deleteConfirmed}
+                        >
+                            Delete Organisation
                         </Button>
                     </CardContent>
                 </Card>

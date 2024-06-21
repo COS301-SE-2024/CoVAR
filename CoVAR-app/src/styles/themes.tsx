@@ -116,14 +116,14 @@ const darkTheme = createTheme({
     MuiButton: {
       styleOverrides: {
         root: {
-          borderRadius: 4, // ensuring button border radius matches the theme
+          borderRadius: 4, 
         },
       },
     },
     MuiPaper: {
       styleOverrides: {
         root: {
-          padding: 8, // ensure all papers have consistent padding
+          padding: 8, 
         },
       },
     },

@@ -56,89 +56,119 @@ const Sidebar: React.FC = () => {
       </Typography>
       <List>
         <ListItem
-          button
           component={Link}
           to="/"
           sx={{
             ...sidebarItemStyles,
-            backgroundColor: isActive('/') ? theme.palette.primary.main : 'inherit', borderRadius: '10px'
+            backgroundColor: isActive('/') ? theme.palette.primary.main : 'inherit',
+            color: isActive('/') ? 'white' : theme.palette.text.primary,
+            borderRadius: '10px',
+            '&:hover': {
+              backgroundColor: theme.palette.action.hover,
+              color: theme.palette.text.primary,
+            },
           }}
         >
-          <ListItemIcon>
-            <DashboardIcon sx={iconStyles} />
+          <ListItemIcon sx={{ ...iconStyles, color: isActive('/') ? 'white' : theme.palette.text.primary }}>
+            <DashboardIcon />
           </ListItemIcon>
           <ListItemText primary="Dashboard" />
         </ListItem>
         {(isAdmin || isVA) && (
           <ListItem
-            button
             component={Link}
             to="/evaluate"
             sx={{
               ...sidebarItemStyles,
-              backgroundColor: isActive('/evaluate') ? theme.palette.primary.main : 'inherit', borderRadius: '10px'
+              backgroundColor: isActive('/evaluate') ? theme.palette.primary.main : 'inherit',
+              color: isActive('/evaluate') ? 'white' : theme.palette.text.primary,
+              borderRadius: '10px',
+              '&:hover': {
+                backgroundColor: theme.palette.action.hover,
+                color: theme.palette.text.primary,
+              },
             }}
           >
-            <ListItemIcon>
-              <AssessmentIcon sx={iconStyles} />
+            <ListItemIcon sx={{ ...iconStyles, color: isActive('/evaluate') ? 'white' : theme.palette.text.primary }}>
+              <AssessmentIcon />
             </ListItemIcon>
             <ListItemText primary="Evaluate" />
           </ListItem>
         )}
         <ListItem
-          button
           component={Link}
           to="/account"
           sx={{
             ...sidebarItemStyles,
-            backgroundColor: isActive('/account') ? theme.palette.primary.main : 'inherit', borderRadius: '10px'
+            backgroundColor: isActive('/account') ? theme.palette.primary.main : 'inherit',
+            color: isActive('/account') ? 'white' : theme.palette.text.primary,
+            borderRadius: '10px',
+            '&:hover': {
+              backgroundColor: theme.palette.action.hover,
+              color: theme.palette.text.primary,
+            },
           }}
         >
-          <ListItemIcon>
-            <AccountCircleIcon sx={iconStyles} />
+          <ListItemIcon sx={{ ...iconStyles, color: isActive('/account') ? 'white' : theme.palette.text.primary }}>
+            <AccountCircleIcon />
           </ListItemIcon>
           <ListItemText primary="Account" />
         </ListItem>
         <ListItem
-          button
           component={Link}
           to="/organisation"
           sx={{
             ...sidebarItemStyles,
-            backgroundColor: isActive('/organisation') ? theme.palette.primary.main : 'inherit', borderRadius: '10px'
+            backgroundColor: isActive('/organisation') ? theme.palette.primary.main : 'inherit',
+            color: isActive('/organisation') ? 'white' : theme.palette.text.primary,
+            borderRadius: '10px',
+            '&:hover': {
+              backgroundColor: theme.palette.action.hover,
+              color: theme.palette.text.primary,
+            },
           }}
         >
-          <ListItemIcon>
-            <GroupsIcon sx={iconStyles} />
+          <ListItemIcon sx={{ ...iconStyles, color: isActive('/organisation') ? 'white' : theme.palette.text.primary }}>
+            <GroupsIcon />
           </ListItemIcon>
           <ListItemText primary="Organisation" />
         </ListItem>
         <ListItem
-          button
           component={Link}
           to="/settings"
           sx={{
             ...sidebarItemStyles,
-            backgroundColor: isActive('/settings') ? theme.palette.primary.main : 'inherit', borderRadius: '10px'
+            backgroundColor: isActive('/settings') ? theme.palette.primary.main : 'inherit',
+            color: isActive('/settings') ? 'white' : theme.palette.text.primary,
+            borderRadius: '10px',
+            '&:hover': {
+              backgroundColor: theme.palette.action.hover,
+              color: theme.palette.text.primary,
+            },
           }}
         >
-          <ListItemIcon>
-            <SettingsIcon sx={iconStyles} />
+          <ListItemIcon sx={{ ...iconStyles, color: isActive('/settings') ? 'white' : theme.palette.text.primary }}>
+            <SettingsIcon />
           </ListItemIcon>
           <ListItemText primary="Settings" />
         </ListItem>
         {isAdmin && (
           <ListItem
-            button
             component={Link}
             to="/admin-tools"
             sx={{
               ...sidebarItemStyles,
-              backgroundColor: isActive('/admin-tools') ? theme.palette.primary.main : 'inherit', borderRadius: '10px'
+              backgroundColor: isActive('/admin-tools') ? theme.palette.primary.main : 'inherit',
+              color: isActive('/admin-tools') ? 'white' : theme.palette.text.primary,
+              borderRadius: '10px',
+              '&:hover': {
+                backgroundColor: theme.palette.action.hover,
+                color: theme.palette.text.primary,
+              },
             }}
           >
-            <ListItemIcon>
-              <AdminPanelSettingsIcon sx={iconStyles} />
+            <ListItemIcon sx={{ ...iconStyles, color: isActive('/admin-tools') ? 'white' : theme.palette.text.primary }}>
+              <AdminPanelSettingsIcon />
             </ListItemIcon>
             <ListItemText primary="Admin Tools" />
           </ListItem>

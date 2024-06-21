@@ -26,6 +26,7 @@ export const sidebarItemStyles: SxProps<Theme> = (theme) => ({
   borderRadius: theme.shape.borderRadius,
   '&:hover': {
     backgroundColor: theme.palette.action.hover,
+    
   },
 });
 
@@ -43,9 +44,10 @@ export const logoutButtonStyles: SxProps<Theme> = (theme) => ({
   marginBottom: theme.spacing(2),
   width: '90%',
   backgroundColor: theme.palette.primary.main,
-  color: theme.palette.primary.contrastText, // Use contrast text color
+  color: theme.palette.primary.contrastText, 
   '&:hover': {
     backgroundColor: theme.palette.primary.dark,
+    color: theme.palette.text.primary,
   },
 });
 

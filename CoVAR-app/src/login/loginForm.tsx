@@ -8,6 +8,7 @@ import { useAuth } from '../contexts/authContext';
 import { useNavigate } from 'react-router-dom';
 import { doc, setDoc, getDoc } from "firebase/firestore";
 import { db } from '../firebase/firebaseConfig';
+import axios from 'axios';
 
 interface LoginProps {
   toggleForm: () => void;
@@ -80,7 +81,18 @@ const Login: React.FC<LoginProps> = ({ toggleForm }) => {
         const result = await doSignInWithGoogle();
         await addUserToFirestore(result.user as User); // Ensure to await Firestore addition
         console.log(result.user);
-        navigate('/'); // Navigate to dashboard after successful Google login
+        //call to postgresql to check if user exists else make one and then navigate
+        const { uid, email } = result.user;
+        const response = await axios.post('/api/users/create', {
+          uid,
+          email
+        });
+
+        if (response.status === 201) {
+            navigate('/');
+        } else {
+            throw new Error('Failed to create user in PostgreSQL');
+        }
         return result;
       } catch (error) {
         console.error(error);

@@ -30,6 +30,18 @@ pgClient.connect()
 
 app.use(express.json());
 
+async function isOwner(pgClient, OrgName, OwnerId) {
+    const ownerResult = await pgClient.query('SELECT owner FROM organizations WHERE name = $1', [OrgName]);
+    if (ownerResult.rows.length === 0) {
+        return { isOwner: false, error: 'Organization not found' };
+    }
+    
+    if (ownerResult.rows[0].owner !== OwnerId) {
+        return { isOwner: false, error: 'Not authorized as owner of the organization' };
+    }
+    
+    return { isOwner: true };
+}
 // Express route handlers
 
 app.get('/users/all', async (req, res) => {
@@ -89,7 +101,12 @@ app.get('/organizations/all', async (req, res) => {
 });
 //create organization
 app.post('/organizations/create', async (req, res) => {
-    const { name, email } = req.body;
+    const { name, username } = req.body;
+
+    // Validate the input
+    if (!name || !username) {
+        return res.status(400).send('Name and username are required');
+    }
 
     try {
         // Check if organization with name already exists
@@ -103,58 +120,61 @@ app.post('/organizations/create', async (req, res) => {
             return res.status(409).send('Organization already exists');
         }
 
+        // Check if the user exists
+        const checkUserQuery = `
+            SELECT * FROM users WHERE username = $1
+        `;
+        const existingUser = await pgClient.query(checkUserQuery, [username]);
+
+        if (existingUser.rows.length === 0) {
+            return res.status(404).send('User not found');
+        }
+
         // Organization does not exist, proceed with insertion
         const insertOrganizationQuery = `
-            INSERT INTO organizations (name, email)
+            INSERT INTO organizations (name, owner)
             VALUES ($1, $2)
         `;
-        await pgClient.query(insertOrganizationQuery, [name, email]);
-
+        await pgClient.query(insertOrganizationQuery, [name, existingUser.rows[0].user_id]);
+        //add org id to user table
+        const orgIdQuery = `
+            SELECT organization_id FROM organizations WHERE name = $1
+        `;
+        const orgId = await pgClient.query(orgIdQuery, [name]);
+        const orgIdValue = orgId.rows[0].organization_id;
+        const insertOrgIdQuery = `
+            UPDATE users SET organization_id = $1 WHERE username = $2
+        `;
+        await pgClient.query(insertOrgIdQuery, [orgIdValue, username]);
         res.status(201).send('Organization created successfully');
     } catch (err) {
         console.error('Error creating organization:', err);
         res.status(500).send('Server Error');
     }
 });
-async function isOwner(pgClient, OrgName, OwnerId) {
-    const ownerResult = await pgClient.query('SELECT owner FROM organizations WHERE name = $1', [OrgName]);
-    if (ownerResult.rows.length === 0) {
-        return { isOwner: false, error: 'Organization not found' };
-    }
-    
-    if (ownerResult.rows[0].owner !== OwnerId) {
-        return { isOwner: false, error: 'Not authorized as owner of the organization' };
-    }
-    
-    return { isOwner: true };
-}
-//add user to organization
+
+// Add user to organization
 app.post('/organizations/:id/add_user', async (req, res) => {
     const { id: OwnerId } = req.params;
     const { organizationId, OrgName, username } = req.body;
 
     try {
-        // Check if the owner is the owner of the organization
-        const { isOwner, error } = await isOwner(pgClient, OrgName, OwnerId);
-        if (!isOwner) {
+        let ownerResult = await isOwner(pgClient, OrgName, OwnerId);
+        if (!ownerResult.isOwner) {
             return res.status(error === 'Organization not found' ? 404 : 403).send(error);
         }
 
-        // Check if the user to be added exists
         const userResult = await pgClient.query('SELECT user_id FROM users WHERE username = $1', [username]);
         if (userResult.rows.length === 0) {
             return res.status(404).send('User not found');
         }
 
-        // Check if the user is already in an organization
         const userInOrgResult = await pgClient.query('SELECT organization_id FROM users WHERE user_id = $1', [userResult.rows[0].user_id]);
         if (userInOrgResult.rows.length > 0 && userInOrgResult.rows[0].organization_id !== null) {
             return res.status(400).send('User already in an organization');
         }
 
         const userId = userResult.rows[0].user_id;
-
-        // Add the user to the organization by updating the organization_id
         await pgClient.query('UPDATE users SET organization_id = $1 WHERE user_id = $2', [organizationId, userId]);
 
         res.send('User added to organization successfully');
@@ -164,33 +184,28 @@ app.post('/organizations/:id/add_user', async (req, res) => {
     }
 });
 
-//remove user from organization
+// Remove user from organization
 app.post('/organizations/:id/remove_user', async (req, res) => {
     const { id: OwnerId } = req.params;
     const { organizationId, OrgName, username } = req.body;
 
     try {
-        // Check if the owner is the owner of the organization
-        const { isOwner, error } = await isOwner(pgClient, OrgName, OwnerId);
-        if (!isOwner) {
+        let ownerResult = await isOwner(pgClient, OrgName, OwnerId);
+        if (!ownerResult.isOwner) {
             return res.status(error === 'Organization not found' ? 404 : 403).send(error);
         }
 
-        // Check if the user to be removed exists
         const userResult = await pgClient.query('SELECT user_id FROM users WHERE username = $1', [username]);
         if (userResult.rows.length === 0) {
             return res.status(404).send('User not found');
         }
 
-        // Check if the user is in the organization
         const userInOrgResult = await pgClient.query('SELECT organization_id FROM users WHERE user_id = $1', [userResult.rows[0].user_id]);
         if (userInOrgResult.rows.length === 0 || userInOrgResult.rows[0].organization_id !== organizationId) {
             return res.status(400).send('User not in the organization');
         }
 
         const userId = userResult.rows[0].user_id;
-
-        // Remove the user from the organization by updating the organization_id to null
         await pgClient.query('UPDATE users SET organization_id = NULL WHERE user_id = $1', [userId]);
 
         res.send('User removed from organization successfully');
@@ -206,8 +221,8 @@ app.patch('/organizations/:id/change_name', async (req, res) => {
 
     try {
         // Check if the owner is the owner of the organization
-        const { isOwner, error } = await isOwner(pgClient, OrgName, OwnerId);
-        if (!isOwner) {
+        let ownerResult = await isOwner(pgClient, OrgName, OwnerId);
+        if (!ownerResult.isOwner) {
             return res.status(error === 'Organization not found' ? 404 : 403).send(error);
         }
 

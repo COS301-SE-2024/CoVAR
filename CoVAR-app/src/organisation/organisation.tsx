@@ -290,7 +290,7 @@ const Organisation = () => {
                                 },
                             }}
                             onClick={handleDeleteOrganisation}
-                            disabled={confirmOrganisationName !== organisationName || deleteConfirmed}
+                            disabled={confirmOrganisationName === '' || confirmOrganisationName !== organisationName || deleteConfirmed}
                         >
                             Delete Organisation
                         </Button>

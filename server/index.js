@@ -86,6 +86,7 @@ app.get('/users/all', authenticateToken,async (req, res) => {
         res.status(500).send('Server Error');
     }
 });
+
 app.post('/getUser', authenticateToken, async (req, res) => {
     const token = req.body.accessToken;
     try {
@@ -179,6 +180,7 @@ app.post('/users/create', async (req, res) => {
     const { uid, email } = req.body;
     const role = 'client'; // Default role
 
+
     try {
         // Check if user with email already exists
         const checkUserQuery = `
@@ -188,6 +190,7 @@ app.post('/users/create', async (req, res) => {
 
         if (existingUser.rows.length > 0) {
             // User already exists
+
             return res.send('User already exists');
         }
         if(existingUser.rows.length === 0){
@@ -206,6 +209,26 @@ app.post('/users/create', async (req, res) => {
     }
 });
 
+
+        // User does not exist, proceed with insertion
+        const insertUserQuery = `
+            INSERT INTO users (username, role)
+            VALUES ($1, $2)
+        `;
+        await pgClient.query(insertUserQuery, [email, role]);
+
+        res.status(201).send('User created successfully');
+    } catch (err) {
+        console.error('Error creating user:', err);
+        res.status(500).send('Server Error');
+    }
+});
+
+  
+// Test route
+app.get('/test', (req, res) => {
+    res.send('Test route is working');
+});
 //Get all organizations
 app.get('/organizations/all', authenticateToken,async (req, res) => {
     try {
@@ -216,23 +239,186 @@ app.get('/organizations/all', authenticateToken,async (req, res) => {
         res.status(500).send('Server Error');
     }
 });
+//create organization
+app.post('/organizations/create', async (req, res) => {
+    const { name, username } = req.body;
 
+    // Validate the input
+    if (!name || !username) {
+        return res.status(400).send('Name and username are required');
+    }
 
+    try {
+        // Check if organization with name already exists
+        const checkOrganizationQuery = `
+            SELECT * FROM organizations WHERE name = $1
+        `;
+        const existingOrganization = await pgClient.query(checkOrganizationQuery, [name]);
+
+        if (existingOrganization.rows.length > 0) {
+            // Organization already exists
+            return res.status(409).send('Organization already exists');
+        }
+
+        // Check if the user exists
+        const checkUserQuery = `
+            SELECT * FROM users WHERE username = $1
+        `;
+        const existingUser = await pgClient.query(checkUserQuery, [username]);
+
+        if (existingUser.rows.length === 0) {
+            return res.status(404).send('User not found');
+        }
+
+        // Organization does not exist, proceed with insertion
+        const insertOrganizationQuery = `
+            INSERT INTO organizations (name, owner)
+            VALUES ($1, $2)
+        `;
+        await pgClient.query(insertOrganizationQuery, [name, existingUser.rows[0].user_id]);
+        //add org id to user table
+        const orgIdQuery = `
+            SELECT organization_id FROM organizations WHERE name = $1
+        `;
+        const orgId = await pgClient.query(orgIdQuery, [name]);
+        const orgIdValue = orgId.rows[0].organization_id;
+        const insertOrgIdQuery = `
+            UPDATE users SET organization_id = $1 WHERE username = $2
+        `;
+        await pgClient.query(insertOrgIdQuery, [orgIdValue, username]);
+        res.status(201).send('Organization created successfully');
+    } catch (err) {
+        console.error('Error creating organization:', err);
+        res.status(500).send('Server Error');
+    }
+});
+
+// Add user to organization
+app.post('/organizations/:id/add_user', async (req, res) => {
+    const { id: OwnerId } = req.params;
+    const { organizationId, OrgName, username } = req.body;
+
+    try {
+        let ownerResult = await isOwner(pgClient, OrgName, OwnerId);
+        if (!ownerResult.isOwner) {
+            return res.status(error === 'Organization not found' ? 404 : 403).send(error);
+        }
+
+        const userResult = await pgClient.query('SELECT user_id FROM users WHERE username = $1', [username]);
+        if (userResult.rows.length === 0) {
+            return res.status(404).send('User not found');
+        }
+
+        const userInOrgResult = await pgClient.query('SELECT organization_id FROM users WHERE user_id = $1', [userResult.rows[0].user_id]);
+        if (userInOrgResult.rows.length > 0 && userInOrgResult.rows[0].organization_id !== null) {
+            return res.status(400).send('User already in an organization');
+        }
+
+        const userId = userResult.rows[0].user_id;
+        await pgClient.query('UPDATE users SET organization_id = $1 WHERE user_id = $2', [organizationId, userId]);
+
+        res.send('User added to organization successfully');
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
+});
+
+// Remove user from organization
+app.post('/organizations/:id/remove_user', async (req, res) => {
+    const { id: OwnerId } = req.params;
+    const { organizationId, OrgName, username } = req.body;
+
+    try {
+        let ownerResult = await isOwner(pgClient, OrgName, OwnerId);
+        if (!ownerResult.isOwner) {
+            return res.status(error === 'Organization not found' ? 404 : 403).send(error);
+        }
+
+        const userResult = await pgClient.query('SELECT user_id FROM users WHERE username = $1', [username]);
+        if (userResult.rows.length === 0) {
+            return res.status(404).send('User not found');
+        }
+
+        const userInOrgResult = await pgClient.query('SELECT organization_id FROM users WHERE user_id = $1', [userResult.rows[0].user_id]);
+        if (userInOrgResult.rows.length === 0 || userInOrgResult.rows[0].organization_id !== organizationId) {
+            return res.status(400).send('User not in the organization');
+        }
+
+        const userId = userResult.rows[0].user_id;
+        await pgClient.query('UPDATE users SET organization_id = NULL WHERE user_id = $1', [userId]);
+
+        res.send('User removed from organization successfully');
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
+});
+//change org name
+app.patch('/organizations/:id/change_name', async (req, res) => {
+    const { id: OwnerId } = req.params;
+    const { OrgName, newName } = req.body;
+
+    try {
+        // Check if the owner is the owner of the organization
+        let ownerResult = await isOwner(pgClient, OrgName, OwnerId);
+        if (!ownerResult.isOwner) {
+            return res.status(error === 'Organization not found' ? 404 : 403).send(error);
+        }
+
+        // Check if the new name is already taken
+        const existingOrgResult = await pgClient.query('SELECT organization_id FROM organizations WHERE name = $1', [newName]);
+        if (existingOrgResult.rows.length > 0) {
+            return res.status(409).send('Organization name already taken');
+        }
+
+        // Update the organization name
+        await pgClient.query('UPDATE organizations SET name = $1 WHERE name = $2', [newName, OrgName]);
+
+        res.send('Organization name changed successfully');
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
+});
+//fetch users of an org
+app.get('/organizations/:id/users', async (req, res) => {
+    const { id } = req.params;
+    try {
+        const users = await pgClient.query('SELECT * FROM users WHERE organization_id = $1', [id]);
+        res.send(users.rows);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
+});
+//fetch org of a user
+app.get('/users/:id/organization', async (req, res) => {
+    const { id } = req.params;
+    try {
+        const org = await pgClient.query('SELECT * FROM organizations WHERE organization_id = (SELECT organization_id FROM users WHERE user_id = $1)', [id]);
+        res.send(org.rows);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
+});
 // Update user role
 app.patch('/users/:id/role', authenticateToken,async (req, res) => {
     const { id } = req.params;
     const { role } = req.body;
 
     try {
-        const queryText = `UPDATE users SET role = '${role}' WHERE user_id = '${id}'`;
-        await pgClient.query(queryText);
+        // Using parameterized query to prevent SQL injection
+        const queryText = 'UPDATE users SET role = $1 WHERE user_id = $2';
+        await pgClient.query(queryText, [role, id]);
         res.send('User role updated successfully');
-        
     } catch (err) {
         console.error('Error updating user role:', err.message);
         res.status(500).send('Server Error');
     }
 });
+
 
 // Assign a client to a VA
 app.post('/users/:id/assign', authenticateToken,async (req, res) => {

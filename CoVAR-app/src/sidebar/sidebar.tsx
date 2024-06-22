@@ -22,21 +22,21 @@ const Sidebar: React.FC = () => {
   const theme = useTheme();
 
   useEffect(() => {
-    const fetchUserRole = async () => {
-      try {
-        const accessToken = localStorage.getItem('accessToken');
-        if (accessToken) {
-          const data = await getUserRole(accessToken);
-          setRole(data.role);
-          console.log("Role:", data.role);
-        }
-      } catch (error) {
-        console.error("Error fetching user role:", error);
-      }
-    };
-
     fetchUserRole();
   }, []);
+
+  const fetchUserRole = async () => {
+    try {
+      const accessToken = localStorage.getItem('accessToken');
+      if (accessToken) {
+        const data = await getUserRole(accessToken);
+        setRole(data.role);
+        console.log("Role:", data.role);
+      }
+    } catch (error) {
+      console.error("Error fetching user role:", error);
+    }
+  };
 
   const signOut = async () => {
     try {

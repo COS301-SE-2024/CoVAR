@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { CircularProgress, Button, Typography, Card, CardContent, TextField } from '@mui/material';
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
-import { doc, getDoc, updateDoc, collection, getDocs, addDoc, deleteDoc } from 'firebase/firestore';
-import { db } from '../firebase/firebaseConfig';
 import { Timestamp } from 'firebase/firestore';
 import { Box } from '@mui/system';
 import { mainContentStyles, cardStyles, headingBoxStyles, textFieldStyles, buttonStyles } from '../styles/organisationStyle';
+import { getUserRole } from '../requests/requests';
 
 type User = {
     id: string;
@@ -22,92 +21,28 @@ const Organisation = () => {
     const [organisationName, setOrganisationName] = useState('');
     const [confirmOrganisationName, setConfirmOrganisationName] = useState('');
     const [deleteConfirmed, setDeleteConfirmed] = useState(false);
+    const [isInOrg, setIsInOrg] = useState(false);
+
 
     useEffect(() => {
-        const fetchUsers = async () => {
-            try {
-                const querySnapshot = await getDocs(collection(db, 'user'));
-                const usersList: User[] = [];
-                for (const userDoc of querySnapshot.docs) {
-                    const userRef = doc(db, 'user', userDoc.id);
-                    const userSnap = await getDoc(userRef);
-
-                    if (userSnap.exists()) {
-                        usersList.push({ id: userDoc.id, ...userSnap.data() } as User);
-                    } else {
-                        console.log('No such document for user:', userDoc.id);
-                    }
-                }
-                setUsers(usersList);
-                setLoading(false);
-            } catch (error) {
-                console.error('Error fetching user:', error);
-                setLoading(false);
-            }
-        };
-
-        fetchUsers();
+        
     }, []);
 
     const handleRemoveUser = async (user: User) => {
-        const userRef = doc(db, 'user', user.id);
-
-        try {
-            await updateDoc(userRef, { organisation: null });
-            setUsers(users.filter(u => u.id !== user.id));
-        } catch (error) {
-            console.error('Error removing user from organisation:', error);
-        }
-    };
+        
+    }
 
     const handleAddMember = async () => {
-        try {
-            const newUserRef = await addDoc(collection(db, 'user'), {
-                email: newMemberEmail,
-                name: 'New User',
-                role: 'Member',
-                createdAt: Timestamp.now(),
-                organisation: 'YourOrganisation',
-            });
-            const newUserSnap = await getDoc(newUserRef);
-            if (newUserSnap.exists()) {
-                setUsers([...users, { id: newUserRef.id, ...newUserSnap.data() } as User]);
-                setNewMemberEmail('');
-            }
-        } catch (error) {
-            console.error('Error adding new member:', error);
-        }
+
     };
 
     const handleDeleteOrganisation = async () => {
-        // Verify if confirmOrganisationName matches organisationName
-        if (confirmOrganisationName !== organisationName) {
-            console.error('Organisation names do not match. Aborting.');
-            return;
-        }
 
-        try {
-            // Implement the logic to delete the organisation
-            console.log('Disbanding organisation:', organisationName);
-
-            // Example deletion using Firestore
-            const organisationRef = doc(db, 'organizations', 'your-organisation-id');
-            await deleteDoc(organisationRef);
-
-            // After deletion, you may want to clear state or redirect
-
-            // Reset fields after successful deletion
-            setOrganisationName('');
-            setConfirmOrganisationName('');
-            setDeleteConfirmed(false);
-        } catch (error) {
-            console.error('Error deleting organisation:', error);
-        }
     };
 
     const handleChangeOrganisationName = async () => {
-        //logic to change organisation name
-    }
+        
+    };
 
     const columns: GridColDef[] = [
         { field: 'name', headerName: 'Name', flex: 1, headerAlign: 'left', resizable: false },
@@ -150,8 +85,42 @@ const Organisation = () => {
         );
     }
 
-    return (
-        <Box sx={mainContentStyles}>
+    if (!isInOrg) {
+        return (
+            <Box sx={mainContentStyles}>
+            <Box sx={headingBoxStyles}>
+                <Typography variant="h4" sx={{ marginBottom: 2 }}>
+                You are not part of an organisation
+                </Typography>
+                </Box>
+            <Card sx={cardStyles}>
+            <CardContent>
+                <Typography variant="h6" color="text.primary">Create Organisation?</Typography>
+                <TextField
+                    required
+                    margin="normal"
+                    fullWidth
+                    id="new-organisation-name"
+                    label="Organisation Name"
+                    name="new-organisation-name"
+                    autoComplete="organisation-name"
+                    autoFocus
+                    InputLabelProps={{ sx: { color: 'text.primary' } }}
+                    InputProps={{ sx: { color: 'text.primary' } }}
+                    value={organisationName}
+                    onChange={(e) => setOrganisationName(e.target.value)}
+                    sx={textFieldStyles}
+                />
+                <Button variant="contained" sx={buttonStyles}>
+                    Create Organisation
+                </Button>
+            </CardContent>
+            </Card>
+        </Box>
+        )
+    } else {
+        return (
+            <Box sx={mainContentStyles}>
             <Box sx={headingBoxStyles}>
                 <Typography variant="h4" sx={{ marginBottom: 2 }}>
                     Organisation
@@ -296,33 +265,12 @@ const Organisation = () => {
                         </Button>
                     </CardContent>
                 </Card>
-                <Card sx={cardStyles}>
-                <CardContent>
-                    <Typography variant="h6" color="text.primary">Create Organisation</Typography>
-                    <TextField
-                        required
-                        margin="normal"
-                        fullWidth
-                        id="new-organisation-name"
-                        label="Organisation Name"
-                        name="new-organisation-name"
-                        autoComplete="organisation-name"
-                        autoFocus
-                        InputLabelProps={{ sx: { color: 'text.primary' } }}
-                        InputProps={{ sx: { color: 'text.primary' } }}
-                        value={organisationName}
-                        onChange={(e) => setOrganisationName(e.target.value)}
-                        sx={textFieldStyles}
-                    />
-                    <Button variant="contained" sx={buttonStyles}>
-                        Create Organisation
-                    </Button>
-                </CardContent>
-            </Card>
 
             </Box>
         </Box>
-    );
+        )
+            
+        }
 };
 
 export default Organisation;

@@ -9,7 +9,7 @@ import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import LockIcon from '@mui/icons-material/Lock';
 import GroupsIcon from '@mui/icons-material/Groups'; 
-import { getUserRole } from '../requests/requests'; // Adjust the path as necessary
+import { getUserRole } from '../requests/requests';
 
 import { sidebarStyles, sidebarItemStyles, iconStyles, logoStyles, logoutButtonStyles } from '../styles/sidebarStyle';
 import { doSignOut } from '../firebase/auth';
@@ -26,9 +26,9 @@ const Sidebar: React.FC = () => {
       try {
         const accessToken = localStorage.getItem('accessToken');
         if (accessToken) {
-          const userRole = await getUserRole(accessToken);
-          setRole(userRole);
-          console.log("Role:", userRole);
+          const data = await getUserRole(accessToken);
+          setRole(data.role);
+          console.log("Role:", data.role);
         }
       } catch (error) {
         console.error("Error fetching user role:", error);

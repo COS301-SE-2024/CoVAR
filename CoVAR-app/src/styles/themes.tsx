@@ -6,7 +6,7 @@ const lightTheme = createTheme({
     mode: 'light',
     primary: {
       main: '#52796F',
-      dark: '#DEDEDE',
+      dark: '#3d5b53',
     },
     secondary: {
       main: '#52796F',

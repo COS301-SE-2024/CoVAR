@@ -47,7 +47,6 @@ export const logoutButtonStyles: SxProps<Theme> = (theme) => ({
   color: theme.palette.primary.contrastText, 
   '&:hover': {
     backgroundColor: theme.palette.primary.dark,
-    color: theme.palette.text.primary,
   },
 });
 

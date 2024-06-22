@@ -48,7 +48,7 @@ pgClient.connect()
 
 app.use(express.json());
 function generateToken(user){
-    return jwt.sign(user,keys.jsonKey,{expiresIn:'30s'});
+    return jwt.sign(user,keys.jsonKey,{expiresIn:'15 m'});
 }
 function authenticateToken(req,res,next){
     console.log("authenticating");

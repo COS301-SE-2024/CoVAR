@@ -101,16 +101,19 @@ app.post('/getUser', authenticateToken, async (req, res) => {
         if (userResult.rows.length === 0) {
             return res.status(404).json({ error: 'User not found' });
         }
-
+        Owner=await isOwner(pgClient, req.body.organization, userResult.rows[0].user_id);
+        console.log("Owner");
+        console.log(Owner.isOwner);
         const user = {
             user_id: userResult.rows[0].user_id,
             username: userResult.rows[0].username,
             role: userResult.rows[0].role,
-            organization_id: userResult.rows[0].organization_id
+            organization_id: userResult.rows[0].organization_id,
+            owner: Owner.isOwner
         };
         console.log("getUser");
-        console.log(userResult.rows[0]);
-        res.json(userResult.rows[0]);
+        console.log(user);
+        res.json(user);
     } catch (err) {
         console.error('Error fetching user:', err);
         res.status(500).json({ error: 'Server Error' });
@@ -366,10 +369,10 @@ app.patch('/organizations/:id/change_name', async (req, res) => {
     }
 });
 //fetch users of an org
-app.get('/organizations/:id/users', async (req, res) => {
-    const { id } = req.params;
+app.post('/organizations/users', async (req, res) => {
+    const { org_id } = req.body;
     try {
-        const users = await pgClient.query('SELECT * FROM users WHERE organization_id = $1', [id]);
+        const users = await pgClient.query('SELECT * FROM users WHERE organization_id = $1', [org_id]);
         res.send(users.rows);
     } catch (err) {
         console.error(err.message);

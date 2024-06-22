@@ -41,8 +41,42 @@ app.get('/users/all', async (req, res) => {
         res.status(500).send('Server Error');
     }
 });
+//postgres firebase synch
+app.post('/users/create', async (req, res) => {
+    const { uid, email } = req.body;
+    const role = 'client'; // Default role
 
+    try {
+        // Check if user with email already exists
+        const checkUserQuery = `
+            SELECT * FROM users WHERE username = $1
+        `;
+        const existingUser = await pgClient.query(checkUserQuery, [email]);
 
+        if (existingUser.rows.length > 0) {
+            // User already exists
+            return res.status(409).send('User already exists');
+        }
+
+        // User does not exist, proceed with insertion
+        const insertUserQuery = `
+            INSERT INTO users (username, role)
+            VALUES ($1, $2)
+        `;
+        await pgClient.query(insertUserQuery, [email, role]);
+
+        res.status(201).send('User created successfully');
+    } catch (err) {
+        console.error('Error creating user:', err);
+        res.status(500).send('Server Error');
+    }
+});
+
+  
+// Test route
+app.get('/test', (req, res) => {
+    res.send('Test route is working');
+});
 //Get all organizations
 app.get('/organizations/all', async (req, res) => {
     try {
@@ -53,7 +87,55 @@ app.get('/organizations/all', async (req, res) => {
         res.status(500).send('Server Error');
     }
 });
+//create organization
+app.post('/organizations/create', async (req, res) => {
+    const { name, email } = req.body;
 
+    try {
+        // Check if organization with name already exists
+        const checkOrganizationQuery = `
+            SELECT * FROM organizations WHERE name = $1
+        `;
+        const existingOrganization = await pgClient.query(checkOrganizationQuery, [name]);
+
+        if (existingOrganization.rows.length > 0) {
+            // Organization already exists
+            return res.status(409).send('Organization already exists');
+        }
+
+        // Organization does not exist, proceed with insertion
+        const insertOrganizationQuery = `
+            INSERT INTO organizations (name, email)
+            VALUES ($1, $2)
+        `;
+        await pgClient.query(insertOrganizationQuery, [name, email]);
+
+        res.status(201).send('Organization created successfully');
+    } catch (err) {
+        console.error('Error creating organization:', err);
+        res.status(500).send('Server Error');
+    }
+});
+//add user to organization
+app.post('/organizations/:id/add_user', async (req, res) => {
+    const { id } = req.params;
+    const { username } = req.body;
+
+    try {
+        // Check if the user exists
+        const userResult = await pgClient.query('SELECT user_id FROM users WHERE username = $1', [username]);
+        if (userResult.rows.length === 0) {
+            return res.status(404).send('User not found');
+        }
+
+        const userId = userResult.rows[0].user_id;
+        await pgClient.query('INSERT INTO organization_users (organization, user_id) VALUES ($1, $2)', [id, userId]);
+        res.send('User added to organization successfully');
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
+});
 
 // Update user role
 app.patch('/users/:id/role', async (req, res) => {

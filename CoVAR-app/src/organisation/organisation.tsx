@@ -79,7 +79,7 @@ const Organisation = () => {
         }
     };
 
-    const handleChangeOrganisationName = async () => {
+    const handleDeleteOrganisation = async () => {
         // Verify if confirmOrganisationName matches organisationName
         if (confirmOrganisationName !== organisationName) {
             console.error('Organisation names do not match. Aborting.');
@@ -104,6 +104,10 @@ const Organisation = () => {
             console.error('Error deleting organisation:', error);
         }
     };
+
+    const handleChangeOrganisationName = async () => {
+        //logic to change organisation name
+    }
 
     const columns: GridColDef[] = [
         { field: 'name', headerName: 'Name', flex: 1, headerAlign: 'left', resizable: false },
@@ -267,7 +271,6 @@ const Organisation = () => {
                             label="Confirm Organisation Name"
                             name="confirm-organisation-name"
                             autoComplete="organisation-name"
-                            autoFocus
                             InputLabelProps={{ sx: { color: 'text.primary' } }}
                             InputProps={{ sx: { color: 'text.primary' } }}
                             value={confirmOrganisationName}
@@ -286,7 +289,7 @@ const Organisation = () => {
                                     backgroundColor: '#B2163B',
                                 },
                             }}
-                            onClick={handleChangeOrganisationName}
+                            onClick={handleDeleteOrganisation}
                             disabled={confirmOrganisationName !== organisationName || deleteConfirmed}
                         >
                             Delete Organisation

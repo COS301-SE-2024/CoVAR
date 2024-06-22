@@ -9,7 +9,7 @@ import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import LockIcon from '@mui/icons-material/Lock';
 import GroupsIcon from '@mui/icons-material/Groups'; 
-import axios from 'axios';
+import { getUserRole } from '../requests/requests'; // Adjust the path as necessary
 
 import { sidebarStyles, sidebarItemStyles, iconStyles, logoStyles, logoutButtonStyles } from '../styles/sidebarStyle';
 import { doSignOut } from '../firebase/auth';
@@ -24,13 +24,12 @@ const Sidebar: React.FC = () => {
   useEffect(() => {
     const fetchUserRole = async () => {
       try {
-        const getUserResponse = await axios.post(
-          '/api/getUser',
-          { accessToken: localStorage.getItem('accessToken') },
-          { headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}` } }
-        );
-        setRole(getUserResponse.data.role);
-        console.log("Role:", getUserResponse.data.role);
+        const accessToken = localStorage.getItem('accessToken');
+        if (accessToken) {
+          const userRole = await getUserRole(accessToken);
+          setRole(userRole);
+          console.log("Role:", userRole);
+        }
       } catch (error) {
         console.error("Error fetching user role:", error);
       }

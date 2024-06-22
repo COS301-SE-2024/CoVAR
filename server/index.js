@@ -51,7 +51,9 @@ function generateToken(user){
     return jwt.sign(user,keys.jsonKey,{expiresIn:'30s'});
 }
 function authenticateToken(req,res,next){
+    console.log("authenticating");
     const authHeader = req.headers['authorization'];
+    console.log(authHeader);
     const token = authHeader && authHeader.split(' ')[1];
     if(token == null) return res.sendStatus(401);
     jwt.verify(token,keys.jsonKey,(err,user)=>{
@@ -84,19 +86,19 @@ app.get('/users/all', authenticateToken,async (req, res) => {
         res.status(500).send('Server Error');
     }
 });
-app.get('/getUser', authenticateToken, async (req, res) => {
+app.post('/getUser', authenticateToken, async (req, res) => {
     const token = req.body.accessToken;
-    const decodedToken = jwt.verify(token, keys.jsonKey);
-    const userId = decodedToken.user_id;
-    console.log("getUser");
-    console.log(userId);
-
     try {
+        const decodedToken = jwt.verify(token, keys.jsonKey);
+        const userId = decodedToken.user_id;
+        console.log("getUser");
+        console.log(userId);
+
         const userQuery = `SELECT * FROM users WHERE user_id = $1`;
         const userResult = await pgClient.query(userQuery, [userId]);
 
         if (userResult.rows.length === 0) {
-            return res.status(403).send('poop');
+            return res.status(404).json({ error: 'User not found' });
         }
 
         const user = {
@@ -105,11 +107,12 @@ app.get('/getUser', authenticateToken, async (req, res) => {
             role: userResult.rows[0].role,
             organization_id: userResult.rows[0].organization_id
         };
-
-        res.json(user);
+        console.log("getUser");
+        console.log(userResult.rows[0]);
+        res.json(userResult.rows[0]);
     } catch (err) {
         console.error('Error fetching user:', err);
-        res.status(500).send('Server Error');
+        res.status(500).json({ error: 'Server Error' });
     }
 });
 

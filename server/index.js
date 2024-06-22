@@ -73,11 +73,6 @@ app.post('/users/create', async (req, res) => {
     }
 });
 
-  
-// Test route
-app.get('/test', (req, res) => {
-    res.send('Test route is working');
-});
 //Get all organizations
 app.get('/organizations/all', async (req, res) => {
     try {

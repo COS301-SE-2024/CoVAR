@@ -82,7 +82,7 @@ const Login: React.FC<LoginProps> = ({ toggleForm }) => {
         await addUserToFirestore(result.user as User); // Ensure to await Firestore addition
         console.log(result.user);
         //call to postgresql to check if user exists else make one and then navigate
-        const { uid, email, displayName } = result.user;
+        const { uid, email } = result.user;
         const response = await axios.post('/api/users/create', {
           uid,
           email

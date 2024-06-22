@@ -8,7 +8,6 @@ import GoogleIcon from "../icons/GoogleIcon";
 import { doc, setDoc, getDoc } from "firebase/firestore";
 import { db } from '../firebase/firebaseConfig';
 import axios from 'axios';
-const { v4: uuidv4, validate: uuidValidate } = require('uuid');
 
 interface User {
   uid: string;
@@ -51,7 +50,7 @@ const Signup: React.FC<SignupProps> = ({ toggleForm }) => {
     try {
       const result = await doSignInWithGoogle();
       if (result.user) {
-        const { uid, email, displayName } = result.user;
+        const { uid, email} = result.user;
         await addUserToFirestore(result.user as User); // Ensure to await Firestore addition
         // Send user data to backend
         const response = await axios.post('/api/users/create', {
@@ -70,15 +69,6 @@ const Signup: React.FC<SignupProps> = ({ toggleForm }) => {
   // Handle errors here
 }
   };
-  // Testing the test route
-const testRoute = async () => {
-  try {
-      const response = await axios.get('/api/test');
-      console.log(response.data);
-  } catch (error) {
-      console.error('Error testing route:', error);
-  }
-};
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const data = new FormData(event.currentTarget);

@@ -35,7 +35,9 @@ services:
       - PG_HOST=${PG_HOST}
       - PG_DATABASE=${PG_DATABASE}
       - PG_PASSWORD=${PG_PASSWORD}
-      - PG_PORT={PG_PORT}
+      - PG_PORT=${PG_PORT}
+      - JSON_SECRET=${JSON_SECRET}
+      - REFRESH_SECRET=${REFRESH_SECRET}
     depends_on:
       - postgres
 

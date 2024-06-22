@@ -319,6 +319,30 @@ const Organisation = () => {
                         </Button>
                     </CardContent>
                 </Card>
+                <Card sx={cardStyles}>
+                <CardContent>
+                    <Typography variant="h6" color="text.primary">Create Organisation</Typography>
+                    <TextField
+                        required
+                        margin="normal"
+                        fullWidth
+                        id="new-organisation-name"
+                        label="Organisation Name"
+                        name="new-organisation-name"
+                        autoComplete="organisation-name"
+                        autoFocus
+                        InputLabelProps={{ sx: { color: 'text.primary' } }}
+                        InputProps={{ sx: { color: 'text.primary' } }}
+                        value={organisationName}
+                        onChange={(e) => setOrganisationName(e.target.value)}
+                        sx={textFieldStyles}
+                    />
+                    <Button variant="contained" sx={buttonStyles}>
+                        Create Organisation
+                    </Button>
+                </CardContent>
+            </Card>
+
             </Box>
         </Box>
     );

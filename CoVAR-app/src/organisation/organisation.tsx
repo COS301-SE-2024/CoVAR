@@ -5,6 +5,7 @@ import { Timestamp } from 'firebase/firestore';
 import { Box } from '@mui/system';
 import { mainContentStyles, cardStyles, headingBoxStyles, textFieldStyles, buttonStyles } from '../styles/organisationStyle';
 import { getUserRole } from '../requests/requests';
+import axios from 'axios';
 
 type User = {
     id: string;
@@ -21,12 +22,53 @@ const Organisation = () => {
     const [organisationName, setOrganisationName] = useState('');
     const [confirmOrganisationName, setConfirmOrganisationName] = useState('');
     const [deleteConfirmed, setDeleteConfirmed] = useState(false);
+    const [role, setRole] = useState<string | null>(null);
+    const [isOwner, setIsOwner] = useState(false);
     const [isInOrg, setIsInOrg] = useState(false);
 
-
     useEffect(() => {
-        
-    }, []);
+        const fetchUserRole = async () => {
+          try {
+            const accessToken = localStorage.getItem('accessToken');
+            if (accessToken) {
+              const userData = await getUserRole(accessToken);
+              console.log("User data:", userData);
+              setRole(userData.role);
+              setIsOwner(userData.isOwner);
+              setIsInOrg(userData.isInOrg);
+              console.log("User role:", userData.role);
+              console.log("Is owner:", userData.owner);
+              console.log("Is in org:", userData.organization_id);
+            }
+          } catch (error) {
+            console.error("Error fetching user role:", error);
+          }
+        };
+    
+        fetchUserRole();
+      }, []);
+
+      useEffect(() => {
+        const fetchUsers = async () => {
+            try {
+                const response = await axios.post(
+                    '/api/organizations/users',
+                    { org_id: isInOrg }, // Request body
+                    {
+                        headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}` }
+                    }
+                );
+                const usersList = response.data;  // Assuming response.data is an array of users
+                setUsers(usersList);
+            } catch (error) {
+                console.error('Error fetching users:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+    
+        fetchUsers();
+    }, [isInOrg]);
 
     const handleRemoveUser = async (user: User) => {
         

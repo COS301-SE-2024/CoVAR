@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import { doc, setDoc, getDoc } from "firebase/firestore";
 import { db } from '../firebase/firebaseConfig';
 import axios from 'axios';
+import { access } from 'fs';
 
 interface LoginProps {
   toggleForm: () => void;
@@ -64,8 +65,33 @@ const Login: React.FC<LoginProps> = ({ toggleForm }) => {
     if (!isSigningIn) {
       setIsSigningIn(true);
       try {
-        await doSignInWithEmailAndPassword(email, password);
+        const currentUser=await doSignInWithEmailAndPassword(email, password);
+        console.log(currentUser);
+        if (currentUser) {
+          // Obtain Firebase token
+          const firebaseToken = await currentUser.user.getIdToken();
+          console.log("firebaseToken");
+          console.log(firebaseToken);
+          // Send Firebase token to the server
+          const response = await axios.post('/api/users/login', {
+            firebaseToken, // Pass Firebase token to the server
+            username: currentUser.user.email
+          });
+        console.log(response);
+        localStorage.setItem('accessToken', response.data.accessToken);
+        localStorage.setItem('refreshToken', response.data.refreshToken);
+        const GetUser = await axios.post('/api/getUser', {
+          //access token from local storage
+          accessToken: localStorage.getItem('accessToken')
+        });
+        console.log("GetUser " + GetUser);
+        axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.accessToken}`;
+        axios.defaults.headers.post['Content-Type'] = 'application/json';
         navigate('/'); // Navigate to dashboard after successful login
+     
+      } else {
+        throw new Error('User not found in Firebase Auth');
+      }
       } catch (error) {
         console.error(error);
         setIsSigningIn(false);
@@ -87,13 +113,27 @@ const Login: React.FC<LoginProps> = ({ toggleForm }) => {
           uid,
           email
         });
-
-        if (response.status === 201) {
-            navigate('/');
-        } else {
-            throw new Error('Failed to create user in PostgreSQL');
-        }
-        return result;
+        console.log(response);
+        const firebaseToken = await result.user.getIdToken();
+        // Send Firebase token to the server
+        const LoginResponse = await axios.post('/api/users/login', {
+          firebaseToken, 
+          username: result.user.email
+        });
+        console.log(LoginResponse);
+        //save response tokens in local storage as user token
+        localStorage.setItem('accessToken', LoginResponse.data.accessToken);
+        localStorage.setItem('refreshToken', LoginResponse.data.refreshToken);
+        axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.accessToken}`;
+        axios.defaults.headers.post['Content-Type'] = 'application/json';
+        const GetUser = await axios.post('/api/getUser', {});
+        console.log("GetUser " + GetUser);
+        if (response.status === 201 && LoginResponse.status === 201) {
+          navigate('/');
+      } else {
+          throw new Error('Failed to create user in PostgreSQL');
+      }
+        return result; 
       } catch (error) {
         console.error(error);
         setIsSigningIn(false);

@@ -2,7 +2,7 @@ import { SxProps, Theme } from '@mui/material/styles';
 
 export const chartContainerStyles: SxProps<Theme> = (theme) => ({
   padding: theme.spacing(2),
-  backgroundColor: theme.palette.background.default,
+  backgroundColor: theme.palette.background.paper,
   color: theme.palette.text.primary,
   display: 'flex',
   flexDirection: 'column',
@@ -26,7 +26,7 @@ export const chartContainerStyles: SxProps<Theme> = (theme) => ({
 // Updated listContainerStyles to use theme
 export const listContainerStyles: SxProps<Theme> = (theme) => ({
   padding: theme.spacing(2),
-  backgroundColor: theme.palette.background.default,
+  backgroundColor: theme.palette.background.paper,
   color: theme.palette.text.primary,
   height: '100%',
 });

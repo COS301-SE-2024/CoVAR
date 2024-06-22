@@ -297,46 +297,53 @@ const UserList = () => {
                 sx={{
                     height: 600,
                     flex: '1 auto',
-                    '& .MuiDataGrid-root': {
-                        bgcolor: '#52796F',
-                        color: '#CAD2C5',
-                        borderColor: '#52796F',
-                    },
-                    '& .MuiDataGrid-columnHeader': {
-                        backgroundColor: '#2F3E46',
-                        color: '#CAD2C5',
-                    },
+                    fontWeight: 500,
+                    borderColor: 'text.primary', 
                     '& .MuiDataGrid-columnHeaderTitle': {
-                        color: '#CAD2C5',
+                        color: 'text.primary',
                     },
                     '& .MuiDataGrid-columnSeparator': {
-                        color: '#52796F',
+                        color: 'text.primary',
                     },
                     '& .MuiDataGrid-cell': {
-                        color: '#CAD2C5',
-                        borderColor: '#52796F',
+                        color: 'text.primary',
+                        borderColor: 'text.primary', 
                     },
                     '& .MuiDataGrid-footerContainer': {
-                        backgroundColor: '#2F3E46',
-                        color: '#CAD2C5',
+                        backgroundColor: 'background.paper',
+                        color: 'text.primary',
                     },
                     '& .MuiTablePagination-root': {
-                        color: '#CAD2C5',
+                        color: 'text.primary',
                     },
                     '& .MuiSvgIcon-root': {
-                        color: '#CAD2C5',
+                        color: 'text.primary',
                     },
                     '& .MuiDataGrid-toolbarContainer button': {
-                        color: '#CAD2C5',
+                        color: 'text.primary',
                     },
                     '& .MuiDataGrid-topContainer, & .MuiDataGrid-container--top': {
-                        backgroundColor: '#52796F',
+                        backgroundColor: 'primary.main',
                     },
                     '& .MuiDataGrid-overlay': {
-                        backgroundColor: '#1F282E',
-                        color: '#CAD2C5',
+                        backgroundColor: 'background.default',
+                        color: 'text.primary',
                     },
-                }}
+                    '& .MuiDataGrid-filler': {
+                        backgroundColor: 'background.paper',
+                        color: 'text.primary',
+                    },
+                    '& .MuiDataGrid-scrollbarFiller': {
+                        backgroundColor: 'background.paper',
+                    },
+                    '& .MuiDataGrid-scrollbarFiller--header': {
+                        backgroundColor: 'background.paper', 
+                    },
+                    '& .MuiDataGrid-columnHeader': {
+                        backgroundColor: 'background.paper',
+                        color: 'text.primary',
+                    },
+            }}
             />
             <Menu
                 anchorEl={anchorEl}

@@ -106,14 +106,14 @@ const Signup: React.FC<SignupProps> = ({ toggleForm }) => {
       <CssBaseline />
       <Container maxWidth="xl" sx={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
         <Box sx={{ textAlign: 'center', margin: '20px auto', width: '100%' }}>
-          <Typography variant="h1" color="textPrimary" gutterBottom>
+          <Typography variant="h1" color="textPrimary" fontWeight={550} gutterBottom >
             CoVAR
           </Typography>
-          <LockOutlinedIcon sx={{ fontSize: 150, color: theme.palette.primary.main }} />
+          <LockOutlinedIcon sx={{ fontSize: 150, color: theme.palette.secondary.main }} />
         </Box>
         <Card sx={{ backgroundColor: theme.palette.background.paper, padding: 4, borderRadius: 1, borderStyle: 'solid', borderWidth: 1, borderColor: theme.palette.divider }}>
           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <Typography variant="h4" component="h2" gutterBottom>
+            <Typography variant="h4" component="h2" fontWeight={550} gutterBottom>
               Sign Up
             </Typography>
             <Box component="form" onSubmit={handleSubmit} sx={{ width: '100%', mt: 1 }}>

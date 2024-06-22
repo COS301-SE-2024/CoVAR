@@ -5,19 +5,22 @@ const lightTheme = createTheme({
   palette: {
     mode: 'light',
     primary: {
-      main: '#84A98C',
-      dark: '#52796F',
+      main: '#52796F',
+      dark: '#3d5b53',
+    },
+    secondary: {
+      main: '#52796F',
     },
     background: {
-      default: '#F0F4F8',
-      paper: '#FFFFFF',
+      default: '#CED4DA',
+      paper: '#F8F9FA',
     },
     text: {
-      primary: '#1F282E',
-      secondary: '#52796F',
+      primary: '#212529',
+      secondary: '#343A40',
     },
     action: {
-      hover: '#E0E0E0',
+      hover: '#DEDEDE',
     },
   },
   typography: {
@@ -70,9 +73,12 @@ const darkTheme = createTheme({
       main: '#52796F',
       dark: '#405d51',
     },
+    secondary: {
+      main: '#52796F',
+    },
     background: {
       default: '#1F282E',
-      paper: '#1F282E',
+      paper: '#2D3E44',
     },
     text: {
       primary: '#CAD2C5',
@@ -96,28 +102,28 @@ const darkTheme = createTheme({
     MuiInputBase: {
       styleOverrides: {
         input: {
-          color: '#CAD2C5',
+          color: '#',
         },
       },
     },
     MuiFormLabel: {
       styleOverrides: {
         root: {
-          color: '#CAD2C5',
+          color: '#',
         },
       },
     },
     MuiButton: {
       styleOverrides: {
         root: {
-          borderRadius: 4, // ensuring button border radius matches the theme
+          borderRadius: 4, 
         },
       },
     },
     MuiPaper: {
       styleOverrides: {
         root: {
-          padding: 8, // ensure all papers have consistent padding
+          padding: 8, 
         },
       },
     },

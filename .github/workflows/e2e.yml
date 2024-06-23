@@ -1,11 +1,10 @@
 name: Cypress E2E Tests
 
 on:
-    push:
-      branches: [ main, develop ]
-  
-    pull_request:
-      branches: [ main, develop ]
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
 
 jobs:
   e2e-tests:
@@ -19,7 +18,7 @@ jobs:
           POSTGRES_PASSWORD: ${{ secrets.PG_PASSWORD }}
           POSTGRES_DB: ${{ secrets.PG_DATABASE }}
         ports:
-          - 5432:5432
+          - 5555:5432
         options: >-
           --health-cmd="pg_isready"
           --health-interval=10s
@@ -29,7 +28,7 @@ jobs:
       nginx:
         image: nginx:latest
         ports:
-          - 80:80
+          - 3050:80
         options: >-
           --health-cmd="curl -f http://localhost/ || exit 1"
           --health-interval=10s
@@ -40,6 +39,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
+      - name: List files in the root directory
+        run: ls -al
+
+      - name: List files in the covar-app directory
+        run: ls -al ./covar-app
+
       - name: Set up Docker Compose
         uses: docker/setup-buildx-action@v2
 
@@ -48,28 +53,28 @@ jobs:
 
       - name: Create .env file
         run: |
-            echo PG_USER=${{ secrets.PG_USER }} >> .env
-            echo PG_HOST=${{ secrets.PG_HOST }} >> .env
-            echo PG_DATABASE=${{ secrets.PG_DATABASE }} >> .env
-            echo PG_PASSWORD=${{ secrets.PG_PASSWORD }} >> .env
-            echo PG_PORT=${{ secrets.PG_PORT }} >> .env
-            echo JSON_SECRET=${{ secrets.JSON_SECRET }} >> .env
-            echo REFRESH_SECRET=${{ secrets.REFRESH_SECRET }} >> .env
-            echo REACT_APP_API_KEY=${{ secrets.REACT_APP_API_KEY }} >> .env
-            echo REACT_APP_AUTH_DOMAIN=${{ secrets.REACT_APP_AUTH_DOMAIN }} >> .env
-            echo REACT_APP_PROJECT_ID=${{ secrets.REACT_APP_PROJECT_ID }} >> .env
-            echo REACT_APP_STORAGE_BUCKET=${{ secrets.REACT_APP_STORAGE_BUCKET }} >> .env
-            echo REACT_APP_MESSAGING_SENDER_ID=${{ secrets.REACT_APP_MESSAGING_SENDER_ID }} >> .env
-            echo REACT_APP_APP_ID=${{ secrets.REACT_APP_APP_ID }} >> .env
-            echo REACT_APP_MEASUREMENT_ID=${{ secrets.REACT_APP_MEASUREMENT_ID }} >> .env
+          echo PG_USER=${{ secrets.PG_USER }} >> .env
+          echo PG_HOST=${{ secrets.PG_HOST }} >> .env
+          echo PG_DATABASE=${{ secrets.PG_DATABASE }} >> .env
+          echo PG_PASSWORD=${{ secrets.PG_PASSWORD }} >> .env
+          echo PG_PORT=${{ secrets.PG_PORT }} >> .env
+          echo JSON_SECRET=${{ secrets.JSON_SECRET }} >> .env
+          echo REFRESH_SECRET=${{ secrets.REFRESH_SECRET }} >> .env
+          echo REACT_APP_API_KEY=${{ secrets.REACT_APP_API_KEY }} >> .env
+          echo REACT_APP_AUTH_DOMAIN=${{ secrets.REACT_APP_AUTH_DOMAIN }} >> .env
+          echo REACT_APP_PROJECT_ID=${{ secrets.REACT_APP_PROJECT_ID }} >> .env
+          echo REACT_APP_STORAGE_BUCKET=${{ secrets.REACT_APP_STORAGE_BUCKET }} >> .env
+          echo REACT_APP_MESSAGING_SENDER_ID=${{ secrets.REACT_APP_MESSAGING_SENDER_ID }} >> .env
+          echo REACT_APP_APP_ID=${{ secrets.REACT_APP_APP_ID }} >> .env
+          echo REACT_APP_MEASUREMENT_ID=${{ secrets.REACT_APP_MEASUREMENT_ID }} >> .env
 
       - name: Build and run Docker Compose services
-        run: docker-compose up --build
-        
+        run: docker-compose up --build -d
+
       - name: Wait for services to be ready
         run: |
-          ./wait-for-it.sh nginx:80 -t 60
-          ./wait-for-it.sh postgres:5432 -t 60
+          ./wait-for-it.sh nginx:3050 -t 60
+          ./wait-for-it.sh postgres:5555 -t 60
           ./wait-for-it.sh api:5000 -t 60
           ./wait-for-it.sh client:3000 -t 60
 

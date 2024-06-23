@@ -7,7 +7,7 @@ on:
     branches: [ main, develop ]
 
 jobs:
-  e2e-tests:
+  start-docker:
     runs-on: ubuntu-latest
 
     steps:
@@ -43,6 +43,10 @@ jobs:
       - name: Build and run Docker Compose services
         run: docker-compose up --build -d
 
+  e2e-tests:
+    runs-on: ubuntu-latest
+
+    steps:
       - name: Remove existing node_modules
         run: rm -rf ./CoVAR-app/node_modules
 

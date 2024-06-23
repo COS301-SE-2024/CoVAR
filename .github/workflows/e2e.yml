@@ -42,8 +42,8 @@ jobs:
       - name: List files in the root directory
         run: ls -al
 
-      - name: List files in the covar-app directory
-        run: ls -al ./covar-app
+      - name: List files in the CoVAR-app directory
+        run: ls -al ./CoVAR-app
 
       - name: Set up Docker Compose
         uses: docker/setup-buildx-action@v2
@@ -80,11 +80,11 @@ jobs:
 
       - name: Install Cypress dependencies
         run: npm ci
-        working-directory: ./covar-app
+        working-directory: ./CoVAR-app
 
       - name: Run Cypress tests
         run: npm run cypress:run
-        working-directory: ./covar-app
+        working-directory: ./CoVAR-app
 
       - name: Shut down Docker Compose services
         run: docker-compose down

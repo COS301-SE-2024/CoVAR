@@ -8,6 +8,7 @@ import { buttonStyles, cardStyles, headingBoxStyles, mainContentStyles, textFiel
 type User = {
     id: string;
     email: string;
+    name: string;
     role: string;
     createdAt?: string;
 };
@@ -54,30 +55,26 @@ const Organisation = () => {
         fetchUserRole();
     }, []);
 
-    const fetchUsersList = async () => {
-        if (isInOrg) {
-            try {
-                const accessToken = localStorage.getItem('accessToken');
-                if (accessToken) {
-                    const usersList = await fetchUsers(isInOrg, accessToken);
-                    const usersWithId = usersList.map((user: User, index: number) => ({
-                        ...user,
-                        id: user.id || index.toString(),
-                    }));
-                    setUsers(usersWithId);
-                    console.log("Users list:", usersWithId);
+    useEffect(() => {
+        const fetchUsersList = async () => {
+            if (isInOrg) {
+                try {
+                    const accessToken = localStorage.getItem('accessToken');
+                    if (accessToken) {
+                        const usersList = await fetchUsers(isInOrg, accessToken);
+                        setUsers(usersList);
+                        console.log("Users list:", usersList);
+                    }
+                } catch (error) {
+                    console.error('Error fetching users:', error);
+                } finally {
+                    setLoading(false);
                 }
-            } catch (error) {
-                console.error('Error fetching users:', error);
-            } finally {
+            } else {
                 setLoading(false);
             }
-        } else {
-            setLoading(false);
-        }
-    };
+        };
 
-    useEffect(() => {
         fetchUsersList();
     }, [isInOrg]);
 
@@ -99,9 +96,19 @@ const Organisation = () => {
         try {
             const accessToken = localStorage.getItem('accessToken');
             if (accessToken && isInOrg && ownerId) {
-                await addUser(isInOrg, ownerId, newMemberEmail, accessToken);
+                const newUser = await addUser(isInOrg, ownerId, newMemberEmail, accessToken);
+                const updatedUsers = [
+                    ...users,
+                    {
+                        id: newUser.user_id,
+                        email: newUser.username,
+                        name: newUser.username.split('@')[0],
+                        role: newUser.role,
+                        createdAt: new Date().toISOString()
+                    }
+                ];
+                setUsers(updatedUsers);
                 setNewMemberEmail('');
-                fetchUsersList();
             }
         } catch (error) {
             console.error('Error adding member:', error);

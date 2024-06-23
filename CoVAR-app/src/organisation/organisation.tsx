@@ -1,9 +1,30 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Card, CardContent, CircularProgress, TextField, Typography } from '@mui/material';
+import {
+    Button,
+    Card,
+    CardContent,
+    CircularProgress,
+    TextField,
+    Typography,
+} from '@mui/material';
 import { Box } from '@mui/system';
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
-import { getUserRole, fetchUsers, removeUser, addUser, deleteOrganisation, createOrganisation, changeOrganisationName } from '../requests/requests';
-import { buttonStyles, cardStyles, headingBoxStyles, mainContentStyles, textFieldStyles } from '../styles/organisationStyle';
+import {
+    getUserRole,
+    fetchUsers,
+    removeUser,
+    addUser,
+    deleteOrganisation,
+    createOrganisation,
+    changeOrganisationName,
+} from '../requests/requests';
+import {
+    buttonStyles,
+    cardStyles,
+    headingBoxStyles,
+    mainContentStyles,
+    textFieldStyles,
+} from '../styles/organisationStyle';
 
 type User = {
     id: string;
@@ -25,7 +46,7 @@ const Organisation = () => {
     const [isOwner, setIsOwner] = useState(false);
     const [isInOrg, setIsInOrg] = useState<string | null>(null);
     const [username, setUsername] = useState<string | null>(null);
-    const [ownerId, setOwner] = useState<string | null>(null);
+    const [ownerId, setOwnerId] = useState<string | null>(null);
 
     useEffect(() => {
         const fetchUserRole = async () => {
@@ -35,12 +56,12 @@ const Organisation = () => {
                     const userData = await getUserRole(accessToken);
                     console.log('User data:', userData);
                     setRole(userData.role);
-                    setIsOwner(userData.isOwner);
+                    setIsOwner(userData.owner); // Assuming 'owner' is the correct key in userData
                     setIsInOrg(userData.organization_id);
                     setUsername(userData.username);
-                    setOwner(userData.user_id);
+                    setOwnerId(userData.user_id);
                     console.log("User role:", userData.role);
-                    console.log("Is owner:", userData.isOwner);
+                    console.log("Is owner:", userData.owner);
                     console.log("Is in org:", userData.organization_id);
                     // Set the organisation name if user is in an organisation
                     if (userData.orgName) {
@@ -191,7 +212,7 @@ const Organisation = () => {
                         },
                     }}
                     onClick={() => handleRemoveUser(params.row)}
-                    disabled={params.row.email === username}
+                    disabled={!isOwner || params.row.email === username}
                 >
                     Remove
                 </Button>
@@ -253,7 +274,7 @@ const Organisation = () => {
         <Box sx={mainContentStyles}>
             <Box sx={headingBoxStyles}>
                 <Typography variant="h4" sx={{ marginBottom: 2 }}>
-                    {organisationName} {/* Display organisation name dynamically */}
+                    {organisationName}
                 </Typography>
             </Box>
             <Box sx={{ height: '50vh', width: '100%', overflow: 'auto', marginBottom: '1rem' }}>
@@ -313,98 +334,100 @@ const Organisation = () => {
                     }}
                 />
             </Box>
-            <Box sx={{ display: 'flex', gap: 10, marginTop: 6 }}>
-                <Card sx={cardStyles}>
-                    <CardContent>
-                        <Typography variant="h6" color="text.primary">
-                            Add a Member
-                        </Typography>
-                        <TextField
-                            required
-                            margin="normal"
-                            fullWidth
-                            id="email"
-                            label="Email Address"
-                            name="email"
-                            autoComplete="email"
-                            InputLabelProps={{ sx: { color: 'text.primary' } }}
-                            InputProps={{ sx: { color: 'text.primary' } }}
-                            value={newMemberEmail}
-                            onChange={(e) => setNewMemberEmail(e.target.value)}
-                            sx={textFieldStyles}
-                        />
-                        <Button variant="contained" sx={buttonStyles} onClick={handleAddMember}>
-                            Add Member
-                        </Button>
-                    </CardContent>
-                </Card>
-                <Card sx={cardStyles}>
-                    <CardContent>
-                        <Typography variant="h6" color="text.primary">
-                            Change Organisation Name
-                        </Typography>
-                        <TextField
-                            required
-                            margin="normal"
-                            fullWidth
-                            id="organisation-name"
-                            label="Organisation Name"
-                            name="organisation-name"
-                            autoComplete="organisation-name"
-                            InputLabelProps={{ sx: { color: 'text.primary' } }}
-                            InputProps={{ sx: { color: 'text.primary' } }}
-                            value={confirmChangeOrganisationName}
-                            onChange={(e) => setConfirmChangeOrganisationName(e.target.value)}
-                            sx={textFieldStyles}
-                        />
-                        <Button variant="contained" sx={buttonStyles} onClick={handleChangeOrganisationName}>
-                            Change Name
-                        </Button>
-                    </CardContent>
-                </Card>
-                <Card sx={cardStyles}>
-                    <CardContent>
-                        <Typography variant="h6" color="text.primary">
-                            Disband Organisation
-                        </Typography>
-                        <TextField
-                            required
-                            margin="normal"
-                            fullWidth
-                            id="confirm-disband-organisation-name"
-                            label="Confirm Organisation Name"
-                            name="confirm-disband-organisation-name"
-                            autoComplete="organisation-name"
-                            InputLabelProps={{ sx: { color: 'text.primary' } }}
-                            InputProps={{ sx: { color: 'text.primary' } }}
-                            value={confirmDisbandOrganisationName}
-                            onChange={(e) => setConfirmDisbandOrganisationName(e.target.value)}
-                            sx={textFieldStyles}
-                        />
-                        <br />
-                        <br />
-                        <Button
-                            variant="contained"
-                            sx={{
-                                backgroundColor: '#D11C45',
-                                color: '#FFFFFF',
-                                width: '100%',
-                                '&:hover': {
-                                    backgroundColor: '#B2163B',
-                                },
-                            }}
-                            onClick={handleDeleteOrganisation}
-                            disabled={
-                                confirmDisbandOrganisationName === '' ||
-                                confirmDisbandOrganisationName !== organisationName ||
-                                deleteConfirmed
-                            }
-                        >
-                            Delete Organisation
-                        </Button>
-                    </CardContent>
-                </Card>
-            </Box>
+            {isOwner && (
+                <Box sx={{ display: 'flex', gap: 10, marginTop: 6 }}>
+                    <Card sx={cardStyles}>
+                        <CardContent>
+                            <Typography variant="h6" color="text.primary">
+                                Add a Member
+                            </Typography>
+                            <TextField
+                                required
+                                margin="normal"
+                                fullWidth
+                                id="email"
+                                label="Email Address"
+                                name="email"
+                                autoComplete="email"
+                                InputLabelProps={{ sx: { color: 'text.primary' } }}
+                                InputProps={{ sx: { color: 'text.primary' } }}
+                                value={newMemberEmail}
+                                onChange={(e) => setNewMemberEmail(e.target.value)}
+                                sx={textFieldStyles}
+                            />
+                            <Button variant="contained" sx={buttonStyles} onClick={handleAddMember}>
+                                Add Member
+                            </Button>
+                        </CardContent>
+                    </Card>
+                    <Card sx={cardStyles}>
+                        <CardContent>
+                            <Typography variant="h6" color="text.primary">
+                                Change Organisation Name
+                            </Typography>
+                            <TextField
+                                required
+                                margin="normal"
+                                fullWidth
+                                id="organisation-name"
+                                label="Organisation Name"
+                                name="organisation-name"
+                                autoComplete="organisation-name"
+                                InputLabelProps={{ sx: { color: 'text.primary' } }}
+                                InputProps={{ sx: { color: 'text.primary' } }}
+                                value={confirmChangeOrganisationName}
+                                onChange={(e) => setConfirmChangeOrganisationName(e.target.value)}
+                                sx={textFieldStyles}
+                            />
+                            <Button variant="contained" sx={buttonStyles} onClick={handleChangeOrganisationName}>
+                                Change Name
+                            </Button>
+                        </CardContent>
+                    </Card>
+                    <Card sx={cardStyles}>
+                        <CardContent>
+                            <Typography variant="h6" color="text.primary">
+                                Disband Organisation
+                            </Typography>
+                            <TextField
+                                required
+                                margin="normal"
+                                fullWidth
+                                id="confirm-disband-organisation-name"
+                                label="Confirm Organisation Name"
+                                name="confirm-disband-organisation-name"
+                                autoComplete="organisation-name"
+                                InputLabelProps={{ sx: { color: 'text.primary' } }}
+                                InputProps={{ sx: { color: 'text.primary' } }}
+                                value={confirmDisbandOrganisationName}
+                                onChange={(e) => setConfirmDisbandOrganisationName(e.target.value)}
+                                sx={textFieldStyles}
+                            />
+                            <br />
+                            <br />
+                            <Button
+                                variant="contained"
+                                sx={{
+                                    backgroundColor: '#D11C45',
+                                    color: '#FFFFFF',
+                                    width: '100%',
+                                    '&:hover': {
+                                        backgroundColor: '#B2163B',
+                                    },
+                                }}
+                                onClick={handleDeleteOrganisation}
+                                disabled={
+                                    confirmDisbandOrganisationName === '' ||
+                                    confirmDisbandOrganisationName !== organisationName ||
+                                    deleteConfirmed
+                                }
+                            >
+                                Delete Organisation
+                            </Button>
+                        </CardContent>
+                    </Card>
+                </Box>
+            )}
         </Box>
     );
 };

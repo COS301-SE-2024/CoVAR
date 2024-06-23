@@ -294,9 +294,15 @@ app.post('/organizations/create',authenticateToken, async (req, res) => {
 // Add user to organization
 app.post('/organizations/:id/add_user', async (req, res) => {
     const { id: OwnerId } = req.params;
-    const { organizationId, OrgName, username } = req.body;
-
+    const { organizationId, username } = req.body;
+    console.log("owner",OwnerId);
+    console.log("org",organizationId);
+    console.log("username",username);
     try {
+        //get org name 
+        const orgQuery = `SELECT name FROM organizations WHERE organization_id = $1`;
+        const orgResult = await pgClient.query(orgQuery, [organizationId]);
+        const OrgName = orgResult.rows[0].name;
         let ownerResult = await isOwner(pgClient, OrgName, OwnerId);
         if (!ownerResult.isOwner) {
             return res.status(error === 'Organization not found' ? 404 : 403).send(error);
@@ -325,9 +331,13 @@ app.post('/organizations/:id/add_user', async (req, res) => {
 // Remove user from organization
 app.post('/organizations/:id/remove_user', async (req, res) => {
     const { id: OwnerId } = req.params;
-    const { organizationId, OrgName, username } = req.body;
+    const { organizationId,  username } = req.body;
     
     try {
+        //get org name
+        const orgQuery = `SELECT name FROM organizations WHERE organization_id = $1`;
+        const orgResult = await pgClient.query(orgQuery, [organizationId]);
+        const OrgName = orgResult.rows[0].name;
         let ownerResult = await isOwner(pgClient, OrgName, OwnerId);
         if (!ownerResult.isOwner) {
             return res.status(error === 'Organization not found' ? 404 : 403).send(error);

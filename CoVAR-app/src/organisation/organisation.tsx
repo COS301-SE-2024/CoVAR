@@ -34,7 +34,7 @@ const Organisation = () => {
                     console.log("User data:", userData);
                     setRole(userData.role);
                     setIsOwner(userData.isOwner);
-                    setIsInOrg(userData.organization_id); // Assuming organization_id is a UUID or null
+                    setIsInOrg(userData.organization_id);
                     console.log("User role:", userData.role);
                     console.log("Is owner:", userData.isOwner);
                     console.log("Is in org:", userData.organization_id);
@@ -53,7 +53,7 @@ const Organisation = () => {
                 try {
                     const response = await axios.post(
                         '/api/organizations/users',
-                        { org_id: isInOrg }, // Request body
+                        { org_id: isInOrg }, 
                         {
                             headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}` }
                         }
@@ -61,9 +61,9 @@ const Organisation = () => {
                     const usersList = response.data.map((user: any) => ({
                         id: user.user_id,
                         email: user.username,
-                        name: user.username.split('@')[0], // Assuming name is part of the email before @
+                        name: user.username.split('@')[0],
                         role: user.role,
-                        createdAt: user.createdAt // Adjust if necessary
+                        createdAt: user.createdAt 
                     }));
                     console.log("Users list:", usersList);
                     setUsers(usersList);

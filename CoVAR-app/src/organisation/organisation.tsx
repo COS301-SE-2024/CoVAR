@@ -136,7 +136,6 @@ const Organisation = () => {
     const handleCreateNewOrganisation = async () => {
         try {
             const accessToken = localStorage.getItem('accessToken');
-            const username = localStorage.getItem('username');
             if (accessToken && username) {
                 const orgData = await createOrganisation(organisationName, username, accessToken);
                 setIsInOrg(orgData.id);

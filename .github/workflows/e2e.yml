@@ -43,9 +43,15 @@ jobs:
       - name: Build and run Docker Compose services
         run: docker-compose up --build -d
 
-      - name: Install Cypress dependencies
+      - name: Remove existing node_modules
+        run: rm -rf ./covar-app/node_modules
+
+      - name: Create node_modules directory with correct permissions
+        run: mkdir -p ./covar-app/node_modules
+
+      - name: Install dependencies
         run: npm ci
-        working-directory: ./CoVAR-app
+        working-directory: ./covar-app
 
       - name: Run Cypress tests
         run: npx cypress run

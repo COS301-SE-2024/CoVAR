@@ -3,14 +3,9 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { BrowserRouter as Router } from 'react-router-dom';
 import '@testing-library/jest-dom/extend-expect';
 import Sidebar from '../sidebar/sidebar';
+import { doSignOut } from '../firebase/auth';
 
 // Mock Firebase services
-
-jest.mock('../sidebar/components/userRole', () => ({
-  __esModule: true, // this property makes it work
-  default: jest.fn().mockReturnValue('admin'), // Mock the user role
-}));
-
 jest.mock('firebase/app', () => ({
   initializeApp: jest.fn(),
 }));
@@ -43,7 +38,7 @@ describe('Sidebar Component', () => {
   test('renders the sidebar with all menu items', () => {
     render(
       <Router>
-        <Sidebar />
+        <Sidebar role={'admin'} onSignOut={doSignOut}/>
       </Router>
     );
 

@@ -1,30 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import {
-    Button,
-    Card,
-    CardContent,
-    CircularProgress,
-    TextField,
-    Typography,
-} from '@mui/material';
+import { Button, Card, CardContent, CircularProgress, TextField, Typography, } from '@mui/material';
 import { Box } from '@mui/system';
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
-import {
-    getUserRole,
-    fetchUsers,
-    removeUser,
-    addUser,
-    deleteOrganisation,
-    createOrganisation,
-    changeOrganisationName,
-} from '../requests/requests';
-import {
-    buttonStyles,
-    cardStyles,
-    headingBoxStyles,
-    mainContentStyles,
-    textFieldStyles,
-} from '../styles/organisationStyle';
+import { getUserRole, fetchUsers, removeUser, addUser, deleteOrganisation, createOrganisation, changeOrganisationName, } from '../requests/requests';
+import { buttonStyles, cardStyles, headingBoxStyles, mainContentStyles, textFieldStyles } from '../styles/organisationStyle';
 
 type User = {
     id: string;
@@ -41,7 +20,7 @@ const Organisation = () => {
     const [confirmChangeOrganisationName, setConfirmChangeOrganisationName] = useState('');
     const [confirmDisbandOrganisationName, setConfirmDisbandOrganisationName] = useState('');
     const [deleteConfirmed, setDeleteConfirmed] = useState(false);
-    const [role, setRole] = useState<string | null>(null);
+    // const [role, setRole] = useState<string | null>(null);
     const [isOwner, setIsOwner] = useState(false);
     const [isInOrg, setIsInOrg] = useState<string | null>(null);
     const [username, setUsername] = useState<string | null>(null);
@@ -54,7 +33,7 @@ const Organisation = () => {
                 if (accessToken) {
                     const userData = await getUserRole(accessToken);
                     console.log('User data:', userData);
-                    setRole(userData.role);
+                    // setRole(userData.role);
                     setIsOwner(userData.owner); // Assuming 'owner' is the correct key in userData
                     setIsInOrg(userData.organization_id);
                     setUsername(userData.username);

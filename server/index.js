@@ -209,22 +209,6 @@ app.post('/users/create', async (req, res) => {
     }
 });
 
-
-        // User does not exist, proceed with insertion
-        const insertUserQuery = `
-            INSERT INTO users (username, role)
-            VALUES ($1, $2)
-        `;
-        await pgClient.query(insertUserQuery, [email, role]);
-
-        res.status(201).send('User created successfully');
-    } catch (err) {
-        console.error('Error creating user:', err);
-        res.status(500).send('Server Error');
-    }
-});
-
-  
 // Test route
 app.get('/test', (req, res) => {
     res.send('Test route is working');

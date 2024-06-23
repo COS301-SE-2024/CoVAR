@@ -32,13 +32,15 @@
     "@typescript-eslint/parser": "^7.11.0",
     "eslint": "^8.57.0",
     "eslint-plugin-react": "^7.34.2",
-    "react-scripts": "5.0.1"
+    "react-scripts": "5.0.1",
+    "cypress": "^9.1.0"
   },
   "scripts": {
     "dev": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test --coverage --watchAll=false",
     "lint": "eslint . --ext .jsx,.ts,.tsx",
+    "cypress:run": "cypress run",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {

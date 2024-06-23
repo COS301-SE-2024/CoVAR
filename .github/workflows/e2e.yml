@@ -1,0 +1,68 @@
+name: Cypress E2E Tests
+
+on:
+    push:
+      branches: [ main, develop ]
+  
+    pull_request:
+      branches: [ main, develop ]
+
+jobs:
+  e2e-tests:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:latest
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: mydatabase
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+      nginx:
+        image: nginx:latest
+        ports:
+          - 80:80
+        options: >-
+          --health-cmd="curl -f http://localhost/ || exit 1"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Docker Compose
+        uses: docker/setup-buildx-action@v2
+
+      - name: Make wait-for-it.sh executable
+        run: chmod +x ./wait-for-it.sh
+
+      - name: Build and run Docker Compose services
+        run: docker-compose up --build -d
+
+      - name: Wait for services to be ready
+        run: |
+          ./wait-for-it.sh nginx:80 -t 60
+          ./wait-for-it.sh postgres:5432 -t 60
+          ./wait-for-it.sh api:3000 -t 60
+          ./wait-for-it.sh client:3000 -t 60
+
+      - name: Install Cypress dependencies
+        run: npm ci
+        working-directory: ./covar-app
+
+      - name: Run Cypress tests
+        run: npm run cypress:run
+        working-directory: ./covar-app
+
+      - name: Shut down Docker Compose services
+        run: docker-compose down

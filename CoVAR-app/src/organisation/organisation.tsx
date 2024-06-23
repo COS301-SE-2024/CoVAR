@@ -8,7 +8,6 @@ import { buttonStyles, cardStyles, headingBoxStyles, mainContentStyles, textFiel
 type User = {
     id: string;
     email: string;
-    name: string;
     role: string;
     createdAt?: string;
 };
@@ -92,9 +91,8 @@ const Organisation = () => {
                 setUsers([...users, {
                     id: newUser.user_id,
                     email: newUser.username,
-                    name: newUser.username.split('@')[0], // Assuming name is part of the email before @
                     role: newUser.role,
-                    createdAt: newUser.createdAt // Adjust if necessary
+                    createdAt: newUser.createdAt
                 }]);
                 setNewMemberEmail('');
             }
@@ -149,9 +147,9 @@ const Organisation = () => {
     };
 
     const columns: GridColDef[] = [
-        { field: 'name', headerName: 'Name', flex: 1, headerAlign: 'left', resizable: false },
         { field: 'email', headerName: 'Email', flex: 1, headerAlign: 'left', resizable: false },
         {
+            resizable: false,
             field: 'actions',
             headerName: 'Actions',
             flex: 0.5,
@@ -170,7 +168,7 @@ const Organisation = () => {
                         },
                     }}
                     onClick={() => handleRemoveUser(params.row)}
-                    disabled={params.row.email === username} // Disable the button if the user's email matches the owner's email
+                    disabled={params.row.email === username}
                 >
                     Remove
                 </Button>

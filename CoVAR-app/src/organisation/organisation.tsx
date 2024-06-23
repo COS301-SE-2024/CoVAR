@@ -2,7 +2,6 @@ import { Button, Card, CardContent, CircularProgress, TextField, Typography } fr
 import { Box } from '@mui/system';
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import axios from 'axios';
-import { Timestamp } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import { getUserRole } from '../requests/requests';
 import { buttonStyles, cardStyles, headingBoxStyles, mainContentStyles, textFieldStyles } from '../styles/organisationStyle';
@@ -12,7 +11,7 @@ type User = {
     email: string;
     name: string;
     role: string;
-    createdAt: Timestamp;
+    createdAt?: string; // Adjust based on your actual data structure
 };
 
 const Organisation = () => {
@@ -24,7 +23,7 @@ const Organisation = () => {
     const [deleteConfirmed, setDeleteConfirmed] = useState(false);
     const [role, setRole] = useState<string | null>(null);
     const [isOwner, setIsOwner] = useState(false);
-    const [isInOrg, setIsInOrg] = useState(false);
+    const [isInOrg, setIsInOrg] = useState<string | null>(null);
     const [username, setUsername] = useState<string | null>(null);
 
     useEffect(() => {
@@ -33,10 +32,14 @@ const Organisation = () => {
                 const accessToken = localStorage.getItem('accessToken');
                 if (accessToken) {
                     const userData = await getUserRole(accessToken);
+                    console.log("User data:", userData);
                     setRole(userData.role);
                     setIsOwner(userData.isOwner);
-                    setIsInOrg(userData.isInOrg);
+                    setIsInOrg(userData.organization_id); // Assuming organization_id is a UUID or null
                     setUsername(userData.username);
+                    console.log("User role:", userData.role);
+                    console.log("Is owner:", userData.isOwner);
+                    console.log("Is in org:", userData.organization_id);
                 }
             } catch (error) {
                 console.error("Error fetching user role:", error);
@@ -48,19 +51,30 @@ const Organisation = () => {
 
     useEffect(() => {
         const fetchUsers = async () => {
-            try {
-                const response = await axios.post(
-                    '/api/organizations/users',
-                    { org_id: isInOrg },
-                    {
-                        headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}` }
-                    }
-                );
-                const usersList = response.data;
-                setUsers(usersList);
-            } catch (error) {
-                console.error('Error fetching users:', error);
-            } finally {
+            if (isInOrg) {
+                try {
+                    const response = await axios.post(
+                        '/api/organizations/users',
+                        { org_id: isInOrg }, // Request body
+                        {
+                            headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}` }
+                        }
+                    );
+                    const usersList = response.data.map((user: any) => ({
+                        id: user.user_id,
+                        email: user.username,
+                        name: user.username.split('@')[0], // Assuming name is part of the email before @
+                        role: user.role,
+                        createdAt: user.createdAt // Adjust if necessary
+                    }));
+                    console.log("Users list:", usersList);
+                    setUsers(usersList);
+                } catch (error) {
+                    console.error('Error fetching users:', error);
+                } finally {
+                    setLoading(false);
+                }
+            } else {
                 setLoading(false);
             }
         };
@@ -125,7 +139,7 @@ const Organisation = () => {
                 }
             );
             if (response.status === 200) {
-                setIsInOrg(false);
+                setIsInOrg(null);
                 setOrganisationName('');
                 setConfirmOrganisationName('');
                 setDeleteConfirmed(true);
@@ -215,7 +229,9 @@ const Organisation = () => {
         );
     }
 
-    if (!isInOrg) {
+    console.log("Is in org:", isInOrg === null);
+    if (isInOrg === null) {
+        console.log("Not in an org blud");
         return (
             <Box sx={mainContentStyles}>
                 <Box sx={headingBoxStyles}>
@@ -251,7 +267,7 @@ const Organisation = () => {
                     </CardContent>
                 </Card>
             </Box>
-        );
+        )
     } else {
         return (
             <Box sx={mainContentStyles}>
@@ -264,11 +280,22 @@ const Organisation = () => {
                     <DataGrid
                         rows={users}
                         columns={columns}
+                        getRowId={(row) => row.id}
                         sx={{
                             width: '100%',
                             color: 'text.primary',
                             fontWeight: 500,
                             borderColor: 'text.primary',
+                            '& .MuiDataGrid-columnHeader': {
+                                backgroundColor: 'background.paper',
+                                color: 'text.primary',
+                            },
+                            '& .MuiDataGrid-columnHeaderTitle': {
+                                color: 'text.primary',
+                            },
+                            '& .MuiDataGrid-columnSeparator': {
+                                color: 'text.primary',
+                            },
                             '& .MuiDataGrid-cell': {
                                 color: 'text.primary',
                                 borderColor: 'text.primary',
@@ -391,7 +418,7 @@ const Organisation = () => {
                     </Card>
                 </Box>
             </Box>
-        );
+        )
     }
 };
 

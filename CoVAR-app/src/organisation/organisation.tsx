@@ -36,6 +36,7 @@ const Organisation = () => {
                     setRole(userData.role);
                     setIsOwner(userData.isOwner);
                     setIsInOrg(userData.organization_id);
+                    setIsInOrg(userData.organization_id);
                     setUsername(userData.username);
                     console.log("User role:", userData.role);
                     console.log("Is owner:", userData.isOwner);

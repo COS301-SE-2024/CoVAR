@@ -326,7 +326,7 @@ app.post('/organizations/:id/add_user', async (req, res) => {
 app.post('/organizations/:id/remove_user', async (req, res) => {
     const { id: OwnerId } = req.params;
     const { organizationId, OrgName, username } = req.body;
-
+    
     try {
         let ownerResult = await isOwner(pgClient, OrgName, OwnerId);
         if (!ownerResult.isOwner) {
@@ -337,7 +337,10 @@ app.post('/organizations/:id/remove_user', async (req, res) => {
         if (userResult.rows.length === 0) {
             return res.status(404).send('User not found');
         }
-
+        //if user to be removed is owner dont remove
+        if(userResult.rows[0].user_id === OwnerId){
+            return res.status(400).send('Owner cannot be removed');
+        }
         const userInOrgResult = await pgClient.query('SELECT organization_id FROM users WHERE user_id = $1', [userResult.rows[0].user_id]);
         if (userInOrgResult.rows.length === 0 || userInOrgResult.rows[0].organization_id !== organizationId) {
             return res.status(400).send('User not in the organization');

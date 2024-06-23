@@ -8,6 +8,7 @@ import { buttonStyles, cardStyles, headingBoxStyles, mainContentStyles, textFiel
 type User = {
     id: string;
     email: string;
+    name: string;
     role: string;
     createdAt?: string;
 };
@@ -23,7 +24,7 @@ const Organisation = () => {
     const [isOwner, setIsOwner] = useState(false);
     const [isInOrg, setIsInOrg] = useState<string | null>(null);
     const [username, setUsername] = useState<string | null>(null);
-
+    const [ownerId, setOwner] = useState<string | null>(null);
     useEffect(() => {
         const fetchUserRole = async () => {
             try {
@@ -35,6 +36,7 @@ const Organisation = () => {
                     setIsOwner(userData.isOwner);
                     setIsInOrg(userData.organization_id);
                     setUsername(userData.username);
+                    setOwner(userData.user_id);
                     console.log("User role:", userData.role);
                     console.log("Is owner:", userData.isOwner);
                     console.log("Is in org:", userData.organization_id);
@@ -59,6 +61,7 @@ const Organisation = () => {
                     if (accessToken) {
                         const usersList = await fetchUsers(isInOrg, accessToken);
                         setUsers(usersList);
+                        console.log("Users list:", usersList);
                     }
                 } catch (error) {
                     console.error('Error fetching users:', error);
@@ -76,8 +79,8 @@ const Organisation = () => {
     const handleRemoveUser = async (user: User) => {
         try {
             const accessToken = localStorage.getItem('accessToken');
-            if (accessToken && isInOrg) {
-                const status = await removeUser(isInOrg, organisationName, user.email, accessToken);
+            if (accessToken && isInOrg && ownerId) {
+                const status = await removeUser(isInOrg, ownerId, user.email, accessToken);
                 if (status === 200) {
                     setUsers(users.filter(u => u.id !== user.id));
                 }
@@ -90,20 +93,25 @@ const Organisation = () => {
     const handleAddMember = async () => {
         try {
             const accessToken = localStorage.getItem('accessToken');
-            if (accessToken && isInOrg) {
-                const newUser = await addUser(isInOrg, organisationName, newMemberEmail, accessToken);
-                setUsers([...users, {
-                    id: newUser.user_id,
-                    email: newUser.username,
-                    role: newUser.role,
-                    createdAt: newUser.createdAt
-                }]);
+            if (accessToken && isInOrg && ownerId) {
+                const newUser = await addUser(isInOrg, ownerId, newMemberEmail, accessToken);
+                const updatedUsers = [
+                    ...users,
+                    {
+                        id: newUser.user_id,
+                        email: newUser.username,
+                        name: newUser.username.split('@')[0],
+                        role: newUser.role,
+                        createdAt: new Date().toISOString()
+                    }
+                ];
+                setUsers(updatedUsers);
                 setNewMemberEmail('');
             }
         } catch (error) {
             console.error('Error adding member:', error);
         }
-    };
+    };    
 
     const handleDeleteOrganisation = async () => {
         try {

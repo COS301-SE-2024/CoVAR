@@ -35,13 +35,13 @@ export const fetchUsers = async (orgId: string, accessToken: string) => {
   }
 };
 
-export const removeUser = async (orgId: string, organisationName: string, email: string, accessToken: string) => {
+
+export const removeUser = async (orgId: string, ownerId: string, email: string, accessToken: string) => {
   try {
     const response = await axios.post(
-      `/api/organizations/${orgId}/remove_user`,
+      `/api/organizations/${ownerId}/remove_user`,
       {
         organizationId: orgId,
-        OrgName: organisationName,
         username: email,
       },
       {
@@ -55,13 +55,12 @@ export const removeUser = async (orgId: string, organisationName: string, email:
   }
 };
 
-export const addUser = async (orgId: string, organisationName: string, email: string, accessToken: string) => {
+export const addUser = async (orgId: string, ownerId: string, email: string, accessToken: string) => {
   try {
     const response = await axios.post(
-      `/api/organizations/${orgId}/add_user`,
+      `/api/organizations/${ownerId}/add_user`,
       {
         organizationId: orgId,
-        OrgName: organisationName,
         username: email,
       },
       {

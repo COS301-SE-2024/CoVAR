@@ -3,6 +3,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { BrowserRouter as Router } from 'react-router-dom';
 import '@testing-library/jest-dom/extend-expect';
 import Sidebar from '../sidebar/sidebar';
+import { doSignOut } from '../firebase/auth';
 
 // Mock Firebase services
 

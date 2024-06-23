@@ -1,7 +1,6 @@
 import { Button, Card, CardContent, CircularProgress, TextField, Typography } from '@mui/material';
 import { Box } from '@mui/system';
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
-import axios from 'axios';
 import { useEffect, useState } from 'react';
 import { getUserRole, fetchUsers, removeUser, addUser, deleteOrganisation, createOrganisation, changeOrganisationName } from '../requests/requests';
 import { buttonStyles, cardStyles, headingBoxStyles, mainContentStyles, textFieldStyles } from '../styles/organisationStyle';
@@ -9,7 +8,6 @@ import { buttonStyles, cardStyles, headingBoxStyles, mainContentStyles, textFiel
 type User = {
     id: string;
     email: string;
-    name: string;
     role: string;
     createdAt?: string;
 };
@@ -36,11 +34,14 @@ const Organisation = () => {
                     setRole(userData.role);
                     setIsOwner(userData.isOwner);
                     setIsInOrg(userData.organization_id);
-                    setIsInOrg(userData.organization_id);
                     setUsername(userData.username);
                     console.log("User role:", userData.role);
                     console.log("Is owner:", userData.isOwner);
                     console.log("Is in org:", userData.organization_id);
+                    // Set the organisation name if user is in an organisation
+                    if (userData.organization_name) {
+                        setOrganisationName(userData.organization_name);
+                    }
                 }
             } catch (error) {
                 console.error("Error fetching user role:", error);
@@ -94,9 +95,8 @@ const Organisation = () => {
                 setUsers([...users, {
                     id: newUser.user_id,
                     email: newUser.username,
-                    name: newUser.username.split('@')[0], // Assuming name is part of the email before @
                     role: newUser.role,
-                    createdAt: newUser.createdAt // Adjust if necessary
+                    createdAt: newUser.createdAt
                 }]);
                 setNewMemberEmail('');
             }
@@ -140,10 +140,10 @@ const Organisation = () => {
     const handleCreateNewOrganisation = async () => {
         try {
             const accessToken = localStorage.getItem('accessToken');
-            const username = localStorage.getItem('username');
             if (accessToken && username) {
                 const orgData = await createOrganisation(organisationName, username, accessToken);
                 setIsInOrg(orgData.id);
+                setOrganisationName(orgData.name); // Set the organisation name
             }
         } catch (error) {
             console.error('Error creating organisation:', error);
@@ -151,9 +151,9 @@ const Organisation = () => {
     };
 
     const columns: GridColDef[] = [
-        { field: 'name', headerName: 'Name', flex: 1, headerAlign: 'left', resizable: false },
         { field: 'email', headerName: 'Email', flex: 1, headerAlign: 'left', resizable: false },
         {
+            resizable: false,
             field: 'actions',
             headerName: 'Actions',
             flex: 0.5,
@@ -172,6 +172,7 @@ const Organisation = () => {
                         },
                     }}
                     onClick={() => handleRemoveUser(params.row)}
+                    disabled={params.row.email === username}
                 >
                     Remove
                 </Button>
@@ -232,7 +233,7 @@ const Organisation = () => {
         <Box sx={mainContentStyles}>
             <Box sx={headingBoxStyles}>
                 <Typography variant="h4" sx={{ marginBottom: 2 }}>
-                    Organisation
+                    {organisationName} {/* Display organisation name dynamically */}
                 </Typography>
             </Box>
             <Box sx={{ height: '50vh', width: '100%', overflow: 'auto', marginBottom: '1rem' }}>

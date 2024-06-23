@@ -89,11 +89,10 @@ app.get('/users/all', authenticateToken,async (req, res) => {
 
 app.post('/getUser', authenticateToken, async (req, res) => {
     const token = req.body.accessToken;
+
     try {
         const decodedToken = jwt.verify(token, keys.jsonKey);
         const userId = decodedToken.user_id;
-        console.log("getUser");
-        console.log(userId);
 
         const userQuery = `SELECT * FROM users WHERE user_id = $1`;
         const userResult = await pgClient.query(userQuery, [userId]);
@@ -101,35 +100,40 @@ app.post('/getUser', authenticateToken, async (req, res) => {
         if (userResult.rows.length === 0) {
             return res.status(404).json({ error: 'User not found' });
         }
-        //get the org name 
-        if(userResult.rows[0].organization_id === null){
-            Owner={isOwner:false};
-            console.log(Owner.isOwner);
-        }else{
-        const orgQuery = `SELECT name FROM organizations WHERE organization_id = $1`;
-        const orgResult = await pgClient.query(orgQuery, [userResult.rows[0].organization_id]);
-        console.log("Org");
-        console.log(orgResult.rows[0].name);
-        //check if user is an owner of an organization
-        Owner=await isOwner(pgClient, orgResult.rows[0].name, userResult.rows[0].user_id);
-        console.log("Owner");
-        console.log(Owner.isOwner);
+
+        let orgName = null;
+        let owner = { isOwner: false };
+
+        // Check if the user is associated with an organization
+        if (userResult.rows[0].organization_id !== null) {
+            const orgQuery = `SELECT name FROM organizations WHERE organization_id = $1`;
+            const orgResult = await pgClient.query(orgQuery, [userResult.rows[0].organization_id]);
+            
+            if (orgResult.rows.length > 0) {
+                orgName = orgResult.rows[0].name;
+                // Check if user is an owner of the organization
+                owner = await isOwner(pgClient, orgName, userResult.rows[0].user_id);
+            } else {
+                console.error('Organization not found');
+            }
         }
+
         const user = {
             user_id: userResult.rows[0].user_id,
             username: userResult.rows[0].username,
             role: userResult.rows[0].role,
             organization_id: userResult.rows[0].organization_id,
-            owner: Owner.isOwner
+            orgName: orgName, // Include organization name in response
+            owner: owner.isOwner
         };
-        console.log("getUser");
-        console.log(user);
+
         res.json(user);
     } catch (err) {
         console.error('Error fetching user:', err);
         res.status(500).json({ error: 'Server Error' });
     }
 });
+
 
 app.post('/users/login', async (req, res) => {
    const username=req.body.username;

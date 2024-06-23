@@ -101,7 +101,13 @@ app.post('/getUser', authenticateToken, async (req, res) => {
         if (userResult.rows.length === 0) {
             return res.status(404).json({ error: 'User not found' });
         }
-        Owner=await isOwner(pgClient, req.body.organization, userResult.rows[0].user_id);
+        //get the org name 
+        const orgQuery = `SELECT name FROM organizations WHERE organization_id = $1`;
+        const orgResult = await pgClient.query(orgQuery, [userResult.rows[0].organization_id]);
+        console.log("Org");
+        console.log(orgResult.rows[0].name);
+        //check if user is an owner of an organization
+        Owner=await isOwner(pgClient, orgResult.rows[0].name, userResult.rows[0].user_id);
         console.log("Owner");
         console.log(Owner.isOwner);
         const user = {

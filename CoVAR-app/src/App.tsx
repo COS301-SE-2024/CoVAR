@@ -9,6 +9,7 @@ import Settings from './settings/settings';
 import Organisation from './organisation/organisation'; 
 import Layout from './layout/layout'; 
 import { CustomThemeProvider } from './styles/customThemeProvider';
+import Help from './help/help';
 
 
 
@@ -25,6 +26,7 @@ const App: React.FC = () => {
             <Route path="/settings" element={<Layout><Settings /></Layout>} />
             <Route path="/admin-tools" element={<Layout><AdminTools /></Layout>} />
             <Route path="/organisation" element={<Layout><Organisation /></Layout>} /> 
+            <Route path="/help" element={<Layout><Help /></Layout>} />
           </Routes>
       </Router>
     </CustomThemeProvider>

@@ -12,6 +12,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 import { ThemeContext } from '../styles/customThemeProvider';
 import { iconStyles, logoStyles, logoutButtonStyles, sidebarItemStyles, sidebarStyles } from '../styles/sidebarStyle';
+import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 
 interface SidebarProps {
   role: string | null;
@@ -167,6 +168,26 @@ const Sidebar: React.FC<SidebarProps> = ({ role, onSignOut }) => {
             <ListItemText primary="Admin Tools" />
           </ListItem>
         )}
+
+        <ListItem
+            component={Link}
+            to="/help"
+            sx={{
+                ...sidebarItemStyles,
+                backgroundColor: isActive('/help') ? theme.palette.primary.main : 'inherit',
+                color: isActive('/help') ? 'white' : theme.palette.text.primary,
+                borderRadius: '10px',
+                '&:hover': {
+                backgroundColor: theme.palette.action.hover,
+                color: theme.palette.text.primary,
+                },
+            }}
+            >
+            <ListItemIcon sx={{ ...iconStyles, color: isActive('/help') ? 'white' : theme.palette.text.primary }}>
+                <HelpOutlineIcon />
+            </ListItemIcon>
+            <ListItemText primary="Help" />
+        </ListItem>
       </List>
       <Button
         variant="contained"

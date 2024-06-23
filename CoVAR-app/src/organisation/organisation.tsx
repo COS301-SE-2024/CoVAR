@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
-import { Button, Card, CardContent, CircularProgress, TextField, Typography, } from '@mui/material';
+import { useEffect, useState, useCallback } from 'react';
+import { Button, Card, CardContent, CircularProgress, TextField, Typography } from '@mui/material';
 import { Box } from '@mui/system';
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
-import { getUserRole, fetchUsers, removeUser, addUser, deleteOrganisation, createOrganisation, changeOrganisationName, } from '../requests/requests';
+import { getUserRole, fetchUsers, removeUser, addUser, deleteOrganisation, createOrganisation, changeOrganisationName } from '../requests/requests';
 import { buttonStyles, cardStyles, headingBoxStyles, mainContentStyles, textFieldStyles } from '../styles/organisationStyle';
 
 type User = {
@@ -20,41 +20,12 @@ const Organisation = () => {
     const [confirmChangeOrganisationName, setConfirmChangeOrganisationName] = useState('');
     const [confirmDisbandOrganisationName, setConfirmDisbandOrganisationName] = useState('');
     const [deleteConfirmed, setDeleteConfirmed] = useState(false);
-    // const [role, setRole] = useState<string | null>(null);
     const [isOwner, setIsOwner] = useState(false);
     const [isInOrg, setIsInOrg] = useState<string | null>(null);
     const [username, setUsername] = useState<string | null>(null);
     const [ownerId, setOwnerId] = useState<string | null>(null);
 
-    useEffect(() => {
-        const fetchUserRole = async () => {
-            try {
-                const accessToken = localStorage.getItem('accessToken');
-                if (accessToken) {
-                    const userData = await getUserRole(accessToken);
-                    console.log('User data:', userData);
-                    // setRole(userData.role);
-                    setIsOwner(userData.owner); // Assuming 'owner' is the correct key in userData
-                    setIsInOrg(userData.organization_id);
-                    setUsername(userData.username);
-                    setOwnerId(userData.user_id);
-                    console.log("User role:", userData.role);
-                    console.log("Is owner:", userData.owner);
-                    console.log("Is in org:", userData.organization_id);
-                    // Set the organisation name if user is in an organisation
-                    if (userData.orgName) {
-                        setOrganisationName(userData.orgName);
-                    }
-                }
-            } catch (error) {
-                console.error('Error fetching user role:', error);
-            }
-        };
-
-        fetchUserRole();
-    }, []);
-
-    const fetchUsersList = async () => {
+    const fetchUsersList = useCallback(async () => {
         if (isInOrg) {
             try {
                 const accessToken = localStorage.getItem('accessToken');
@@ -75,11 +46,38 @@ const Organisation = () => {
         } else {
             setLoading(false);
         }
-    };
+    }, [isInOrg]);
+
+    useEffect(() => {
+        const fetchUserRole = async () => {
+            try {
+                const accessToken = localStorage.getItem('accessToken');
+                if (accessToken) {
+                    const userData = await getUserRole(accessToken);
+                    console.log('User data:', userData);
+                    setIsOwner(userData.owner); // Assuming 'owner' is the correct key in userData
+                    setIsInOrg(userData.organization_id);
+                    setUsername(userData.username);
+                    setOwnerId(userData.user_id);
+                    console.log("User role:", userData.role);
+                    console.log("Is owner:", userData.owner);
+                    console.log("Is in org:", userData.organization_id);
+                    // Set the organisation name if user is in an organisation
+                    if (userData.orgName) {
+                        setOrganisationName(userData.orgName);
+                    }
+                }
+            } catch (error) {
+                console.error('Error fetching user role:', error);
+            }
+        };
+
+        fetchUserRole();
+    }, []);
 
     useEffect(() => {
         fetchUsersList();
-    }, [isInOrg]);
+    }, [fetchUsersList]);
 
     const handleRemoveUser = async (user: User) => {
         try {

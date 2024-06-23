@@ -64,7 +64,7 @@ jobs:
             echo REACT_APP_MEASUREMENT_ID=${{ secrets.REACT_APP_MEASUREMENT_ID }} >> .env
 
       - name: Build and run Docker Compose services
-        run: docker-compose up --build -d
+        run: docker-compose up --build
         
       - name: Wait for services to be ready
         run: |

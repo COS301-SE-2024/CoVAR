@@ -51,9 +51,9 @@ jobs:
     #       ./wait-for-it.sh postgres:5555 -t 60
     #       ./wait-for-it.sh client:3000 -t 60
 
-      - name: Install Cypress dependencies
-        run: npm ci
-        working-directory: ./CoVAR-app
+    #   - name: Install Cypress dependencies
+    #     run: npm ci
+    #     working-directory: ./CoVAR-app
 
       - name: Run Cypress tests
         run: npm run cypress:run

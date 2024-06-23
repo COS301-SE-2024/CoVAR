@@ -1,7 +1,6 @@
 import { Button, Card, CardContent, CircularProgress, TextField, Typography } from '@mui/material';
 import { Box } from '@mui/system';
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
-import axios from 'axios';
 import { useEffect, useState } from 'react';
 import { getUserRole, fetchUsers, removeUser, addUser, deleteOrganisation, createOrganisation, changeOrganisationName } from '../requests/requests';
 import { buttonStyles, cardStyles, headingBoxStyles, mainContentStyles, textFieldStyles } from '../styles/organisationStyle';
@@ -9,7 +8,6 @@ import { buttonStyles, cardStyles, headingBoxStyles, mainContentStyles, textFiel
 type User = {
     id: string;
     email: string;
-    name: string;
     role: string;
     createdAt?: string;
 };
@@ -97,9 +95,8 @@ const Organisation = () => {
                 setUsers([...users, {
                     id: newUser.user_id,
                     email: newUser.username,
-                    name: newUser.username.split('@')[0], // Assuming name is part of the email before @
                     role: newUser.role,
-                    createdAt: newUser.createdAt // Adjust if necessary
+                    createdAt: newUser.createdAt
                 }]);
                 setNewMemberEmail('');
             }
@@ -155,9 +152,9 @@ const Organisation = () => {
     };
 
     const columns: GridColDef[] = [
-        { field: 'name', headerName: 'Name', flex: 1, headerAlign: 'left', resizable: false },
         { field: 'email', headerName: 'Email', flex: 1, headerAlign: 'left', resizable: false },
         {
+            resizable: false,
             field: 'actions',
             headerName: 'Actions',
             flex: 0.5,
@@ -176,6 +173,7 @@ const Organisation = () => {
                         },
                     }}
                     onClick={() => handleRemoveUser(params.row)}
+                    disabled={params.row.email === username}
                 >
                     Remove
                 </Button>

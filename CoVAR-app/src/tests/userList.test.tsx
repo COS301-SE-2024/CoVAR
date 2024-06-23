@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, fireEvent, waitFor } from '@testing-library/react';
+import { render } from '@testing-library/react';
 import UserList from '../adminTools/components/userList';
 
 jest.mock('../adminTools/components/userList', () => {
@@ -12,9 +12,7 @@ jest.mock('../adminTools/components/userList', () => {
     };
   });
 
-
 describe('UserList Component', () => {
-    //test if the component renders
     test('renders UserList component', () => {
         render(<UserList />);
     });

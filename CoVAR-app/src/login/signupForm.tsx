@@ -7,6 +7,7 @@ import { doCreateUserWithEmailAndPassword, doSignInWithGoogle } from '../firebas
 import GoogleIcon from "../icons/GoogleIcon";
 import { doc, setDoc, getDoc } from "firebase/firestore";
 import { db } from '../firebase/firebaseConfig';
+import axios from 'axios';
 
 interface User {
   uid: string;
@@ -49,15 +50,25 @@ const Signup: React.FC<SignupProps> = ({ toggleForm }) => {
     try {
       const result = await doSignInWithGoogle();
       if (result.user) {
+        const { uid, email} = result.user;
         await addUserToFirestore(result.user as User); // Ensure to await Firestore addition
-        navigate('/'); // Navigate to the home page
-      }
-    } catch (error) {
-      console.error(error);
-      // Handle errors here
-    }
-  };
+        // Send user data to backend
+        const response = await axios.post('/api/users/create', {
+          uid,
+          email
+      });
 
+      if (response.status === 201) {
+          navigate('/');
+      } else {
+          throw new Error('Failed to create user in PostgreSQL');
+      }
+  }
+} catch (error) {
+  console.error(error);
+  // Handle errors here
+}
+  };
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
@@ -74,7 +85,17 @@ const Signup: React.FC<SignupProps> = ({ toggleForm }) => {
       const userCredential = await doCreateUserWithEmailAndPassword(email, password);
       const user = userCredential.user;
       await addUserToFirestore(user as User); // Ensure to await Firestore addition
-      navigate('/'); // Navigate to the home page
+      // Send user data to backend
+      const response = await axios.post('/api/users/create', {
+        uid: user.uid,
+        email: user.email
+      });
+
+      if (response.status === 201) {
+        navigate('/'); // Navigate to the home page after successful signup
+      } else {
+        throw new Error('Failed to create user in PostgreSQL');
+      }
     } catch (error) {
       console.error("Error signing up: ", error);
     }
@@ -85,14 +106,14 @@ const Signup: React.FC<SignupProps> = ({ toggleForm }) => {
       <CssBaseline />
       <Container maxWidth="xl" sx={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
         <Box sx={{ textAlign: 'center', margin: '20px auto', width: '100%' }}>
-          <Typography variant="h1" color="textPrimary" gutterBottom>
+          <Typography variant="h1" color="textPrimary" fontWeight={550} gutterBottom >
             CoVAR
           </Typography>
-          <LockOutlinedIcon sx={{ fontSize: 150, color: theme.palette.primary.main }} />
+          <LockOutlinedIcon sx={{ fontSize: 150, color: theme.palette.secondary.main }} />
         </Box>
         <Card sx={{ backgroundColor: theme.palette.background.paper, padding: 4, borderRadius: 1, borderStyle: 'solid', borderWidth: 1, borderColor: theme.palette.divider }}>
           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <Typography variant="h4" component="h2" gutterBottom>
+            <Typography variant="h4" component="h2" fontWeight={550} gutterBottom>
               Sign Up
             </Typography>
             <Box component="form" onSubmit={handleSubmit} sx={{ width: '100%', mt: 1 }}>

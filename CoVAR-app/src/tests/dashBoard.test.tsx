@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render } from '@testing-library/react';
 import Dashboard from '../dashboard/dashboard';
 
 class MockResizeObserver {
@@ -16,6 +16,4 @@ describe('Dashboard Component', () => {
             <Dashboard />
         </div>);
     });
-
-
 });

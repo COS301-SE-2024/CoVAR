@@ -48,9 +48,7 @@ jobs:
 
       - name: Wait for services to be ready
         run: |
-          ./wait-for-it.sh nginx:3050 -t 60
           ./wait-for-it.sh postgres:5555 -t 60
-          ./wait-for-it.sh api:5000 -t 60
           ./wait-for-it.sh client:3000 -t 60
 
       - name: Install Cypress dependencies

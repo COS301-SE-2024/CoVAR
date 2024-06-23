@@ -24,9 +24,8 @@ export const fetchUsers = async (orgId: string, accessToken: string) => {
     const usersList = response.data.map((user: any) => ({
       id: user.user_id,
       email: user.username,
-      name: user.username.split('@')[0], // Assuming name is part of the email before @
       role: user.role,
-      createdAt: user.createdAt // Adjust if necessary
+      createdAt: user.createdAt
     }));
     console.log("Users list:", usersList);
     return usersList;
@@ -36,12 +35,13 @@ export const fetchUsers = async (orgId: string, accessToken: string) => {
   }
 };
 
-export const removeUser = async (orgId: string, ownerId: string, email: string, accessToken: string) => {
+export const removeUser = async (orgId: string, organisationName: string, email: string, accessToken: string) => {
   try {
     const response = await axios.post(
-      `/api/organizations/${ownerId}/remove_user`,
+      `/api/organizations/${orgId}/remove_user`,
       {
         organizationId: orgId,
+        OrgName: organisationName,
         username: email,
       },
       {
@@ -55,12 +55,13 @@ export const removeUser = async (orgId: string, ownerId: string, email: string, 
   }
 };
 
-export const addUser = async (orgId: string, ownerId: string, email: string, accessToken: string) => {
+export const addUser = async (orgId: string, organisationName: string, email: string, accessToken: string) => {
   try {
     const response = await axios.post(
-      `/api/organizations/${ownerId}/add_user`,
+      `/api/organizations/${orgId}/add_user`,
       {
         organizationId: orgId,
+        OrgName: organisationName,
         username: email,
       },
       {
@@ -93,10 +94,10 @@ export const deleteOrganisation = async (orgId: string, organisationName: string
   }
 };
 
-export const changeOrganisationName = async (orgId: string, organisationName: string, newName: string, accessToken: string) => {
+export const changeOrganisationName = async (ownerId: string, organisationName: string, newName: string, accessToken: string) => {
   try {
     const response = await axios.patch(
-      `/api/organizations/${orgId}/change_name`,
+      `/api/organizations/${ownerId}/change_name`,
       {
         OrgName: organisationName,
         newName: newName,

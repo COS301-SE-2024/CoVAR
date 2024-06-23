@@ -1,30 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import {
-    Button,
-    Card,
-    CardContent,
-    CircularProgress,
-    TextField,
-    Typography,
-} from '@mui/material';
+import { Button, Card, CardContent, CircularProgress, TextField, Typography } from '@mui/material';
 import { Box } from '@mui/system';
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
-import {
-    getUserRole,
-    fetchUsers,
-    removeUser,
-    addUser,
-    deleteOrganisation,
-    createOrganisation,
-    changeOrganisationName,
-} from '../requests/requests';
-import {
-    buttonStyles,
-    cardStyles,
-    headingBoxStyles,
-    mainContentStyles,
-    textFieldStyles,
-} from '../styles/organisationStyle';
+import { getUserRole, fetchUsers, removeUser, addUser, deleteOrganisation, createOrganisation, changeOrganisationName } from '../requests/requests';
+import { buttonStyles, cardStyles, headingBoxStyles, mainContentStyles, textFieldStyles } from '../styles/organisationStyle';
 
 type User = {
     id: string;
@@ -47,6 +26,7 @@ const Organisation = () => {
     const [isInOrg, setIsInOrg] = useState<string | null>(null);
     const [username, setUsername] = useState<string | null>(null);
     const [ownerId, setOwner] = useState<string | null>(null);
+
     useEffect(() => {
         const fetchUserRole = async () => {
             try {
@@ -161,7 +141,7 @@ const Organisation = () => {
             const accessToken = localStorage.getItem('accessToken');
             if (accessToken && isInOrg) {
                 const status = await changeOrganisationName(
-                    isInOrg,
+                    (ownerId !== null ? ownerId : ''),
                     organisationName,
                     confirmChangeOrganisationName,
                     accessToken

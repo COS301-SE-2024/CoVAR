@@ -8,6 +8,8 @@ import { useAuth } from '../contexts/authContext';
 import { useNavigate } from 'react-router-dom';
 import { doc, setDoc, getDoc } from "firebase/firestore";
 import { db } from '../firebase/firebaseConfig';
+import axios from 'axios';
+
 
 interface LoginProps {
   toggleForm: () => void;
@@ -63,8 +65,42 @@ const Login: React.FC<LoginProps> = ({ toggleForm }) => {
     if (!isSigningIn) {
       setIsSigningIn(true);
       try {
-        await doSignInWithEmailAndPassword(email, password);
-        navigate('/'); // Navigate to dashboard after successful login
+        const currentUser = await doSignInWithEmailAndPassword(email, password);
+        console.log(currentUser);
+        if (currentUser) {
+          const firebaseToken = await currentUser.user.getIdToken();
+          console.log("firebaseToken");
+          console.log(firebaseToken);
+  
+          const response = await axios.post('/api/users/login', {
+            firebaseToken,
+            username: email
+          });
+          console.log(response);
+          localStorage.setItem('accessToken', response.data.accessToken);
+          localStorage.setItem('refreshToken', response.data.refreshToken);
+          axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.accessToken}`;
+          axios.defaults.headers.post['Content-Type'] = 'application/json';
+  
+          let getUserResponse = await axios.post(
+            '/api/getUser',
+            { accessToken: localStorage.getItem('accessToken') },
+            { headers: { Authorization: `Bearer ${response.data.accessToken}` } }
+          );
+  
+          //Extract individual properties from getUserResponse.data
+          const { user_id, username, role, organization_id } = getUserResponse.data;
+          console.log("getUserResponse");
+          // Log individual properties
+          console.log("User ID:", user_id);
+          console.log("Username:", username);
+          console.log("Role:", role);
+          console.log("Organization ID:", organization_id);
+  
+          navigate('/'); // Navigate to dashboard after successful login
+        } else {
+          throw new Error('User not found in Firebase Auth');
+        }
       } catch (error) {
         console.error(error);
         setIsSigningIn(false);
@@ -72,36 +108,86 @@ const Login: React.FC<LoginProps> = ({ toggleForm }) => {
       }
     }
   };
+  
+  
 
   const signInWithGoogle = async () => {
     if (!isSigningIn) {
       setIsSigningIn(true);
       try {
         const result = await doSignInWithGoogle();
-        await addUserToFirestore(result.user as User); // Ensure to await Firestore addition
-        console.log(result.user);
-        navigate('/'); // Navigate to dashboard after successful Google login
-        return result;
+        await addUserToFirestore(result.user as User);
+        console.log("User signed in with Google:", result.user);
+  
+        const { uid, email } = result.user;
+        console.log("User UID:", uid);
+        console.log("User Email:", email);
+  
+        const response = await axios.post('/api/users/create', {
+          uid,
+          email
+        });
+        console.log("Create user response:", response);
+  
+        const firebaseToken = await result.user.getIdToken();
+        console.log("Firebase Token:", firebaseToken);
+  
+        const LoginResponse = await axios.post('/api/users/login', {
+          firebaseToken,
+          username: email
+        });
+        console.log("Login response:", LoginResponse);
+  
+        localStorage.setItem('accessToken', LoginResponse.data.accessToken);
+        localStorage.setItem('refreshToken', LoginResponse.data.refreshToken);
+        axios.defaults.headers.common['Authorization'] = `Bearer ${LoginResponse.data.accessToken}`;
+        axios.defaults.headers.post['Content-Type'] = 'application/json';
+  
+        let getUserResponse;
+        try {
+          getUserResponse = await axios.post(
+            '/api/getUser',
+            { accessToken: localStorage.getItem('accessToken') },
+            { headers: { Authorization: `Bearer ${LoginResponse.data.accessToken}` } }
+          );
+          console.log("Get user response:", getUserResponse);
+        } catch (error) {
+          console.error("Error fetching user data:", error);
+          throw error; // Re-throw the error to be caught by the outer catch block
+        }
+  
+        const { user_id, username, role, organization_id } = getUserResponse.data;
+        console.log("User ID:", user_id);
+        console.log("Username:", username);
+        console.log("Role:", role);
+        console.log("Organization ID:", organization_id);
+  
+        if (response.status === 201 && LoginResponse.status === 201) {
+          navigate('/');
+        } else {
+          throw new Error('Failed to create user in PostgreSQL');
+        }
       } catch (error) {
         setIsSigningIn(false);
         setError('Failed to sign in with Google.');
       }
     }
   };
+  
 
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <Container maxWidth="xl" sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
         <Box sx={{ textAlign: 'center', marginRight: 'auto', marginLeft: 'auto' }}>
-          <Typography variant="h1" color="textPrimary" gutterBottom>
+          <Typography variant="h1" color="textPrimary" fontWeight={550} gutterBottom>
             CoVAR
           </Typography>
           <LockOutlinedIcon sx={{ fontSize: 150, color: theme.palette.primary.main }} />
         </Box>
         <Card sx={{ backgroundColor: theme.palette.background.paper, padding: 4, borderRadius: 1, borderStyle: 'solid', borderWidth: 1, borderColor: theme.palette.divider }}>
           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <Typography variant="h4" component="h2" gutterBottom>
+            <Typography variant="h4" component="h2" fontWeight={550} gutterBottom>
               Sign In
             </Typography>
             <Box component="form" sx={{ width: '100%', mt: 1 }} onSubmit={onSubmit}>

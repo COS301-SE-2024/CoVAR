@@ -1,55 +1,54 @@
-import { SxProps } from '@mui/material/styles';
+import { SxProps, Theme } from '@mui/system';
 
-export const mainContentStyles: SxProps = {
+export const mainContentStyles: SxProps<Theme> = {
     flexGrow: 1,
-    backgroundColor: '#1F282E',
-    padding: 3,
-    color: '#CAD2C5',
+    backgroundColor: (theme) => theme.palette.background.default,
+    padding: (theme) => theme.spacing(3),
+    color: (theme) => theme.palette.text.primary,
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    overflow : 'hidden',
+    overflow: 'hidden',
 };
 
-export const cardStyles: SxProps = {
+export const cardStyles: SxProps<Theme> = {
     width: 450,
     height: 220,
-    backgroundColor: '#2F3E46',
-    color: '#CAD2C5',
-    padding: 2,
+    backgroundColor: (theme) => theme.palette.background.paper,
+    color: (theme) => theme.palette.text.secondary,
+    padding: (theme) => theme.spacing(2),
 };
 
-export const headingBoxStyles: SxProps = {
-    backgroundColor: '#2D3E44',
+export const headingBoxStyles: SxProps<Theme> = {
     width: '98%',
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 2,
-    marginBottom: 2,
+    padding: (theme) => theme.spacing(2),
+    marginBottom: (theme) => theme.spacing(2),
 };
 
-export const textFieldStyles: SxProps = {
-  color: '#CAD2C5',
-  '& .MuiOutlinedInput-root': {
-    '& fieldset': {
-      borderColor: '#CAD2C5',
-    },
-    '&:hover fieldset': {
-      borderColor: '#CAD2C5',
-    },
-    '&.Mui-focused fieldset': {
-      borderColor: '#52796F',
-    },
-  },
+export const textFieldStyles: SxProps<Theme> = {
+    // '& .MuiOutlinedInput-root': {
+    //     '& fieldset': {
+    //         borderColor: (theme) => theme.palette.text.secondary,
+    //     },
+    //     '&:hover fieldset': {
+    //         borderColor: (theme) => theme.palette.text.primary,
+    //     },
+    //     '&.Mui-focused fieldset': {
+    //         borderColor: (theme) => theme.palette.primary.main,
+    //     },
+    // },
 };
 
-export const buttonStyles: SxProps = {
-  mt: 3,
-  mb: 2,
-  backgroundColor: 'primary.main',
-  color: 'white',
-  '&:hover': {
-    backgroundColor: 'primary.dark',
-  },
+export const buttonStyles: SxProps<Theme> = {
+    mt: 3,
+    mb: 2,
+    backgroundColor: (theme) => theme.palette.primary.main,
+    color: (theme) => theme.palette.primary.contrastText,
+    '&:hover': {
+        backgroundColor: (theme) => theme.palette.primary.dark,
+    },
+    width: '100%',
 };

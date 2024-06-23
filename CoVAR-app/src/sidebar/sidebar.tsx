@@ -1,6 +1,6 @@
-import React, { useContext} from 'react';
+import React, { useContext } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Box, List, ListItem, ListItemText, ListItemIcon, Typography, Button } from '@mui/material';
+import { Box, List, ListItem, ListItemText, ListItemIcon, Typography, Button, useTheme } from '@mui/material';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import AssessmentIcon from '@mui/icons-material/Assessment';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
@@ -9,19 +9,25 @@ import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import LockIcon from '@mui/icons-material/Lock';
 import GroupsIcon from '@mui/icons-material/Groups'; 
-import { sidebarStyles, sidebarItemStyles, iconStyles, logoStyles, logoutButtonStyles } from '../styles/sidebarStyle';
+import {
+  sidebarStyles,
+  sidebarItemStyles,
+  iconStyles,
+  logoStyles,
+  logoutButtonStyles
+} from '../styles/sidebarStyle';
 import { doSignOut } from '../firebase/auth';
 import useUserRole from './components/userRole';
 import { ThemeContext } from '../styles/customThemeProvider';
 
 const Sidebar: React.FC = () => {
   const userRole = useUserRole();
-
   const isAdmin = userRole === 'admin';
   const isVA = userRole === 'VA';
 
   const navigate = useNavigate();
   const location = useLocation();
+  const theme = useTheme();
 
   const signOut = async () => {
     try {
@@ -41,48 +47,128 @@ const Sidebar: React.FC = () => {
     );
   };
 
+  const isActive = (path: string) => location.pathname === path;
+
   return (
     <Box sx={sidebarStyles}>
       <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', ...logoStyles }}>
-        <LockIcon sx={{ fontSize: 'inherit', marginRight: 1, color: '#52796F' }} /> CoVAR
+        <LockIcon sx={{ fontSize: 'inherit', marginRight: 1, color: theme.palette.primary.main }} /> CoVAR
       </Typography>
       <List>
-        <ListItem button component={Link} to="/" sx={{ ...sidebarItemStyles, backgroundColor: location.pathname === '/' ? '#52796F !important' : 'inherit' }}>
-          <ListItemIcon>
-            <DashboardIcon sx={iconStyles} />
+        <ListItem
+          component={Link}
+          to="/"
+          sx={{
+            ...sidebarItemStyles,
+            backgroundColor: isActive('/') ? theme.palette.primary.main : 'inherit',
+            color: isActive('/') ? 'white' : theme.palette.text.primary,
+            borderRadius: '10px',
+            '&:hover': {
+              backgroundColor: theme.palette.action.hover,
+              color: theme.palette.text.primary,
+            },
+          }}
+        >
+          <ListItemIcon sx={{ ...iconStyles, color: isActive('/') ? 'white' : theme.palette.text.primary }}>
+            <DashboardIcon />
           </ListItemIcon>
           <ListItemText primary="Dashboard" />
         </ListItem>
         {(isAdmin || isVA) && (
-          <ListItem button component={Link} to="/evaluate" sx={{ ...sidebarItemStyles, backgroundColor: location.pathname === '/evaluate' ? '#52796F !important' : 'inherit' }}>
-            <ListItemIcon>
-              <AssessmentIcon sx={iconStyles} />
+          <ListItem
+            component={Link}
+            to="/evaluate"
+            sx={{
+              ...sidebarItemStyles,
+              backgroundColor: isActive('/evaluate') ? theme.palette.primary.main : 'inherit',
+              color: isActive('/evaluate') ? 'white' : theme.palette.text.primary,
+              borderRadius: '10px',
+              '&:hover': {
+                backgroundColor: theme.palette.action.hover,
+                color: theme.palette.text.primary,
+              },
+            }}
+          >
+            <ListItemIcon sx={{ ...iconStyles, color: isActive('/evaluate') ? 'white' : theme.palette.text.primary }}>
+              <AssessmentIcon />
             </ListItemIcon>
             <ListItemText primary="Evaluate" />
           </ListItem>
         )}
-        <ListItem button component={Link} to="/account" sx={{ ...sidebarItemStyles, backgroundColor: location.pathname === '/account' ? '#52796F !important' : 'inherit' }}>
-          <ListItemIcon>
-            <AccountCircleIcon sx={iconStyles} />
+        <ListItem
+          component={Link}
+          to="/account"
+          sx={{
+            ...sidebarItemStyles,
+            backgroundColor: isActive('/account') ? theme.palette.primary.main : 'inherit',
+            color: isActive('/account') ? 'white' : theme.palette.text.primary,
+            borderRadius: '10px',
+            '&:hover': {
+              backgroundColor: theme.palette.action.hover,
+              color: theme.palette.text.primary,
+            },
+          }}
+        >
+          <ListItemIcon sx={{ ...iconStyles, color: isActive('/account') ? 'white' : theme.palette.text.primary }}>
+            <AccountCircleIcon />
           </ListItemIcon>
           <ListItemText primary="Account" />
         </ListItem>
-        <ListItem button component={Link} to="/organisation" sx={{ ...sidebarItemStyles, backgroundColor: location.pathname === '/organisation' ? '#52796F !important' : 'inherit' }}>
-          <ListItemIcon>
-            <GroupsIcon sx={iconStyles} />
+        <ListItem
+          component={Link}
+          to="/organisation"
+          sx={{
+            ...sidebarItemStyles,
+            backgroundColor: isActive('/organisation') ? theme.palette.primary.main : 'inherit',
+            color: isActive('/organisation') ? 'white' : theme.palette.text.primary,
+            borderRadius: '10px',
+            '&:hover': {
+              backgroundColor: theme.palette.action.hover,
+              color: theme.palette.text.primary,
+            },
+          }}
+        >
+          <ListItemIcon sx={{ ...iconStyles, color: isActive('/organisation') ? 'white' : theme.palette.text.primary }}>
+            <GroupsIcon />
           </ListItemIcon>
           <ListItemText primary="Organisation" />
         </ListItem>
-        <ListItem button component={Link} to="/settings" sx={{ ...sidebarItemStyles, backgroundColor: location.pathname === '/settings' ? '#52796F !important' : 'inherit' }}>
-          <ListItemIcon>
-            <SettingsIcon sx={iconStyles} />
+        <ListItem
+          component={Link}
+          to="/settings"
+          sx={{
+            ...sidebarItemStyles,
+            backgroundColor: isActive('/settings') ? theme.palette.primary.main : 'inherit',
+            color: isActive('/settings') ? 'white' : theme.palette.text.primary,
+            borderRadius: '10px',
+            '&:hover': {
+              backgroundColor: theme.palette.action.hover,
+              color: theme.palette.text.primary,
+            },
+          }}
+        >
+          <ListItemIcon sx={{ ...iconStyles, color: isActive('/settings') ? 'white' : theme.palette.text.primary }}>
+            <SettingsIcon />
           </ListItemIcon>
           <ListItemText primary="Settings" />
         </ListItem>
         {isAdmin && (
-          <ListItem button component={Link} to="/admin-tools" sx={{ ...sidebarItemStyles, backgroundColor: location.pathname === '/admin-tools' ? '#52796F !important' : 'inherit' }}>
-            <ListItemIcon>
-              <AdminPanelSettingsIcon sx={iconStyles} />
+          <ListItem
+            component={Link}
+            to="/admin-tools"
+            sx={{
+              ...sidebarItemStyles,
+              backgroundColor: isActive('/admin-tools') ? theme.palette.primary.main : 'inherit',
+              color: isActive('/admin-tools') ? 'white' : theme.palette.text.primary,
+              borderRadius: '10px',
+              '&:hover': {
+                backgroundColor: theme.palette.action.hover,
+                color: theme.palette.text.primary,
+              },
+            }}
+          >
+            <ListItemIcon sx={{ ...iconStyles, color: isActive('/admin-tools') ? 'white' : theme.palette.text.primary }}>
+              <AdminPanelSettingsIcon />
             </ListItemIcon>
             <ListItemText primary="Admin Tools" />
           </ListItem>

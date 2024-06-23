@@ -381,6 +381,7 @@ app.patch('/organizations/:id/change_name', async (req, res) => {
 });
 //fetch users of an org
 app.post('/organizations/users', async (req, res) => {
+    console.log("Getting users from an organization");
     const { org_id } = req.body;
     try {
         const users = await pgClient.query('SELECT * FROM users WHERE organization_id = $1', [org_id]);

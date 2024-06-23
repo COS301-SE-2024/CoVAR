@@ -55,7 +55,7 @@ const Organisation = () => {
                 try {
                     const response = await axios.post(
                         '/api/organizations/users',
-                        { org_id: isInOrg }, // Request body
+                        { org_id: isInOrg },
                         {
                             headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}` }
                         }
@@ -229,9 +229,7 @@ const Organisation = () => {
         );
     }
 
-    console.log("Is in org:", isInOrg === null);
     if (isInOrg === null) {
-        console.log("Not in an org blud");
         return (
             <Box sx={mainContentStyles}>
                 <Box sx={headingBoxStyles}>
@@ -267,159 +265,159 @@ const Organisation = () => {
                     </CardContent>
                 </Card>
             </Box>
-        )
-    } else {
-        return (
-            <Box sx={mainContentStyles}>
-                <Box sx={headingBoxStyles}>
-                    <Typography variant="h4" sx={{ marginBottom: 2 }}>
-                        Organisation
-                    </Typography>
-                </Box>
-                <Box sx={{ height: '50vh', width: '100%', overflow: 'auto', marginBottom: '1rem' }}>
-                    <DataGrid
-                        rows={users}
-                        columns={columns}
-                        getRowId={(row) => row.id}
-                        sx={{
-                            width: '100%',
-                            color: 'text.primary',
-                            fontWeight: 500,
-                            borderColor: 'text.primary',
-                            '& .MuiDataGrid-columnHeader': {
-                                backgroundColor: 'background.paper',
-                                color: 'text.primary',
-                            },
-                            '& .MuiDataGrid-columnHeaderTitle': {
-                                color: 'text.primary',
-                            },
-                            '& .MuiDataGrid-columnSeparator': {
-                                color: 'text.primary',
-                            },
-                            '& .MuiDataGrid-cell': {
-                                color: 'text.primary',
-                                borderColor: 'text.primary',
-                            },
-                            '& .MuiDataGrid-footerContainer': {
-                                backgroundColor: 'background.paper',
-                                color: 'text.primary',
-                            },
-                            '& .MuiTablePagination-root': {
-                                color: 'text.primary',
-                            },
-                            '& .MuiSvgIcon-root': {
-                                color: 'text.primary',
-                            },
-                            '& .MuiDataGrid-toolbarContainer button': {
-                                color: 'text.primary',
-                            },
-                            '& .MuiDataGrid-topContainer, & .MuiDataGrid-container--top': {
-                                backgroundColor: 'primary.main',
-                            },
-                            '& .MuiDataGrid-overlay': {
-                                backgroundColor: 'background.default',
-                                color: 'text.primary',
-                            },
-                            '& .MuiDataGrid-filler': {
-                                backgroundColor: 'background.paper',
-                                color: 'text.primary',
-                            },
-                            '& .MuiDataGrid-scrollbarFiller': {
-                                backgroundColor: 'background.paper',
-                            },
-                            '& .MuiDataGrid-scrollbarFiller--header': {
-                                backgroundColor: 'background.paper',
-                            },
-                        }}
-                    />
-                </Box>
-                <Box sx={{ display: 'flex', gap: 10, marginTop: 6 }}>
-                    <Card sx={cardStyles}>
-                        <CardContent>
-                            <Typography variant="h6" color="text.primary">Add a Member</Typography>
-                            <TextField
-                                required
-                                margin="normal"
-                                fullWidth
-                                id="email"
-                                label="Email Address"
-                                name="email"
-                                autoComplete="email"
-                                autoFocus
-                                InputLabelProps={{ sx: { color: 'text.primary' } }}
-                                InputProps={{ sx: { color: 'text.primary' } }}
-                                value={newMemberEmail}
-                                onChange={(e) => setNewMemberEmail(e.target.value)}
-                                sx={textFieldStyles}
-                            />
-                            <Button variant="contained" sx={buttonStyles} onClick={handleAddMember}>
-                                Add Member
-                            </Button>
-                        </CardContent>
-                    </Card>
-                    <Card sx={cardStyles}>
-                        <CardContent>
-                            <Typography variant="h6" color="text.primary">Change Organisation Name</Typography>
-                            <TextField
-                                required
-                                margin="normal"
-                                fullWidth
-                                id="organisation-name"
-                                label="Organisation Name"
-                                name="organisation-name"
-                                autoComplete="organisation-name"
-                                autoFocus
-                                InputLabelProps={{ sx: { color: 'text.primary' } }}
-                                InputProps={{ sx: { color: 'text.primary' } }}
-                                value={confirmOrganisationName}
-                                onChange={(e) => setConfirmOrganisationName(e.target.value)}
-                                sx={textFieldStyles}
-                            />
-                            <Button variant="contained" sx={buttonStyles} onClick={handleChangeOrganisationName}>
-                                Change Name
-                            </Button>
-                        </CardContent>
-                    </Card>
-                    <Card sx={cardStyles}>
-                        <CardContent>
-                            <Typography variant="h6" color="text.primary">Disband Organisation</Typography>
-                            <TextField
-                                required
-                                margin="normal"
-                                fullWidth
-                                id="confirm-organisation-name"
-                                label="Confirm Organisation Name"
-                                name="confirm-organisation-name"
-                                autoComplete="organisation-name"
-                                InputLabelProps={{ sx: { color: 'text.primary' } }}
-                                InputProps={{ sx: { color: 'text.primary' } }}
-                                value={confirmOrganisationName}
-                                onChange={(e) => setConfirmOrganisationName(e.target.value)}
-                                sx={textFieldStyles}
-                            />
-                            <br></br>
-                            <br></br>
-                            <Button
-                                variant="contained"
-                                sx={{
-                                    backgroundColor: '#D11C45',
-                                    color: '#FFFFFF',
-                                    width: '100%',
-                                    '&:hover': {
-                                        backgroundColor: '#B2163B',
-                                    },
-                                }}
-                                onClick={handleDeleteOrganisation}
-                                disabled={confirmOrganisationName === '' || confirmOrganisationName !== organisationName || deleteConfirmed}
-                            >
-                                Delete Organisation
-                            </Button>
-                        </CardContent>
-                    </Card>
-                </Box>
-            </Box>
-        )
+        );
     }
+
+    return (
+        <Box sx={mainContentStyles}>
+            <Box sx={headingBoxStyles}>
+                <Typography variant="h4" sx={{ marginBottom: 2 }}>
+                    Organisation
+                </Typography>
+            </Box>
+            <Box sx={{ height: '50vh', width: '100%', overflow: 'auto', marginBottom: '1rem' }}>
+                <DataGrid
+                    rows={users}
+                    columns={columns}
+                    getRowId={(row) => row.id}
+                    sx={{
+                        width: '100%',
+                        color: 'text.primary',
+                        fontWeight: 500,
+                        borderColor: 'text.primary',
+                        '& .MuiDataGrid-columnHeader': {
+                            backgroundColor: 'background.paper',
+                            color: 'text.primary',
+                        },
+                        '& .MuiDataGrid-columnHeaderTitle': {
+                            color: 'text.primary',
+                        },
+                        '& .MuiDataGrid-columnSeparator': {
+                            color: 'text.primary',
+                        },
+                        '& .MuiDataGrid-cell': {
+                            color: 'text.primary',
+                            borderColor: 'text.primary',
+                        },
+                        '& .MuiDataGrid-footerContainer': {
+                            backgroundColor: 'background.paper',
+                            color: 'text.primary',
+                        },
+                        '& .MuiTablePagination-root': {
+                            color: 'text.primary',
+                        },
+                        '& .MuiSvgIcon-root': {
+                            color: 'text.primary',
+                        },
+                        '& .MuiDataGrid-toolbarContainer button': {
+                            color: 'text.primary',
+                        },
+                        '& .MuiDataGrid-topContainer, & .MuiDataGrid-container--top': {
+                            backgroundColor: 'primary.main',
+                        },
+                        '& .MuiDataGrid-overlay': {
+                            backgroundColor: 'background.default',
+                            color: 'text.primary',
+                        },
+                        '& .MuiDataGrid-filler': {
+                            backgroundColor: 'background.paper',
+                            color: 'text.primary',
+                        },
+                        '& .MuiDataGrid-scrollbarFiller': {
+                            backgroundColor: 'background.paper',
+                        },
+                        '& .MuiDataGrid-scrollbarFiller--header': {
+                            backgroundColor: 'background.paper',
+                        },
+                    }}
+                />
+            </Box>
+            <Box sx={{ display: 'flex', gap: 10, marginTop: 6 }}>
+                <Card sx={cardStyles}>
+                    <CardContent>
+                        <Typography variant="h6" color="text.primary">Add a Member</Typography>
+                        <TextField
+                            required
+                            margin="normal"
+                            fullWidth
+                            id="email"
+                            label="Email Address"
+                            name="email"
+                            autoComplete="email"
+                            autoFocus
+                            InputLabelProps={{ sx: { color: 'text.primary' } }}
+                            InputProps={{ sx: { color: 'text.primary' } }}
+                            value={newMemberEmail}
+                            onChange={(e) => setNewMemberEmail(e.target.value)}
+                            sx={textFieldStyles}
+                        />
+                        <Button variant="contained" sx={buttonStyles} onClick={handleAddMember}>
+                            Add Member
+                        </Button>
+                    </CardContent>
+                </Card>
+                <Card sx={cardStyles}>
+                    <CardContent>
+                        <Typography variant="h6" color="text.primary">Change Organisation Name</Typography>
+                        <TextField
+                            required
+                            margin="normal"
+                            fullWidth
+                            id="organisation-name"
+                            label="Organisation Name"
+                            name="organisation-name"
+                            autoComplete="organisation-name"
+                            autoFocus
+                            InputLabelProps={{ sx: { color: 'text.primary' } }}
+                            InputProps={{ sx: { color: 'text.primary' } }}
+                            value={confirmOrganisationName}
+                            onChange={(e) => setConfirmOrganisationName(e.target.value)}
+                            sx={textFieldStyles}
+                        />
+                        <Button variant="contained" sx={buttonStyles} onClick={handleChangeOrganisationName}>
+                            Change Name
+                        </Button>
+                    </CardContent>
+                </Card>
+                <Card sx={cardStyles}>
+                    <CardContent>
+                        <Typography variant="h6" color="text.primary">Disband Organisation</Typography>
+                        <TextField
+                            required
+                            margin="normal"
+                            fullWidth
+                            id="confirm-organisation-name"
+                            label="Confirm Organisation Name"
+                            name="confirm-organisation-name"
+                            autoComplete="organisation-name"
+                            InputLabelProps={{ sx: { color: 'text.primary' } }}
+                            InputProps={{ sx: { color: 'text.primary' } }}
+                            value={confirmOrganisationName}
+                            onChange={(e) => setConfirmOrganisationName(e.target.value)}
+                            sx={textFieldStyles}
+                        />
+                        <br></br>
+                        <br></br>
+                        <Button
+                            variant="contained"
+                            sx={{
+                                backgroundColor: '#D11C45',
+                                color: '#FFFFFF',
+                                width: '100%',
+                                '&:hover': {
+                                    backgroundColor: '#B2163B',
+                                },
+                            }}
+                            onClick={handleDeleteOrganisation}
+                            disabled={confirmOrganisationName === '' || confirmOrganisationName !== organisationName || deleteConfirmed}
+                        >
+                            Delete Organisation
+                        </Button>
+                    </CardContent>
+                </Card>
+            </Box>
+        </Box>
+    );
 };
 
 export default Organisation;

@@ -39,8 +39,8 @@ const Organisation = () => {
                     console.log("Is owner:", userData.isOwner);
                     console.log("Is in org:", userData.organization_id);
                     // Set the organisation name if user is in an organisation
-                    if (userData.organization_name) {
-                        setOrganisationName(userData.organization_name);
+                    if (userData.orgName) {
+                        setOrganisationName(userData.orgName);
                     }
                 }
             } catch (error) {

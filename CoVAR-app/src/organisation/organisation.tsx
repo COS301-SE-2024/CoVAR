@@ -1,18 +1,15 @@
-import React, { useEffect, useState } from 'react';
-import { CircularProgress, Button, Typography, Card, CardContent, TextField } from '@mui/material';
-import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
-import { doc, getDoc, updateDoc, collection, getDocs, addDoc, deleteDoc } from 'firebase/firestore';
-import { db } from '../firebase/firebaseConfig';
-import { Timestamp } from 'firebase/firestore';
+import { useEffect, useState, useCallback } from 'react';
+import { Button, Card, CardContent, CircularProgress, TextField, Typography } from '@mui/material';
 import { Box } from '@mui/system';
-import { mainContentStyles, cardStyles, headingBoxStyles, textFieldStyles, buttonStyles } from '../styles/organisationStyle';
+import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
+import { getUserRole, fetchUsers, removeUser, addUser, deleteOrganisation, createOrganisation, changeOrganisationName } from '../requests/requests';
+import { buttonStyles, cardStyles, headingBoxStyles, mainContentStyles, textFieldStyles } from '../styles/organisationStyle';
 
 type User = {
     id: string;
     email: string;
-    name: string;
     role: string;
-    createdAt: Timestamp;
+    createdAt?: string;
 };
 
 const Organisation = () => {
@@ -20,123 +17,176 @@ const Organisation = () => {
     const [loading, setLoading] = useState(true);
     const [newMemberEmail, setNewMemberEmail] = useState('');
     const [organisationName, setOrganisationName] = useState('');
-    const [confirmOrganisationName, setConfirmOrganisationName] = useState('');
+    const [confirmChangeOrganisationName, setConfirmChangeOrganisationName] = useState('');
+    const [confirmDisbandOrganisationName, setConfirmDisbandOrganisationName] = useState('');
     const [deleteConfirmed, setDeleteConfirmed] = useState(false);
+    const [isOwner, setIsOwner] = useState(false);
+    const [isInOrg, setIsInOrg] = useState<string | null>(null);
+    const [username, setUsername] = useState<string | null>(null);
+    const [ownerId, setOwnerId] = useState<string | null>(null);
+
+    const fetchUsersList = useCallback(async () => {
+        if (isInOrg) {
+            try {
+                const accessToken = localStorage.getItem('accessToken');
+                if (accessToken) {
+                    const usersList = await fetchUsers(isInOrg, accessToken);
+                    const usersWithId = usersList.map((user: User, index: number) => ({
+                        ...user,
+                        id: user.id || index.toString(),
+                    }));
+                    setUsers(usersWithId);
+                    console.log("Users list:", usersWithId);
+                }
+            } catch (error) {
+                console.error('Error fetching users:', error);
+            } finally {
+                setLoading(false);
+            }
+        } else {
+            setLoading(false);
+        }
+    }, [isInOrg]);
 
     useEffect(() => {
-        const fetchUsers = async () => {
+        const fetchUserRole = async () => {
             try {
-                const querySnapshot = await getDocs(collection(db, 'user'));
-                const usersList: User[] = [];
-                for (const userDoc of querySnapshot.docs) {
-                    const userRef = doc(db, 'user', userDoc.id);
-                    const userSnap = await getDoc(userRef);
-
-                    if (userSnap.exists()) {
-                        usersList.push({ id: userDoc.id, ...userSnap.data() } as User);
-                    } else {
-                        console.log('No such document for user:', userDoc.id);
+                const accessToken = localStorage.getItem('accessToken');
+                if (accessToken) {
+                    const userData = await getUserRole(accessToken);
+                    console.log('User data:', userData);
+                    setIsOwner(userData.owner); // Assuming 'owner' is the correct key in userData
+                    setIsInOrg(userData.organization_id);
+                    setUsername(userData.username);
+                    setOwnerId(userData.user_id);
+                    console.log("User role:", userData.role);
+                    console.log("Is owner:", userData.owner);
+                    console.log("Is in org:", userData.organization_id);
+                    // Set the organisation name if user is in an organisation
+                    if (userData.orgName) {
+                        setOrganisationName(userData.orgName);
                     }
                 }
-                setUsers(usersList);
-                setLoading(false);
             } catch (error) {
-                console.error('Error fetching user:', error);
-                setLoading(false);
+                console.error('Error fetching user role:', error);
             }
         };
 
-        fetchUsers();
+        fetchUserRole();
     }, []);
 
-    const handleRemoveUser = async (user: User) => {
-        const userRef = doc(db, 'user', user.id);
+    useEffect(() => {
+        fetchUsersList();
+    }, [fetchUsersList]);
 
+    const handleRemoveUser = async (user: User) => {
         try {
-            await updateDoc(userRef, { organisation: null });
-            setUsers(users.filter(u => u.id !== user.id));
+            const accessToken = localStorage.getItem('accessToken');
+            if (accessToken && isInOrg && ownerId) {
+                const status = await removeUser(isInOrg, ownerId, user.email, accessToken);
+                if (status === 200) {
+                    setUsers(users.filter((u) => u.id !== user.id));
+                }
+            }
         } catch (error) {
-            console.error('Error removing user from organisation:', error);
+            console.error('Error removing user:', error);
         }
     };
 
     const handleAddMember = async () => {
         try {
-            const newUserRef = await addDoc(collection(db, 'user'), {
-                email: newMemberEmail,
-                name: 'New User',
-                role: 'Member',
-                createdAt: Timestamp.now(),
-                organisation: 'YourOrganisation',
-            });
-            const newUserSnap = await getDoc(newUserRef);
-            if (newUserSnap.exists()) {
-                setUsers([...users, { id: newUserRef.id, ...newUserSnap.data() } as User]);
+            const accessToken = localStorage.getItem('accessToken');
+            if (accessToken && isInOrg && ownerId) {
+                await addUser(isInOrg, ownerId, newMemberEmail, accessToken);
                 setNewMemberEmail('');
+                fetchUsersList();
             }
         } catch (error) {
-            console.error('Error adding new member:', error);
+            console.error('Error adding member:', error);
         }
-    };
+    };    
 
     const handleDeleteOrganisation = async () => {
-        // Verify if confirmOrganisationName matches organisationName
-        if (confirmOrganisationName !== organisationName) {
-            console.error('Organisation names do not match. Aborting.');
-            return;
-        }
-
         try {
-            // Implement the logic to delete the organisation
-            console.log('Disbanding organisation:', organisationName);
-
-            // Example deletion using Firestore
-            const organisationRef = doc(db, 'organizations', 'your-organisation-id');
-            await deleteDoc(organisationRef);
-
-            // After deletion, you may want to clear state or redirect
-
-            // Reset fields after successful deletion
-            setOrganisationName('');
-            setConfirmOrganisationName('');
-            setDeleteConfirmed(false);
+            const accessToken = localStorage.getItem('accessToken');
+            if (accessToken && isInOrg) {
+                const status = await deleteOrganisation(
+                    isInOrg,
+                    confirmDisbandOrganisationName,
+                    accessToken
+                );
+                if (status === 200) {
+                    setIsInOrg(null);
+                    setOrganisationName('');
+                    setConfirmDisbandOrganisationName('');
+                    setDeleteConfirmed(true);
+                }
+            }
         } catch (error) {
             console.error('Error deleting organisation:', error);
         }
     };
 
     const handleChangeOrganisationName = async () => {
-        //logic to change organisation name
-    }
+        try {
+            const accessToken = localStorage.getItem('accessToken');
+            if (accessToken && isInOrg) {
+                const status = await changeOrganisationName(
+                    (ownerId !== null ? ownerId : ''),
+                    organisationName,
+                    confirmChangeOrganisationName,
+                    accessToken
+                );
+                if (status === 200) {
+                    setOrganisationName(confirmChangeOrganisationName);
+                    setConfirmChangeOrganisationName('');
+                }
+            }
+        } catch (error) {
+            console.error('Error changing organisation name:', error);
+        }
+    };
+
+    const handleCreateNewOrganisation = async () => {
+        try {
+            const accessToken = localStorage.getItem('accessToken');
+            if (accessToken && username) {
+                const orgData = await createOrganisation(organisationName, username, accessToken);
+                setIsInOrg(orgData.id);
+                setOrganisationName(orgData.name); // Set the organisation name
+            }
+        } catch (error) {
+            console.error('Error creating organisation:', error);
+        }
+    };
 
     const columns: GridColDef[] = [
-        { field: 'name', headerName: 'Name', flex: 1, headerAlign: 'left', resizable: false },
         { field: 'email', headerName: 'Email', flex: 1, headerAlign: 'left', resizable: false },
         {
+            resizable: false,
             field: 'actions',
             headerName: 'Actions',
             flex: 0.5,
             headerAlign: 'left',
             align: 'left',
             disableColumnMenu: true,
-            renderCell: (params: GridRenderCellParams) => {
-                return (
-                    <Button
-                        variant="contained"
-                        sx={{
-                            backgroundColor: '#EE1D52',
-                            color: '#CAD2C5',
-                            width: '110px',
-                            '&:hover': {
-                                backgroundColor: '#D11C45',
-                            },
-                        }}
-                        onClick={() => handleRemoveUser(params.row)}
-                    >
-                        Remove
-                    </Button>
-                );
-            },
+            renderCell: (params: GridRenderCellParams) => (
+                <Button
+                    variant="contained"
+                    sx={{
+                        backgroundColor: '#EE1D52',
+                        color: '#CAD2C5',
+                        width: '110px',
+                        '&:hover': {
+                            backgroundColor: '#D11C45',
+                        },
+                    }}
+                    onClick={() => handleRemoveUser(params.row)}
+                    disabled={!isOwner || params.row.email === username}
+                >
+                    Remove
+                </Button>
+            ),
         },
     ];
 
@@ -150,17 +200,58 @@ const Organisation = () => {
         );
     }
 
+    if (isInOrg === null) {
+        return (
+            <Box sx={mainContentStyles}>
+                <Box sx={headingBoxStyles}>
+                    <Typography variant="h4" sx={{ marginBottom: 2 }}>
+                        You are not part of an organisation
+                    </Typography>
+                </Box>
+                <Card sx={cardStyles}>
+                    <CardContent>
+                        <Typography variant="h6" color="text.primary">
+                            Create Organisation?
+                        </Typography>
+                        <TextField
+                            required
+                            margin="normal"
+                            fullWidth
+                            id="new-organisation-name"
+                            label="Organisation Name"
+                            name="new-organisation-name"
+                            autoComplete="organisation-name"
+                            InputLabelProps={{ sx: { color: 'text.primary' } }}
+                            InputProps={{ sx: { color: 'text.primary' } }}
+                            value={organisationName}
+                            onChange={(e) => setOrganisationName(e.target.value)}
+                            sx={textFieldStyles}
+                        />
+                        <Button
+                            variant="contained"
+                            sx={buttonStyles}
+                            onClick={handleCreateNewOrganisation}
+                        >
+                            Create Organisation
+                        </Button>
+                    </CardContent>
+                </Card>
+            </Box>
+        );
+    }
+
     return (
         <Box sx={mainContentStyles}>
             <Box sx={headingBoxStyles}>
                 <Typography variant="h4" sx={{ marginBottom: 2 }}>
-                    Organisation
+                    {organisationName}
                 </Typography>
             </Box>
             <Box sx={{ height: '50vh', width: '100%', overflow: 'auto', marginBottom: '1rem' }}>
                 <DataGrid
                     rows={users}
                     columns={columns}
+                    getRowId={(row) => row.id}
                     sx={{
                         width: '100%',
                         color: 'text.primary',
@@ -213,90 +304,100 @@ const Organisation = () => {
                     }}
                 />
             </Box>
-            <Box sx={{ display: 'flex', gap: 10, marginTop: 6 }}>
-                <Card sx={cardStyles}>
-                    <CardContent>
-                        <Typography variant="h6" color="text.primary">Add a Member</Typography>
-                        <TextField
-                            required
-                            margin="normal"
-                            fullWidth
-                            id="email"
-                            label="Email Address"
-                            name="email"
-                            autoComplete="email"
-                            autoFocus
-                            InputLabelProps={{ sx: { color: 'text.primary' } }}
-                            InputProps={{ sx: { color: 'text.primary' } }}
-                            value={newMemberEmail}
-                            onChange={(e) => setNewMemberEmail(e.target.value)}
-                            sx={textFieldStyles}
-                        />
-                        <Button variant="contained" sx={buttonStyles} onClick={handleAddMember}>
-                            Add Member
-                        </Button>
-                    </CardContent>
-                </Card>
-                <Card sx={cardStyles}>
-                    <CardContent>
-                        <Typography variant="h6" color="text.primary">Change Organisation Name</Typography>
-                        <TextField
-                            required
-                            margin="normal"
-                            fullWidth
-                            id="organisation-name"
-                            label="Organisation Name"
-                            name="organisation-name"
-                            autoComplete="organisation-name"
-                            autoFocus
-                            InputLabelProps={{ sx: { color: 'text.primary' } }}
-                            InputProps={{ sx: { color: 'text.primary' } }}
-                            value={organisationName}
-                            onChange={(e) => setOrganisationName(e.target.value)}
-                            sx={textFieldStyles}
-                        />
-                        <Button variant="contained" sx={buttonStyles} onClick={handleChangeOrganisationName}>
-                            Change Name
-                        </Button>
-                    </CardContent>
-                </Card>
-                <Card sx={cardStyles}>
-                    <CardContent>
-                        <Typography variant="h6" color="text.primary">Disband Organisation</Typography>
-                        <TextField
-                            required
-                            margin="normal"
-                            fullWidth
-                            id="confirm-organisation-name"
-                            label="Confirm Organisation Name"
-                            name="confirm-organisation-name"
-                            autoComplete="organisation-name"
-                            InputLabelProps={{ sx: { color: 'text.primary' } }}
-                            InputProps={{ sx: { color: 'text.primary' } }}
-                            value={confirmOrganisationName}
-                            onChange={(e) => setConfirmOrganisationName(e.target.value)}
-                            sx={textFieldStyles}
-                        />
-                        <br></br>
-                        <br></br>
-                        <Button
-                            variant="contained"
-                            sx={{
-                                backgroundColor: '#D11C45',
-                                color: '#FFFFFF',
-                                width: '100%',
-                                '&:hover': {
-                                    backgroundColor: '#B2163B',
-                                },
-                            }}
-                            onClick={handleDeleteOrganisation}
-                            disabled={confirmOrganisationName !== organisationName || deleteConfirmed}
-                        >
-                            Delete Organisation
-                        </Button>
-                    </CardContent>
-                </Card>
-            </Box>
+            {isOwner && (
+                <Box sx={{ display: 'flex', gap: 10, marginTop: 6 }}>
+                    <Card sx={cardStyles}>
+                        <CardContent>
+                            <Typography variant="h6" color="text.primary">
+                                Add a Member
+                            </Typography>
+                            <TextField
+                                required
+                                margin="normal"
+                                fullWidth
+                                id="email"
+                                label="Email Address"
+                                name="email"
+                                autoComplete="email"
+                                InputLabelProps={{ sx: { color: 'text.primary' } }}
+                                InputProps={{ sx: { color: 'text.primary' } }}
+                                value={newMemberEmail}
+                                onChange={(e) => setNewMemberEmail(e.target.value)}
+                                sx={textFieldStyles}
+                            />
+                            <Button variant="contained" sx={buttonStyles} onClick={handleAddMember}>
+                                Add Member
+                            </Button>
+                        </CardContent>
+                    </Card>
+                    <Card sx={cardStyles}>
+                        <CardContent>
+                            <Typography variant="h6" color="text.primary">
+                                Change Organisation Name
+                            </Typography>
+                            <TextField
+                                required
+                                margin="normal"
+                                fullWidth
+                                id="organisation-name"
+                                label="Organisation Name"
+                                name="organisation-name"
+                                autoComplete="organisation-name"
+                                InputLabelProps={{ sx: { color: 'text.primary' } }}
+                                InputProps={{ sx: { color: 'text.primary' } }}
+                                value={confirmChangeOrganisationName}
+                                onChange={(e) => setConfirmChangeOrganisationName(e.target.value)}
+                                sx={textFieldStyles}
+                            />
+                            <Button variant="contained" sx={buttonStyles} onClick={handleChangeOrganisationName}>
+                                Change Name
+                            </Button>
+                        </CardContent>
+                    </Card>
+                    <Card sx={cardStyles}>
+                        <CardContent>
+                            <Typography variant="h6" color="text.primary">
+                                Disband Organisation
+                            </Typography>
+                            <TextField
+                                required
+                                margin="normal"
+                                fullWidth
+                                id="confirm-disband-organisation-name"
+                                label="Confirm Organisation Name"
+                                name="confirm-disband-organisation-name"
+                                autoComplete="organisation-name"
+                                InputLabelProps={{ sx: { color: 'text.primary' } }}
+                                InputProps={{ sx: { color: 'text.primary' } }}
+                                value={confirmDisbandOrganisationName}
+                                onChange={(e) => setConfirmDisbandOrganisationName(e.target.value)}
+                                sx={textFieldStyles}
+                            />
+                            <br />
+                            <br />
+                            <Button
+                                variant="contained"
+                                sx={{
+                                    backgroundColor: '#D11C45',
+                                    color: '#FFFFFF',
+                                    width: '100%',
+                                    '&:hover': {
+                                        backgroundColor: '#B2163B',
+                                    },
+                                }}
+                                onClick={handleDeleteOrganisation}
+                                disabled={
+                                    confirmDisbandOrganisationName === '' ||
+                                    confirmDisbandOrganisationName !== organisationName ||
+                                    deleteConfirmed
+                                }
+                            >
+                                Delete Organisation
+                            </Button>
+                        </CardContent>
+                    </Card>
+                </Box>
+            )}
         </Box>
     );
 };

@@ -89,11 +89,10 @@ app.get('/users/all', authenticateToken,async (req, res) => {
 
 app.post('/getUser', authenticateToken, async (req, res) => {
     const token = req.body.accessToken;
+
     try {
         const decodedToken = jwt.verify(token, keys.jsonKey);
         const userId = decodedToken.user_id;
-        console.log("getUser");
-        console.log(userId);
 
         const userQuery = `SELECT * FROM users WHERE user_id = $1`;
         const userResult = await pgClient.query(userQuery, [userId]);
@@ -102,20 +101,39 @@ app.post('/getUser', authenticateToken, async (req, res) => {
             return res.status(404).json({ error: 'User not found' });
         }
 
+        let orgName = null;
+        let owner = { isOwner: false };
+
+        // Check if the user is associated with an organization
+        if (userResult.rows[0].organization_id !== null) {
+            const orgQuery = `SELECT name FROM organizations WHERE organization_id = $1`;
+            const orgResult = await pgClient.query(orgQuery, [userResult.rows[0].organization_id]);
+            
+            if (orgResult.rows.length > 0) {
+                orgName = orgResult.rows[0].name;
+                // Check if user is an owner of the organization
+                owner = await isOwner(pgClient, orgName, userResult.rows[0].user_id);
+            } else {
+                console.error('Organization not found');
+            }
+        }
+
         const user = {
             user_id: userResult.rows[0].user_id,
             username: userResult.rows[0].username,
             role: userResult.rows[0].role,
-            organization_id: userResult.rows[0].organization_id
+            organization_id: userResult.rows[0].organization_id,
+            orgName: orgName, // Include organization name in response
+            owner: owner.isOwner
         };
-        console.log("getUser");
-        console.log(userResult.rows[0]);
-        res.json(userResult.rows[0]);
+
+        res.json(user);
     } catch (err) {
         console.error('Error fetching user:', err);
         res.status(500).json({ error: 'Server Error' });
     }
 });
+
 
 app.post('/users/login', async (req, res) => {
    const username=req.body.username;
@@ -208,22 +226,6 @@ app.post('/users/create', async (req, res) => {
         res.status(500).send('Server Error');
     }
 });
-
-
-        // User does not exist, proceed with insertion
-        const insertUserQuery = `
-            INSERT INTO users (username, role)
-            VALUES ($1, $2)
-        `;
-        await pgClient.query(insertUserQuery, [email, role]);
-
-        res.status(201).send('User created successfully');
-    } catch (err) {
-        console.error('Error creating user:', err);
-        res.status(500).send('Server Error');
-    }
-});
-
   
 // Test route
 app.get('/test', (req, res) => {
@@ -240,7 +242,7 @@ app.get('/organizations/all', authenticateToken,async (req, res) => {
     }
 });
 //create organization
-app.post('/organizations/create', async (req, res) => {
+app.post('/organizations/create',authenticateToken, async (req, res) => {
     const { name, username } = req.body;
 
     // Validate the input
@@ -296,9 +298,15 @@ app.post('/organizations/create', async (req, res) => {
 // Add user to organization
 app.post('/organizations/:id/add_user', async (req, res) => {
     const { id: OwnerId } = req.params;
-    const { organizationId, OrgName, username } = req.body;
-
+    const { organizationId, username } = req.body;
+    console.log("owner",OwnerId);
+    console.log("org",organizationId);
+    console.log("username",username);
     try {
+        //get org name 
+        const orgQuery = `SELECT name FROM organizations WHERE organization_id = $1`;
+        const orgResult = await pgClient.query(orgQuery, [organizationId]);
+        const OrgName = orgResult.rows[0].name;
         let ownerResult = await isOwner(pgClient, OrgName, OwnerId);
         if (!ownerResult.isOwner) {
             return res.status(error === 'Organization not found' ? 404 : 403).send(error);
@@ -327,9 +335,13 @@ app.post('/organizations/:id/add_user', async (req, res) => {
 // Remove user from organization
 app.post('/organizations/:id/remove_user', async (req, res) => {
     const { id: OwnerId } = req.params;
-    const { organizationId, OrgName, username } = req.body;
-
+    const { organizationId,  username } = req.body;
+    
     try {
+        //get org name
+        const orgQuery = `SELECT name FROM organizations WHERE organization_id = $1`;
+        const orgResult = await pgClient.query(orgQuery, [organizationId]);
+        const OrgName = orgResult.rows[0].name;
         let ownerResult = await isOwner(pgClient, OrgName, OwnerId);
         if (!ownerResult.isOwner) {
             return res.status(error === 'Organization not found' ? 404 : 403).send(error);
@@ -339,7 +351,10 @@ app.post('/organizations/:id/remove_user', async (req, res) => {
         if (userResult.rows.length === 0) {
             return res.status(404).send('User not found');
         }
-
+        //if user to be removed is owner dont remove
+        if(userResult.rows[0].user_id === OwnerId){
+            return res.status(400).send('Owner cannot be removed');
+        }
         const userInOrgResult = await pgClient.query('SELECT organization_id FROM users WHERE user_id = $1', [userResult.rows[0].user_id]);
         if (userInOrgResult.rows.length === 0 || userInOrgResult.rows[0].organization_id !== organizationId) {
             return res.status(400).send('User not in the organization');
@@ -382,10 +397,11 @@ app.patch('/organizations/:id/change_name', async (req, res) => {
     }
 });
 //fetch users of an org
-app.get('/organizations/:id/users', async (req, res) => {
-    const { id } = req.params;
+app.post('/organizations/users', async (req, res) => {
+    console.log("Getting users from an organization");
+    const { org_id } = req.body;
     try {
-        const users = await pgClient.query('SELECT * FROM users WHERE organization_id = $1', [id]);
+        const users = await pgClient.query('SELECT * FROM users WHERE organization_id = $1', [org_id]);
         res.send(users.rows);
     } catch (err) {
         console.error(err.message);

@@ -1,37 +1,31 @@
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
+import AssessmentIcon from '@mui/icons-material/Assessment';
+import DashboardIcon from '@mui/icons-material/Dashboard';
+import ExitToAppIcon from '@mui/icons-material/ExitToApp';
+import GroupsIcon from '@mui/icons-material/Groups';
+import LockIcon from '@mui/icons-material/Lock';
+import SettingsIcon from '@mui/icons-material/Settings';
+import { Box, Button, List, ListItem, ListItemIcon, ListItemText, Typography, useTheme } from '@mui/material';
 import React, { useContext } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Box, List, ListItem, ListItemText, ListItemIcon, Typography, Button, useTheme } from '@mui/material';
-import DashboardIcon from '@mui/icons-material/Dashboard';
-import AssessmentIcon from '@mui/icons-material/Assessment';
-import AccountCircleIcon from '@mui/icons-material/AccountCircle';
-import SettingsIcon from '@mui/icons-material/Settings';
-import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
-import ExitToAppIcon from '@mui/icons-material/ExitToApp';
-import LockIcon from '@mui/icons-material/Lock';
-import GroupsIcon from '@mui/icons-material/Groups'; 
-import {
-  sidebarStyles,
-  sidebarItemStyles,
-  iconStyles,
-  logoStyles,
-  logoutButtonStyles
-} from '../styles/sidebarStyle';
-import { doSignOut } from '../firebase/auth';
-import useUserRole from './components/userRole';
+
 import { ThemeContext } from '../styles/customThemeProvider';
+import { iconStyles, logoStyles, logoutButtonStyles, sidebarItemStyles, sidebarStyles } from '../styles/sidebarStyle';
 
-const Sidebar: React.FC = () => {
-  const userRole = useUserRole();
-  const isAdmin = userRole === 'admin';
-  const isVA = userRole === 'VA';
+interface SidebarProps {
+  role: string | null;
+  onSignOut: () => void;
+}
 
+const Sidebar: React.FC<SidebarProps> = ({ role, onSignOut }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const theme = useTheme();
 
   const signOut = async () => {
     try {
-      await doSignOut();
+      await onSignOut();
       navigate('/login');
     } catch (error) {
       console.error(error);
@@ -74,7 +68,7 @@ const Sidebar: React.FC = () => {
           </ListItemIcon>
           <ListItemText primary="Dashboard" />
         </ListItem>
-        {(isAdmin || isVA) && (
+        {(role === "va" || role === "admin") && (
           <ListItem
             component={Link}
             to="/evaluate"
@@ -152,7 +146,7 @@ const Sidebar: React.FC = () => {
           </ListItemIcon>
           <ListItemText primary="Settings" />
         </ListItem>
-        {isAdmin && (
+        {role === "admin" && (
           <ListItem
             component={Link}
             to="/admin-tools"

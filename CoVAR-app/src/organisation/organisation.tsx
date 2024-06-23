@@ -1,9 +1,30 @@
-import { Button, Card, CardContent, CircularProgress, TextField, Typography } from '@mui/material';
+import React, { useEffect, useState } from 'react';
+import {
+    Button,
+    Card,
+    CardContent,
+    CircularProgress,
+    TextField,
+    Typography,
+} from '@mui/material';
 import { Box } from '@mui/system';
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
-import { useEffect, useState } from 'react';
-import { getUserRole, fetchUsers, removeUser, addUser, deleteOrganisation, createOrganisation, changeOrganisationName } from '../requests/requests';
-import { buttonStyles, cardStyles, headingBoxStyles, mainContentStyles, textFieldStyles } from '../styles/organisationStyle';
+import {
+    getUserRole,
+    fetchUsers,
+    removeUser,
+    addUser,
+    deleteOrganisation,
+    createOrganisation,
+    changeOrganisationName,
+} from '../requests/requests';
+import {
+    buttonStyles,
+    cardStyles,
+    headingBoxStyles,
+    mainContentStyles,
+    textFieldStyles,
+} from '../styles/organisationStyle';
 
 type User = {
     id: string;
@@ -18,7 +39,8 @@ const Organisation = () => {
     const [loading, setLoading] = useState(true);
     const [newMemberEmail, setNewMemberEmail] = useState('');
     const [organisationName, setOrganisationName] = useState('');
-    const [confirmOrganisationName, setConfirmOrganisationName] = useState('');
+    const [confirmChangeOrganisationName, setConfirmChangeOrganisationName] = useState('');
+    const [confirmDisbandOrganisationName, setConfirmDisbandOrganisationName] = useState('');
     const [deleteConfirmed, setDeleteConfirmed] = useState(false);
     const [role, setRole] = useState<string | null>(null);
     const [isOwner, setIsOwner] = useState(false);
@@ -31,7 +53,7 @@ const Organisation = () => {
                 const accessToken = localStorage.getItem('accessToken');
                 if (accessToken) {
                     const userData = await getUserRole(accessToken);
-                    console.log("User data:", userData);
+                    console.log('User data:', userData);
                     setRole(userData.role);
                     setIsOwner(userData.isOwner);
                     setIsInOrg(userData.organization_id);
@@ -41,12 +63,12 @@ const Organisation = () => {
                     console.log("Is owner:", userData.isOwner);
                     console.log("Is in org:", userData.organization_id);
                     // Set the organisation name if user is in an organisation
-                    if (userData.organization_name) {
-                        setOrganisationName(userData.organization_name);
+                    if (userData.orgName) {
+                        setOrganisationName(userData.orgName);
                     }
                 }
             } catch (error) {
-                console.error("Error fetching user role:", error);
+                console.error('Error fetching user role:', error);
             }
         };
 
@@ -82,7 +104,7 @@ const Organisation = () => {
             if (accessToken && isInOrg && ownerId) {
                 const status = await removeUser(isInOrg, ownerId, user.email, accessToken);
                 if (status === 200) {
-                    setUsers(users.filter(u => u.id !== user.id));
+                    setUsers(users.filter((u) => u.id !== user.id));
                 }
             }
         } catch (error) {
@@ -117,11 +139,15 @@ const Organisation = () => {
         try {
             const accessToken = localStorage.getItem('accessToken');
             if (accessToken && isInOrg) {
-                const status = await deleteOrganisation(isInOrg, organisationName, accessToken);
+                const status = await deleteOrganisation(
+                    isInOrg,
+                    confirmDisbandOrganisationName,
+                    accessToken
+                );
                 if (status === 200) {
                     setIsInOrg(null);
                     setOrganisationName('');
-                    setConfirmOrganisationName('');
+                    setConfirmDisbandOrganisationName('');
                     setDeleteConfirmed(true);
                 }
             }
@@ -134,10 +160,15 @@ const Organisation = () => {
         try {
             const accessToken = localStorage.getItem('accessToken');
             if (accessToken && isInOrg) {
-                const status = await changeOrganisationName(isInOrg, organisationName, confirmOrganisationName, accessToken);
+                const status = await changeOrganisationName(
+                    isInOrg,
+                    organisationName,
+                    confirmChangeOrganisationName,
+                    accessToken
+                );
                 if (status === 200) {
-                    setOrganisationName(confirmOrganisationName);
-                    setConfirmOrganisationName('');
+                    setOrganisationName(confirmChangeOrganisationName);
+                    setConfirmChangeOrganisationName('');
                 }
             }
         } catch (error) {
@@ -208,7 +239,9 @@ const Organisation = () => {
                 </Box>
                 <Card sx={cardStyles}>
                     <CardContent>
-                        <Typography variant="h6" color="text.primary">Create Organisation?</Typography>
+                        <Typography variant="h6" color="text.primary">
+                            Create Organisation?
+                        </Typography>
                         <TextField
                             required
                             margin="normal"
@@ -217,7 +250,6 @@ const Organisation = () => {
                             label="Organisation Name"
                             name="new-organisation-name"
                             autoComplete="organisation-name"
-                            autoFocus
                             InputLabelProps={{ sx: { color: 'text.primary' } }}
                             InputProps={{ sx: { color: 'text.primary' } }}
                             value={organisationName}
@@ -304,7 +336,9 @@ const Organisation = () => {
             <Box sx={{ display: 'flex', gap: 10, marginTop: 6 }}>
                 <Card sx={cardStyles}>
                     <CardContent>
-                        <Typography variant="h6" color="text.primary">Add a Member</Typography>
+                        <Typography variant="h6" color="text.primary">
+                            Add a Member
+                        </Typography>
                         <TextField
                             required
                             margin="normal"
@@ -313,7 +347,6 @@ const Organisation = () => {
                             label="Email Address"
                             name="email"
                             autoComplete="email"
-                            autoFocus
                             InputLabelProps={{ sx: { color: 'text.primary' } }}
                             InputProps={{ sx: { color: 'text.primary' } }}
                             value={newMemberEmail}
@@ -327,7 +360,9 @@ const Organisation = () => {
                 </Card>
                 <Card sx={cardStyles}>
                     <CardContent>
-                        <Typography variant="h6" color="text.primary">Change Organisation Name</Typography>
+                        <Typography variant="h6" color="text.primary">
+                            Change Organisation Name
+                        </Typography>
                         <TextField
                             required
                             margin="normal"
@@ -336,11 +371,10 @@ const Organisation = () => {
                             label="Organisation Name"
                             name="organisation-name"
                             autoComplete="organisation-name"
-                            autoFocus
                             InputLabelProps={{ sx: { color: 'text.primary' } }}
                             InputProps={{ sx: { color: 'text.primary' } }}
-                            value={confirmOrganisationName}
-                            onChange={(e) => setConfirmOrganisationName(e.target.value)}
+                            value={confirmChangeOrganisationName}
+                            onChange={(e) => setConfirmChangeOrganisationName(e.target.value)}
                             sx={textFieldStyles}
                         />
                         <Button variant="contained" sx={buttonStyles} onClick={handleChangeOrganisationName}>
@@ -350,23 +384,25 @@ const Organisation = () => {
                 </Card>
                 <Card sx={cardStyles}>
                     <CardContent>
-                        <Typography variant="h6" color="text.primary">Disband Organisation</Typography>
+                        <Typography variant="h6" color="text.primary">
+                            Disband Organisation
+                        </Typography>
                         <TextField
                             required
                             margin="normal"
                             fullWidth
-                            id="confirm-organisation-name"
+                            id="confirm-disband-organisation-name"
                             label="Confirm Organisation Name"
-                            name="confirm-organisation-name"
+                            name="confirm-disband-organisation-name"
                             autoComplete="organisation-name"
                             InputLabelProps={{ sx: { color: 'text.primary' } }}
                             InputProps={{ sx: { color: 'text.primary' } }}
-                            value={confirmOrganisationName}
-                            onChange={(e) => setConfirmOrganisationName(e.target.value)}
+                            value={confirmDisbandOrganisationName}
+                            onChange={(e) => setConfirmDisbandOrganisationName(e.target.value)}
                             sx={textFieldStyles}
                         />
-                        <br></br>
-                        <br></br>
+                        <br />
+                        <br />
                         <Button
                             variant="contained"
                             sx={{
@@ -378,7 +414,11 @@ const Organisation = () => {
                                 },
                             }}
                             onClick={handleDeleteOrganisation}
-                            disabled={confirmOrganisationName === '' || confirmOrganisationName !== organisationName || deleteConfirmed}
+                            disabled={
+                                confirmDisbandOrganisationName === '' ||
+                                confirmDisbandOrganisationName !== organisationName ||
+                                deleteConfirmed
+                            }
                         >
                             Delete Organisation
                         </Button>

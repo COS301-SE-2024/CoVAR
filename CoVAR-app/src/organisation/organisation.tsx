@@ -3,7 +3,7 @@ import { Box } from '@mui/system';
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import axios from 'axios';
 import { useEffect, useState } from 'react';
-import { getUserRole } from '../requests/requests';
+import { getUserRole, fetchUsers, removeUser, addUser, deleteOrganisation, createOrganisation, changeOrganisationName } from '../requests/requests';
 import { buttonStyles, cardStyles, headingBoxStyles, mainContentStyles, textFieldStyles } from '../styles/organisationStyle';
 
 type User = {
@@ -11,7 +11,7 @@ type User = {
     email: string;
     name: string;
     role: string;
-    createdAt?: string; // Adjust based on your actual data structure
+    createdAt?: string;
 };
 
 const Organisation = () => {
@@ -35,7 +35,7 @@ const Organisation = () => {
                     console.log("User data:", userData);
                     setRole(userData.role);
                     setIsOwner(userData.isOwner);
-                    setIsInOrg(userData.organization_id); // Assuming organization_id is a UUID or null
+                    setIsInOrg(userData.organization_id);
                     setUsername(userData.username);
                     console.log("User role:", userData.role);
                     console.log("Is owner:", userData.isOwner);
@@ -50,25 +50,14 @@ const Organisation = () => {
     }, []);
 
     useEffect(() => {
-        const fetchUsers = async () => {
+        const fetchUsersList = async () => {
             if (isInOrg) {
                 try {
-                    const response = await axios.post(
-                        '/api/organizations/users',
-                        { org_id: isInOrg },
-                        {
-                            headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}` }
-                        }
-                    );
-                    const usersList = response.data.map((user: any) => ({
-                        id: user.user_id,
-                        email: user.username,
-                        name: user.username.split('@')[0], // Assuming name is part of the email before @
-                        role: user.role,
-                        createdAt: user.createdAt // Adjust if necessary
-                    }));
-                    console.log("Users list:", usersList);
-                    setUsers(usersList);
+                    const accessToken = localStorage.getItem('accessToken');
+                    if (accessToken) {
+                        const usersList = await fetchUsers(isInOrg, accessToken);
+                        setUsers(usersList);
+                    }
                 } catch (error) {
                     console.error('Error fetching users:', error);
                 } finally {
@@ -79,24 +68,17 @@ const Organisation = () => {
             }
         };
 
-        fetchUsers();
+        fetchUsersList();
     }, [isInOrg]);
 
     const handleRemoveUser = async (user: User) => {
         try {
-            const response = await axios.post(
-                `/api/organizations/${isInOrg}/remove_user`,
-                {
-                    organizationId: isInOrg,
-                    OrgName: organisationName,
-                    username: user.email,
-                },
-                {
-                    headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}` },
+            const accessToken = localStorage.getItem('accessToken');
+            if (accessToken && isInOrg) {
+                const status = await removeUser(isInOrg, organisationName, user.email, accessToken);
+                if (status === 200) {
+                    setUsers(users.filter(u => u.id !== user.id));
                 }
-            );
-            if (response.status === 200) {
-                setUsers(users.filter(u => u.id !== user.id));
             }
         } catch (error) {
             console.error('Error removing user:', error);
@@ -105,20 +87,16 @@ const Organisation = () => {
 
     const handleAddMember = async () => {
         try {
-            const response = await axios.post(
-                `/api/organizations/${isInOrg}/add_user`,
-                {
-                    organizationId: isInOrg,
-                    OrgName: organisationName,
-                    username: newMemberEmail,
-                },
-                {
-                    headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}` },
-                }
-            );
-            if (response.status === 200) {
-                const newUser = response.data;
-                setUsers([...users, newUser]);
+            const accessToken = localStorage.getItem('accessToken');
+            if (accessToken && isInOrg) {
+                const newUser = await addUser(isInOrg, organisationName, newMemberEmail, accessToken);
+                setUsers([...users, {
+                    id: newUser.user_id,
+                    email: newUser.username,
+                    name: newUser.username.split('@')[0], // Assuming name is part of the email before @
+                    role: newUser.role,
+                    createdAt: newUser.createdAt // Adjust if necessary
+                }]);
                 setNewMemberEmail('');
             }
         } catch (error) {
@@ -128,21 +106,15 @@ const Organisation = () => {
 
     const handleDeleteOrganisation = async () => {
         try {
-            const response = await axios.post(
-                `/api/organizations/${isInOrg}/delete`,
-                {
-                    organizationId: isInOrg,
-                    OrgName: organisationName,
-                },
-                {
-                    headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}` },
+            const accessToken = localStorage.getItem('accessToken');
+            if (accessToken && isInOrg) {
+                const status = await deleteOrganisation(isInOrg, organisationName, accessToken);
+                if (status === 200) {
+                    setIsInOrg(null);
+                    setOrganisationName('');
+                    setConfirmOrganisationName('');
+                    setDeleteConfirmed(true);
                 }
-            );
-            if (response.status === 200) {
-                setIsInOrg(null);
-                setOrganisationName('');
-                setConfirmOrganisationName('');
-                setDeleteConfirmed(true);
             }
         } catch (error) {
             console.error('Error deleting organisation:', error);
@@ -151,39 +123,26 @@ const Organisation = () => {
 
     const handleChangeOrganisationName = async () => {
         try {
-            const response = await axios.patch(
-                `/api/organizations/${isInOrg}/change_name`,
-                {
-                    OrgName: organisationName,
-                    newName: confirmOrganisationName,
-                },
-                {
-                    headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}` },
+            const accessToken = localStorage.getItem('accessToken');
+            if (accessToken && isInOrg) {
+                const status = await changeOrganisationName(isInOrg, organisationName, confirmOrganisationName, accessToken);
+                if (status === 200) {
+                    setOrganisationName(confirmOrganisationName);
+                    setConfirmOrganisationName('');
                 }
-            );
-            if (response.status === 200) {
-                setOrganisationName(confirmOrganisationName);
-                setConfirmOrganisationName('');
             }
         } catch (error) {
             console.error('Error changing organisation name:', error);
         }
     };
 
-    const createOrganisation = async () => {
+    const handleCreateNewOrganisation = async () => {
         try {
-            const response = await axios.post(
-                '/api/organizations/create',
-                {
-                    name: organisationName,
-                    username: username,
-                },
-                {
-                    headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}` },
-                }
-            );
-            if (response.status === 201) {
-                setIsInOrg(response.data.id);
+            const accessToken = localStorage.getItem('accessToken');
+            const username = localStorage.getItem('username');
+            if (accessToken && username) {
+                const orgData = await createOrganisation(organisationName, username, accessToken);
+                setIsInOrg(orgData.id);
             }
         } catch (error) {
             console.error('Error creating organisation:', error);
@@ -258,7 +217,7 @@ const Organisation = () => {
                         <Button
                             variant="contained"
                             sx={buttonStyles}
-                            onClick={createOrganisation}
+                            onClick={handleCreateNewOrganisation}
                         >
                             Create Organisation
                         </Button>

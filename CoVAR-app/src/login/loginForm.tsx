@@ -1,24 +1,28 @@
 import React, { useEffect } from 'react';
-import { theme } from '../App';
-import { ThemeProvider } from '@mui/material/styles';
+import { useTheme, ThemeProvider } from '@mui/material/styles';
 import { Container, Box, Typography, TextField, Button, Link, CssBaseline, Card } from '@mui/material';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import GoogleIcon from "../icons/GoogleIcon";
 import { doSignInWithEmailAndPassword, doSignInWithGoogle } from '../firebase/auth';
 import { useAuth } from '../contexts/authContext';
 import { useNavigate } from 'react-router-dom';
-import { doc, setDoc,getDoc } from "firebase/firestore";
+import { doc, setDoc, getDoc } from "firebase/firestore";
 import { db } from '../firebase/firebaseConfig';
+import axios from 'axios';
+
 
 interface LoginProps {
   toggleForm: () => void;
 }
+
 interface User {
   uid: string;
   email: string | null;
   displayName: string | null;
 }
+
 const Login: React.FC<LoginProps> = ({ toggleForm }) => {
+  const theme = useTheme(); // Use the theme hook here
   const { userLoggedIn } = useAuth();
   const navigate = useNavigate();
 
@@ -32,6 +36,7 @@ const Login: React.FC<LoginProps> = ({ toggleForm }) => {
       navigate('/');
     }
   }, [userLoggedIn, navigate]);
+
   const addUserToFirestore = async (user: User) => {
     try {
       const userRef = doc(db, "user", user.uid); 
@@ -54,13 +59,48 @@ const Login: React.FC<LoginProps> = ({ toggleForm }) => {
       console.error("Error adding user to Firestore: ", error);
     }
   };
+
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!isSigningIn) {
       setIsSigningIn(true);
       try {
-        await doSignInWithEmailAndPassword(email, password);
-        navigate('/'); // Navigate to dashboard after successful login
+        const currentUser = await doSignInWithEmailAndPassword(email, password);
+        console.log(currentUser);
+        if (currentUser) {
+          const firebaseToken = await currentUser.user.getIdToken();
+          console.log("firebaseToken");
+          console.log(firebaseToken);
+  
+          const response = await axios.post('/api/users/login', {
+            firebaseToken,
+            username: email
+          });
+          console.log(response);
+          localStorage.setItem('accessToken', response.data.accessToken);
+          localStorage.setItem('refreshToken', response.data.refreshToken);
+          axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.accessToken}`;
+          axios.defaults.headers.post['Content-Type'] = 'application/json';
+  
+          let getUserResponse = await axios.post(
+            '/api/getUser',
+            { accessToken: localStorage.getItem('accessToken') },
+            { headers: { Authorization: `Bearer ${response.data.accessToken}` } }
+          );
+  
+          //Extract individual properties from getUserResponse.data
+          const { user_id, username, role, organization_id } = getUserResponse.data;
+          console.log("getUserResponse");
+          // Log individual properties
+          console.log("User ID:", user_id);
+          console.log("Username:", username);
+          console.log("Role:", role);
+          console.log("Organization ID:", organization_id);
+  
+          navigate('/'); // Navigate to dashboard after successful login
+        } else {
+          throw new Error('User not found in Firebase Auth');
+        }
       } catch (error) {
         console.error(error);
         setIsSigningIn(false);
@@ -68,37 +108,87 @@ const Login: React.FC<LoginProps> = ({ toggleForm }) => {
       }
     }
   };
+  
+  
 
   const signInWithGoogle = async () => {
     if (!isSigningIn) {
       setIsSigningIn(true);
       try {
         const result = await doSignInWithGoogle();
-        await addUserToFirestore(result.user as User); // Ensure to await Firestore addition
-        console.log(result.user);
-        navigate('/'); // Navigate to dashboard after successful Google login
-        return result;
+        await addUserToFirestore(result.user as User);
+        console.log("User signed in with Google:", result.user);
+  
+        const { uid, email } = result.user;
+        console.log("User UID:", uid);
+        console.log("User Email:", email);
+  
+        const response = await axios.post('/api/users/create', {
+          uid,
+          email
+        });
+        console.log("Create user response:", response);
+  
+        const firebaseToken = await result.user.getIdToken();
+        console.log("Firebase Token:", firebaseToken);
+  
+        const LoginResponse = await axios.post('/api/users/login', {
+          firebaseToken,
+          username: email
+        });
+        console.log("Login response:", LoginResponse);
+  
+        localStorage.setItem('accessToken', LoginResponse.data.accessToken);
+        localStorage.setItem('refreshToken', LoginResponse.data.refreshToken);
+        axios.defaults.headers.common['Authorization'] = `Bearer ${LoginResponse.data.accessToken}`;
+        axios.defaults.headers.post['Content-Type'] = 'application/json';
+  
+        let getUserResponse;
+        try {
+          getUserResponse = await axios.post(
+            '/api/getUser',
+            { accessToken: localStorage.getItem('accessToken') },
+            { headers: { Authorization: `Bearer ${LoginResponse.data.accessToken}` } }
+          );
+          console.log("Get user response:", getUserResponse);
+        } catch (error) {
+          console.error("Error fetching user data:", error);
+          throw error; // Re-throw the error to be caught by the outer catch block
+        }
+  
+        const { user_id, username, role, organization_id } = getUserResponse.data;
+        console.log("User ID:", user_id);
+        console.log("Username:", username);
+        console.log("Role:", role);
+        console.log("Organization ID:", organization_id);
+  
+        if (response.status === 201 && LoginResponse.status === 201) {
+          navigate('/');
+        } else {
+          throw new Error('Failed to create user in PostgreSQL');
+        }
       } catch (error) {
-        console.error(error);
+        console.error("Sign-in with Google failed:", error);
         setIsSigningIn(false);
         setError('Failed to sign in with Google.');
       }
     }
   };
+  
 
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <Container maxWidth="xl" sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
         <Box sx={{ textAlign: 'center', marginRight: 'auto', marginLeft: 'auto' }}>
-          <Typography variant="h1" color="textPrimary" gutterBottom>
+          <Typography variant="h1" color="textPrimary" fontWeight={550} gutterBottom>
             CoVAR
           </Typography>
-          <LockOutlinedIcon sx={{ fontSize: 150, color: 'primary.main' }} />
+          <LockOutlinedIcon sx={{ fontSize: 150, color: theme.palette.primary.main }} />
         </Box>
-        <Card sx={{ backgroundColor: '#2F3E46', padding: 4, borderRadius: 1, borderStyle: 'solid', borderWidth: 1, borderColor: '#CAD2C5' }}>
+        <Card sx={{ backgroundColor: theme.palette.background.paper, padding: 4, borderRadius: 1, borderStyle: 'solid', borderWidth: 1, borderColor: theme.palette.divider }}>
           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <Typography variant="h4" component="h2" gutterBottom>
+            <Typography variant="h4" component="h2" fontWeight={550} gutterBottom>
               Sign In
             </Typography>
             <Box component="form" sx={{ width: '100%', mt: 1 }} onSubmit={onSubmit}>
@@ -112,20 +202,20 @@ const Login: React.FC<LoginProps> = ({ toggleForm }) => {
                 autoComplete="email"
                 autoFocus
                 InputLabelProps={{
-                  style: { color: '#CAD2C5' },
+                  style: { color: theme.palette.text.primary },
                 }}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 sx={{
                   '& .MuiOutlinedInput-root': {
                     '& fieldset': {
-                      borderColor: '#CAD2C5',
+                      borderColor: theme.palette.divider,
                     },
                     '&:hover fieldset': {
-                      borderColor: '#CAD2C5',
+                      borderColor: theme.palette.divider,
                     },
                     '&.Mui-focused fieldset': {
-                      borderColor: '#52796F',
+                      borderColor: theme.palette.primary.main,
                     },
                   },
                 }}
@@ -140,26 +230,26 @@ const Login: React.FC<LoginProps> = ({ toggleForm }) => {
                 id="password"
                 autoComplete="current-password"
                 InputLabelProps={{
-                  style: { color: '#CAD2C5' },
+                  style: { color: theme.palette.text.primary },
                 }}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 sx={{
                   '& .MuiOutlinedInput-root': {
                     '& fieldset': {
-                      borderColor: '#CAD2C5',
+                      borderColor: theme.palette.divider,
                     },
                     '&:hover fieldset': {
-                      borderColor: '#CAD2C5',
+                      borderColor: theme.palette.divider,
                     },
                     '&.Mui-focused fieldset': {
-                      borderColor: '#52796F',
+                      borderColor: theme.palette.primary.main,
                     },
                   },
                 }}
               />
               <Box sx={{ textAlign: 'left', width: '100%', mt: 1 }}>
-                <Link href="#" variant="body2" sx={{ color: 'text.secondary' }}>
+                <Link href="#" variant="body2" sx={{ color: theme.palette.text.secondary }}>
                   Forgot your password?
                 </Link>
               </Box>
@@ -167,23 +257,23 @@ const Login: React.FC<LoginProps> = ({ toggleForm }) => {
                 type="submit"
                 fullWidth
                 variant="contained"
-                sx={{ mt: 3, mb: 2, backgroundColor: 'primary.main' }}
+                sx={{ mt: 3, mb: 2, backgroundColor: theme.palette.primary.main }}
               >
                 Log in
               </Button>
               <Button
                 fullWidth
                 variant="contained"
-                sx={{ mt: 3, mb: 2, backgroundColor: 'primary.main' }}
+                sx={{ mt: 3, mb: 2, backgroundColor: theme.palette.primary.main }}
                 onClick={signInWithGoogle}
               >
                 <GoogleIcon />Continue with Google
               </Button>
               <Box display="flex" justifyContent="center" alignItems="center" mt={2}>
-                <Typography variant="body2" sx={{ color: 'text.primary' }}>
+                <Typography variant="body2" sx={{ color: theme.palette.text.primary }}>
                   Don't have an account?
                 </Typography>
-                <Link href="#" variant="body2" sx={{ color: 'text.secondary', ml: 1 }} onClick={toggleForm}>
+                <Link href="#" variant="body2" sx={{ color: theme.palette.text.secondary, ml: 1 }} onClick={toggleForm}>
                   Sign up
                 </Link>
               </Box>

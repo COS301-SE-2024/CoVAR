@@ -1,0 +1,63 @@
+version: '3'
+services:
+  postgres:
+    image: 'postgres:latest'
+    environment:
+      - POSTGRES_PASSWORD=${PG_PASSWORD}
+      - POSTGRES_USER=${PG_USER}
+      - POSTGRES_DB=${PG_DATABASE}
+    ports:
+      - "5555:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./schema.sql:/docker-entrypoint-initdb.d/schema.sql
+
+  nginx:
+    depends_on:
+      - api
+      - client
+    restart: always
+    build:
+      dockerfile: Dockerfile.dev
+      context: './nginx'
+    ports:
+      - '3050:80'
+
+  api:
+    build:
+      dockerfile: Dockerfile.dev
+      context: './server'
+    volumes:
+      - /app/node_modules
+      - ./server:/app
+    environment:
+      - PG_USER=${PG_USER}
+      - PG_HOST=${PG_HOST}
+      - PG_DATABASE=${PG_DATABASE}
+      - PG_PASSWORD=${PG_PASSWORD}
+      - PG_PORT=${PG_PORT}
+      - JSON_SECRET=${JSON_SECRET}
+      - REFRESH_SECRET=${REFRESH_SECRET}
+    depends_on:
+      - postgres
+
+  client:
+    stdin_open: true
+    build:
+      dockerfile: Dockerfile.dev
+      context: './covar-app'
+    environment:
+      - REACT_APP_API_KEY=${REACT_APP_API_KEY}
+      - REACT_APP_AUTH_DOMAIN=${REACT_APP_AUTH_DOMAIN}
+      - REACT_APP_PROJECT_ID=${REACT_APP_PROJECT_ID}
+      - REACT_APP_STORAGE_BUCKET=${REACT_APP_STORAGE_BUCKET}
+      - REACT_APP_MESSAGING_SENDER_ID=${REACT_APP_MESSAGING_SENDER_ID}
+      - REACT_APP_APP_ID=${REACT_APP_APP_ID}
+      - REACT_APP_MEASUREMENT_ID=${REACT_APP_MEASUREMENT_ID}
+    volumes:
+      - /app/node_modules
+      - ./covar-app:/app
+
+volumes:
+  postgres_data:
+    driver: local

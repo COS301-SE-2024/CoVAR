@@ -1,13 +1,13 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { theme } from '../App';
-import { ThemeProvider } from '@mui/material/styles';
+import { useTheme, ThemeProvider } from '@mui/material/styles';
 import { Container, Box, Typography, TextField, Button, Link, CssBaseline, Card } from '@mui/material';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
-import { doCreateUserWithEmailAndPassword, doSignInWithGoogle } from '../firebase/auth';
 import GoogleIcon from "../icons/GoogleIcon";
-import { doc, setDoc ,getDoc} from "firebase/firestore";
+import { doCreateUserWithEmailAndPassword, doSignInWithGoogle } from '../firebase/auth';
+import { doc, setDoc, getDoc } from "firebase/firestore";
 import { db } from '../firebase/firebaseConfig';
+import axios from 'axios';
 
 interface User {
   uid: string;
@@ -18,7 +18,7 @@ interface User {
 const addUserToFirestore = async (user: User) => {
   try {
     const userRef = doc(db, "user", user.uid); 
-    const userSnapshot = await getDoc(userRef); // Check if the document exists
+    const userSnapshot = await getDoc(userRef);
 
     if (!userSnapshot.exists()) {
       const userData = {
@@ -43,18 +43,50 @@ interface SignupProps {
 }
 
 const Signup: React.FC<SignupProps> = ({ toggleForm }) => {
+  const theme = useTheme();
   const navigate = useNavigate();
 
   const signInWithGoogle = async () => {
     try {
       const result = await doSignInWithGoogle();
       if (result.user) {
-        await addUserToFirestore(result.user as User); // Ensure to await Firestore addition
-        navigate('/'); // Navigate to the home page
+        const { uid, email } = result.user;
+        await addUserToFirestore(result.user as User);
+        const response = await axios.post('/api/users/create', { uid, email });
+        console.log(response);
+        const firebaseToken = await result.user.getIdToken();
+        console.log("Firebase Token:", firebaseToken);
+  
+        const LoginResponse = await axios.post('/api/users/login', {
+          firebaseToken,
+          username: email
+        });
+        console.log("Login response:", LoginResponse);
+  
+        localStorage.setItem('accessToken', LoginResponse.data.accessToken);
+        localStorage.setItem('refreshToken', LoginResponse.data.refreshToken);
+        axios.defaults.headers.common['Authorization'] = `Bearer ${LoginResponse.data.accessToken}`;
+        axios.defaults.headers.post['Content-Type'] = 'application/json';
+        let getUserResponse;
+        try {
+          getUserResponse = await axios.post(
+            '/api/getUser',
+            { accessToken: localStorage.getItem('accessToken') },
+            { headers: { Authorization: `Bearer ${LoginResponse.data.accessToken}` } }
+          );
+          console.log("Get user response:", getUserResponse);
+        } catch (error) {
+          console.error("Error fetching user data:", error);
+          throw error; // Re-throw the error to be caught by the outer catch block
+        }
+        if (getUserResponse.status === 200) {
+          navigate('/');
+        } else {
+          throw new Error('Failed to create user in PostgreSQL');
+        }
       }
     } catch (error) {
       console.error(error);
-      // Handle errors here
     }
   };
 
@@ -73,8 +105,14 @@ const Signup: React.FC<SignupProps> = ({ toggleForm }) => {
     try {
       const userCredential = await doCreateUserWithEmailAndPassword(email, password);
       const user = userCredential.user;
-      await addUserToFirestore(user as User); // Ensure to await Firestore addition
-      navigate('/'); // Navigate to the home page
+      await addUserToFirestore(user as User);
+      const response = await axios.post('/api/users/create', { uid: user.uid, email: user.email });
+
+      if (response.status === 201) {
+        navigate('/');
+      } else {
+        throw new Error('Failed to create user in PostgreSQL');
+      }
     } catch (error) {
       console.error("Error signing up: ", error);
     }
@@ -85,14 +123,14 @@ const Signup: React.FC<SignupProps> = ({ toggleForm }) => {
       <CssBaseline />
       <Container maxWidth="xl" sx={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
         <Box sx={{ textAlign: 'center', margin: '20px auto', width: '100%' }}>
-          <Typography variant="h1" color="textPrimary" gutterBottom>
+          <Typography variant="h1" color="textPrimary" fontWeight={550} gutterBottom >
             CoVAR
           </Typography>
-          <LockOutlinedIcon sx={{ fontSize: 150, color: 'primary.main' }} />
+          <LockOutlinedIcon sx={{ fontSize: 150, color: theme.palette.secondary.main }} />
         </Box>
-        <Card sx={{ backgroundColor: '#2F3E46', padding: 4, borderRadius: 1, borderStyle: 'solid', borderWidth: 1, borderColor: '#CAD2C5' }}>
+        <Card sx={{ backgroundColor: theme.palette.background.paper, padding: 4, borderRadius: 1, borderStyle: 'solid', borderWidth: 1, borderColor: theme.palette.divider }}>
           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <Typography variant="h4" component="h2" gutterBottom>
+            <Typography variant="h4" component="h2" fontWeight={550} gutterBottom>
               Sign Up
             </Typography>
             <Box component="form" onSubmit={handleSubmit} sx={{ width: '100%', mt: 1 }}>
@@ -105,12 +143,12 @@ const Signup: React.FC<SignupProps> = ({ toggleForm }) => {
                 name="email"
                 autoComplete="email"
                 autoFocus
-                InputLabelProps={{ style: { color: '#CAD2C5' } }}
+                InputLabelProps={{ style: { color: theme.palette.text.primary } }}
                 sx={{
                   '& .MuiOutlinedInput-root': {
-                    '& fieldset': { borderColor: '#CAD2C5' },
-                    '&:hover fieldset': { borderColor: '#CAD2C5' },
-                    '&.Mui-focused fieldset': { borderColor: '#52796F' },
+                    '& fieldset': { borderColor: theme.palette.divider },
+                    '&:hover fieldset': { borderColor: theme.palette.divider },
+                    '&.Mui-focused fieldset': { borderColor: theme.palette.primary.main },
                   },
                 }}
               />
@@ -123,12 +161,12 @@ const Signup: React.FC<SignupProps> = ({ toggleForm }) => {
                 type="password"
                 id="password"
                 autoComplete="current-password"
-                InputLabelProps={{ style: { color: '#CAD2C5' } }}
+                InputLabelProps={{ style: { color: theme.palette.text.primary } }}
                 sx={{
                   '& .MuiOutlinedInput-root': {
-                    '& fieldset': { borderColor: '#CAD2C5' },
-                    '&:hover fieldset': { borderColor: '#CAD2C5' },
-                    '&.Mui-focused fieldset': { borderColor: '#52796F' },
+                    '& fieldset': { borderColor: theme.palette.divider },
+                    '&:hover fieldset': { borderColor: theme.palette.divider },
+                    '&.Mui-focused fieldset': { borderColor: theme.palette.primary.main },
                   },
                 }}
               />
@@ -141,17 +179,17 @@ const Signup: React.FC<SignupProps> = ({ toggleForm }) => {
                 type="password"
                 id="passwordConfirm"
                 autoComplete="current-password"
-                InputLabelProps={{ style: { color: '#CAD2C5' } }}
+                InputLabelProps={{ style: { color: theme.palette.text.primary } }}
                 sx={{
                   '& .MuiOutlinedInput-root': {
-                    '& fieldset': { borderColor: '#CAD2C5' },
-                    '&:hover fieldset': { borderColor: '#CAD2C5' },
-                    '&.Mui-focused fieldset': { borderColor: '#52796F' },
+                    '& fieldset': { borderColor: theme.palette.divider },
+                    '&:hover fieldset': { borderColor: theme.palette.divider },
+                    '&.Mui-focused fieldset': { borderColor: theme.palette.primary.main },
                   },
                 }}
               />
               <Box sx={{ textAlign: 'left', width: '100%', mt: 1 }}>
-                <Typography variant="body2">
+                <Typography variant="body2" sx={{ color: theme.palette.text.secondary }}>
                   Use 8 or more characters with a mix of letters, numbers & symbols
                 </Typography>
               </Box>
@@ -159,23 +197,23 @@ const Signup: React.FC<SignupProps> = ({ toggleForm }) => {
                 type="submit"
                 fullWidth
                 variant="contained"
-                sx={{ mt: 3, mb: 2, backgroundColor: 'primary.main' }}
+                sx={{ mt: 3, mb: 2, backgroundColor: theme.palette.primary.main }}
               >
                 Sign Up
               </Button>
               <Button
                 fullWidth
                 variant="contained"
-                sx={{ mt: 3, mb: 2, backgroundColor: 'primary.main' }}
+                sx={{ mt: 3, mb: 2, backgroundColor: theme.palette.primary.main }}
                 onClick={signInWithGoogle}
               >
                 <GoogleIcon />Sign Up with Google
               </Button>
               <Box display="flex" justifyContent="center" alignItems="center" mt={2}>
-                <Typography variant="body2" sx={{ color: 'text.primary' }}>
+                <Typography variant="body2" sx={{ color: theme.palette.text.primary }}>
                   Already have an account?
                 </Typography>
-                <Link href="#" variant="body2" sx={{ color: 'text.secondary', ml: 1 }} onClick={toggleForm}>
+                <Link href="#" variant="body2" sx={{ color: theme.palette.text.secondary, ml: 1 }} onClick={toggleForm}>
                   Log in
                 </Link>
               </Box>

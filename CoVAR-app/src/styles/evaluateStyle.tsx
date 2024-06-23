@@ -1,32 +1,24 @@
-import { SxProps } from '@mui/material/styles';
+import { SxProps, Theme } from '@mui/material/styles';
 
-export const evaluateContainerStyles: SxProps = {
-  display: 'flex',
-  height: '100vh',
-  backgroundColor: '#1F282E',
-};
-
-export const uploadBoxStyles: SxProps = {
+export const uploadBoxStyles: SxProps<Theme> = (theme) => ({
   flexGrow: 1,
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'center',
   justifyContent: 'center',
-  backgroundColor: '#2D3E44',
-  padding: 3,
-};
+  backgroundColor: theme.palette.background.paper,
+  padding: theme.spacing(3),
+});
 
-export const uploadButtonStyles: SxProps = {
-  marginTop: 3,
-  marginBottom: 2,
-  backgroundColor: '#52796F',
-  color: 'white',
+export const uploadButtonStyles: SxProps<Theme> = (theme) => ({
+  marginTop: theme.spacing(3),
+  marginBottom: theme.spacing(2),
+  color: theme.palette.primary.contrastText,
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
   padding: '10px 20px',
-  borderRadius: 1,
   '&:hover': {
-    backgroundColor: '#84A98C',
+    backgroundColor: theme.palette.primary.dark,
   },
-};
+});

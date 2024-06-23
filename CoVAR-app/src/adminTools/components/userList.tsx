@@ -69,7 +69,7 @@ const UserList = () => {
             return;
         }
 
-        const newRole = user.role === 'VA' ? 'client' : 'VA';
+        const newRole = user.role === 'VA' ? 'client' : 'va';
         console.log('Updating user role:', user.user_id, user.role, '->', newRole);
 
         try {
@@ -197,7 +197,7 @@ const UserList = () => {
                             ADMIN
                         </Typography>
                     );
-                } else if (params.row.role === 'VA') {
+                } else if (params.row.role === 'va') {
                     return (
                         <>
                             <Button

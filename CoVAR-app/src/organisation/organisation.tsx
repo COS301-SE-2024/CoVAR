@@ -38,6 +38,10 @@ const Organisation = () => {
                     console.log("User role:", userData.role);
                     console.log("Is owner:", userData.isOwner);
                     console.log("Is in org:", userData.organization_id);
+                    // Set the organisation name if user is in an organisation
+                    if (userData.organization_name) {
+                        setOrganisationName(userData.organization_name);
+                    }
                 }
             } catch (error) {
                 console.error("Error fetching user role:", error);
@@ -139,6 +143,7 @@ const Organisation = () => {
             if (accessToken && username) {
                 const orgData = await createOrganisation(organisationName, username, accessToken);
                 setIsInOrg(orgData.id);
+                setOrganisationName(orgData.name); // Set the organisation name
             }
         } catch (error) {
             console.error('Error creating organisation:', error);
@@ -228,7 +233,7 @@ const Organisation = () => {
         <Box sx={mainContentStyles}>
             <Box sx={headingBoxStyles}>
                 <Typography variant="h4" sx={{ marginBottom: 2 }}>
-                    Organisation
+                    {organisationName} {/* Display organisation name dynamically */}
                 </Typography>
             </Box>
             <Box sx={{ height: '50vh', width: '100%', overflow: 'auto', marginBottom: '1rem' }}>

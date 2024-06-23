@@ -83,7 +83,6 @@ const Login: React.FC<LoginProps> = ({ toggleForm }) => {
         navigate('/'); // Navigate to dashboard after successful Google login
         return result;
       } catch (error) {
-        console.error(error);
         setIsSigningIn(false);
         setError('Failed to sign in with Google.');
       }
@@ -192,7 +191,7 @@ const Login: React.FC<LoginProps> = ({ toggleForm }) => {
                 </Link>
               </Box>
               {error && (
-                <Typography variant="body2" color="error" sx={{ mt: 2 }}>
+                <Typography variant="body2" color="error" id="error" sx={{ mt: 2 }}>
                   {error}
                 </Typography>
               )}

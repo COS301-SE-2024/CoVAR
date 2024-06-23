@@ -1,7 +1,6 @@
 import { Button, Card, CardContent, CircularProgress, TextField, Typography } from '@mui/material';
 import { Box } from '@mui/system';
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
-import axios from 'axios';
 import { useEffect, useState } from 'react';
 import { getUserRole, fetchUsers, removeUser, addUser, deleteOrganisation, createOrganisation, changeOrganisationName } from '../requests/requests';
 import { buttonStyles, cardStyles, headingBoxStyles, mainContentStyles, textFieldStyles } from '../styles/organisationStyle';
@@ -35,7 +34,6 @@ const Organisation = () => {
                     console.log("User data:", userData);
                     setRole(userData.role);
                     setIsOwner(userData.isOwner);
-                    setIsInOrg(userData.organization_id);
                     setIsInOrg(userData.organization_id);
                     setUsername(userData.username);
                     console.log("User role:", userData.role);
@@ -172,6 +170,7 @@ const Organisation = () => {
                         },
                     }}
                     onClick={() => handleRemoveUser(params.row)}
+                    disabled={params.row.email === username} // Disable the button if the user's email matches the owner's email
                 >
                     Remove
                 </Button>

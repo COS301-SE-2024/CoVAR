@@ -102,6 +102,10 @@ app.post('/getUser', authenticateToken, async (req, res) => {
             return res.status(404).json({ error: 'User not found' });
         }
         //get the org name 
+        if(userResult.rows[0].organization_id === null){
+            Owner={isOwner:false};
+            console.log(Owner.isOwner);
+        }else{
         const orgQuery = `SELECT name FROM organizations WHERE organization_id = $1`;
         const orgResult = await pgClient.query(orgQuery, [userResult.rows[0].organization_id]);
         console.log("Org");
@@ -110,6 +114,7 @@ app.post('/getUser', authenticateToken, async (req, res) => {
         Owner=await isOwner(pgClient, orgResult.rows[0].name, userResult.rows[0].user_id);
         console.log("Owner");
         console.log(Owner.isOwner);
+        }
         const user = {
             user_id: userResult.rows[0].user_id,
             username: userResult.rows[0].username,
@@ -233,7 +238,7 @@ app.get('/organizations/all', authenticateToken,async (req, res) => {
     }
 });
 //create organization
-app.post('/organizations/create', async (req, res) => {
+app.post('/organizations/create',authenticateToken, async (req, res) => {
     const { name, username } = req.body;
 
     // Validate the input

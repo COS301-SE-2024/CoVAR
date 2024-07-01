@@ -57,7 +57,7 @@ jobs:
       - name: Wait for services to be ready
         run: |
           echo "Waiting for services to be ready..."
-          sleep 10
+          sleep 20
 
       - name: Check Docker Compose logs
         run: docker-compose logs

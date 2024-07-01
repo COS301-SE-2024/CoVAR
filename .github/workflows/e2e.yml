@@ -54,6 +54,11 @@ jobs:
       - name: Build and run Docker Compose services
         run: docker-compose up --build -d
 
+      - name: Wait for services to be ready
+        run: |
+          echo "Waiting for services to be ready..."
+          sleep 4000
+
       - name: Check Docker Compose logs
         run: docker-compose logs
 

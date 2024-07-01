@@ -1,4 +1,3 @@
-
 name: Build Codebase
 on:
   push:
@@ -11,18 +10,8 @@ permissions:
   contents: read
 
 jobs:
-  start:
-    name: Initial Setup
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - name: Starting Job
-        run: |
-          echo "Beginning to Build ${{ github.repository }}"
-
   run_tests:
     name: Build Codebase
-    needs: start
     runs-on: ubuntu-latest
     steps:
       - name: Checkout "${{ github.repository }}"
@@ -40,13 +29,3 @@ jobs:
       - name: Build Codebase
         run:  |
           cd CoVAR-app && npm run build
-
-  end:
-    name: The end
-    runs-on: ubuntu-latest
-    needs: [start, run_tests]
-    steps:
-      - name: Ending
-        id: init
-        run: |
-          echo "${{ github.repository }} has been successfully built"

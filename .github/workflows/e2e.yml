@@ -61,19 +61,11 @@ jobs:
       - name: Check Docker Compose logs
         run: docker-compose logs
 
-      - name: Remove existing node_modules
-        run: rm -rf ./CoVAR-app/node_modules
-
-      - name: Create node_modules directory with correct permissions
-        run: mkdir -p ./CoVAR-app/node_modules
-
-      - name: Install dependencies
-        run: npm i
-        working-directory: ./CoVAR-app
-
       - name: Run Cypress tests
-        run: npx cypress run
-        working-directory: ./CoVAR-app
+        uses: cypress-io/github-action@v6
+        with:
+          working-directory: ./CoVAR-app
+          browser: chrome
 
       - name: Shut down Docker Compose services
         run: docker-compose down

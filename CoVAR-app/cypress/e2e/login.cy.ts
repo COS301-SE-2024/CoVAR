@@ -3,8 +3,15 @@ describe('Login E2E Tests', () => {
     cy.visit('/login') 
   })
 
+  it('displays the entire DOM for debugging', () => {
+    cy.document().then((doc) => {
+      const domString = doc.documentElement.outerHTML;
+      cy.task('logDOM', domString);
+    });
+  });
+
   it('displays an error message with incorrect credentials', () => {
-    cy.get('input[name="email"]').type('wronguser@something.com')
+    cy.get('input[name="email"]', { timeout: 4000 }).type('wronguser@something.com')
     cy.get('input[name="password"]').type('wrongpassword')
     cy.get('button[type="submit"]').click()
 
@@ -13,7 +20,7 @@ describe('Login E2E Tests', () => {
   })
 
   it('successfully logs in with correct credentials', () => {
-    cy.get('input[name="email"]').type('jfmalan1@gmail.com')
+    cy.get('input[name="email"]', { timeout: 4000 }).type('jfmalan1@gmail.com')
     cy.get('input[name="password"]').type('Password') 
     cy.get('button[type="submit"]').click() 
 

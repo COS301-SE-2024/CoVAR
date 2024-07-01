@@ -1,5 +1,4 @@
 name: Cypress E2E Tests
-
 on:
   push:
     branches: [ main, develop ]
@@ -34,13 +33,16 @@ jobs:
           echo REACT_APP_APP_ID=${{ secrets.REACT_APP_APP_ID }} >> .env
           echo REACT_APP_MEASUREMENT_ID=${{ secrets.REACT_APP_MEASUREMENT_ID }} >> .env
 
-      - name: Create JSON SDK file
-        run: |
-          echo ${{ secrets.FIREBASE_SDK}} >> server/covar-7c8b5-firebase-adminsdk-85918-b6654147c1.json
+      - name: create-json
+        id: create-json
+        uses: jsdaniell/create-json@1.1.2
+        with:
+          name: "server/covar-7c8b5-firebase-adminsdk-85918-b6654147c1.json"
+          json: ${{ secrets.FIREBASE_SDK }}
 
       - name: Create DB Schema
         run: |
-          echo ${{ secrets.SCHEMA }} >> shema.sql
+          echo ${{ secrets.SCHEMA }} > schema.sql
 
       - name: Clean up any existing Docker containers and networks
         run: |
@@ -51,19 +53,13 @@ jobs:
       - name: Build and run Docker Compose services
         run: docker-compose up --build -d
 
-      - name: Remove existing node_modules
-        run: rm -rf ./CoVAR-app/node_modules
-
-      - name: Create node_modules directory with correct permissions
-        run: mkdir -p ./CoVAR-app/node_modules
-
-      - name: Install dependencies
-        run: npm ci
-        working-directory: ./CoVAR-app
+      - name: Wait for services to be ready
+        run: |
+          echo "Waiting for services to be ready..."
+          sleep 20
 
       - name: Run Cypress tests
-        run: npx cypress run
-        working-directory: ./CoVAR-app
+        run: docker run --network host -v $PWD/CoVAR-app:/CoVAR-app -w /CoVAR-app cypress/included:13.11.0 --config-file cypress.config.js
 
       - name: Shut down Docker Compose services
         run: docker-compose down

@@ -45,7 +45,7 @@ services:
     stdin_open: true
     build:
       dockerfile: Dockerfile.dev
-      context: './covar-app'
+      context: './CoVAR-app'
     environment:
       - REACT_APP_API_KEY=${REACT_APP_API_KEY}
       - REACT_APP_AUTH_DOMAIN=${REACT_APP_AUTH_DOMAIN}
@@ -56,7 +56,7 @@ services:
       - REACT_APP_MEASUREMENT_ID=${REACT_APP_MEASUREMENT_ID}
     volumes:
       - /app/node_modules
-      - ./covar-app:/app
+      - ./CoVAR-app:/app
 
 volumes:
   postgres_data:

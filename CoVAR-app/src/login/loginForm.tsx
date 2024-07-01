@@ -168,7 +168,6 @@ const Login: React.FC<LoginProps> = ({ toggleForm }) => {
           throw new Error('Failed to create user in PostgreSQL');
         }
       } catch (error) {
-        console.error("Sign-in with Google failed:", error);
         setIsSigningIn(false);
         setError('Failed to sign in with Google.');
       }
@@ -278,7 +277,7 @@ const Login: React.FC<LoginProps> = ({ toggleForm }) => {
                 </Link>
               </Box>
               {error && (
-                <Typography variant="body2" color="error" sx={{ mt: 2 }}>
+                <Typography variant="body2" color="error" id="error" sx={{ mt: 2 }}>
                   {error}
                 </Typography>
               )}

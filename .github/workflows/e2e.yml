@@ -54,6 +54,9 @@ jobs:
       - name: Build and run Docker Compose services
         run: docker-compose up --build -d
 
+      - name: Check Docker Compose logs
+        run: docker-compose logs
+
       - name: Remove existing node_modules
         run: rm -rf ./CoVAR-app/node_modules
 

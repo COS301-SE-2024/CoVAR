@@ -41,7 +41,7 @@ jobs:
           docker network prune -f
 
       - name: Build and run Docker Compose services
-        run: docker-compose up --build
+        run: docker-compose up --build -d
 
       - name: Remove existing node_modules
         run: rm -rf ./CoVAR-app/node_modules

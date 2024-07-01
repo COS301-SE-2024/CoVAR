@@ -34,6 +34,14 @@ jobs:
           echo REACT_APP_APP_ID=${{ secrets.REACT_APP_APP_ID }} >> .env
           echo REACT_APP_MEASUREMENT_ID=${{ secrets.REACT_APP_MEASUREMENT_ID }} >> .env
 
+      - name: Create JSON SDK file
+        run: |
+          echo ${{ secrets.FIREBASE_SDK}} >> server/covar-7c8b5-firebase-adminsdk-85918-b6654147c1.json
+
+      - name: Create DB Schema
+        run: |
+          echo ${{ secrets.SCHEMA }} >> shema.sql
+
       - name: Clean up any existing Docker containers and networks
         run: |
           docker-compose down || true

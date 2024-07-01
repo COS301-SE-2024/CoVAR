@@ -21,6 +21,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
+const fs = require('fs');
 
 const app = express();
 app.use(cors());
@@ -47,21 +48,115 @@ pgClient.connect()
     .catch((err) => console.error('Connection error', err.stack));
 
 app.use(express.json());
-function generateToken(user){
-    return jwt.sign(user,keys.jsonKey,{expiresIn:'15 m'});
+
+const privateKey = fs.readFileSync('private.pem', 'utf8');
+const publicKey = fs.readFileSync('public.pem', 'utf8');
+const refreshPrivateKey = fs.readFileSync('refreshPrivate.pem', 'utf8');
+const refreshPublicKey = fs.readFileSync('refreshPublic.pem', 'utf8');
+console.log('Keys loaded');
+console.log('Private key:', privateKey);
+console.log('Public key:', publicKey);
+console.log('Refresh private key:', refreshPrivateKey);
+console.log('Refresh public key:', refreshPublicKey);
+
+function generateToken(user) {
+    return jwt.sign(user, privateKey, { algorithm: 'RS256', expiresIn: '15m' });
 }
-function authenticateToken(req,res,next){
-    console.log("authenticating");
+
+function generateRefreshToken(user) {
+    return jwt.sign(user, refreshPrivateKey, { algorithm: 'RS256', expiresIn: '7d' });
+}
+function verifyToken(token) {
+    return jwt.verify(token, publicKey, { algorithms: ['RS256'] });
+}
+function authenticateToken(req, res, next) {
     const authHeader = req.headers['authorization'];
     console.log(authHeader);
     const token = authHeader && authHeader.split(' ')[1];
-    if(token == null) return res.sendStatus(401);
-    jwt.verify(token,keys.jsonKey,(err,user)=>{
-        if(err) return res.sendStatus(403);
+    if (token == null) return res.sendStatus(401);
+
+    jwt.verify(token, publicKey, { algorithms: ['RS256'] }, (err, user) => {
+        if (err) {
+            console.error('Token verification error:', err);
+            return res.sendStatus(403);
+        }
         req.user = user;
         next();
     });
 }
+
+
+app.post('/users/login', async (req, res) => {
+    const { username, firebaseToken } = req.body;
+
+    try {
+        // Firebase login check 
+        const decodedToken = await verifyIdToken(firebaseToken);
+        console.log(username);
+
+        // Make user object out of db entry 
+        const userQuery = 'SELECT * FROM users WHERE username = $1';
+        const userResult = await pgClient.query(userQuery, [username]);
+        if (userResult.rows.length === 0) {
+            return res.status(404).send('User not found');
+        }
+
+        // Check if user is an owner of an organization 
+        let isOwnerResult = await isOwner(pgClient, req.body.organization, userResult.rows[0].user_id);
+        const user = {
+            user_id: userResult.rows[0].user_id,
+            username: userResult.rows[0].username,
+            role: userResult.rows[0].role,
+            organization_id: userResult.rows[0].organization_id,
+            owner: isOwnerResult.isOwner
+        };
+
+        const accessToken = generateToken(user);
+        const refreshToken = generateRefreshToken(user);
+        res.json({ accessToken, refreshToken });
+    } catch (error) {
+        console.error('Login error:', error);
+        res.status(500).send('Server Error');
+    }
+});
+
+app.post('/users/token', (req, res) => {
+    const refreshToken = req.body.token;
+    if (refreshToken == null) return res.sendStatus(401);
+
+    jwt.verify(refreshToken, refreshPublicKey, { algorithms: ['RS256'] }, async (err, decoded) => {
+        if (err) {
+            console.error('Refresh token verification error:', err);
+            return res.sendStatus(403);
+        }
+
+        try {
+            const query = 'SELECT * FROM users WHERE user_id = $1';
+            const { rows } = await pgClient.query(query, [decoded.user_id]);
+
+            if (rows.length === 0) {
+                return res.status(404).json({ error: 'User not found' });
+            }
+
+            const user = {
+                user_id: rows[0].user_id,
+                username: rows[0].username,
+                role: rows[0].role,
+                organization_id: rows[0].organization_id,
+            };
+
+            const accessToken = generateToken(user);
+            res.json({ accessToken });
+        } catch (error) {
+            console.error('Error fetching user:', error);
+            res.status(500).send('Server Error');
+        }
+    });
+});
+
+app.post('/users/logout', (req, res) => {
+    // Implement logout functionality here
+});
 
 async function isOwner(pgClient, OrgName, OwnerId) {
     const ownerResult = await pgClient.query('SELECT owner FROM organizations WHERE name = $1', [OrgName]);
@@ -75,9 +170,10 @@ async function isOwner(pgClient, OrgName, OwnerId) {
     
     return { isOwner: true };
 }
+
 // Express route handlers
 
-app.get('/users/all', authenticateToken,async (req, res) => {
+app.get('/users/all', authenticateToken, async (req, res) => {
     try {
         const users = await pgClient.query('SELECT * FROM users');
         res.send(users.rows);
@@ -91,10 +187,11 @@ app.post('/getUser', authenticateToken, async (req, res) => {
     const token = req.body.accessToken;
 
     try {
-        const decodedToken = jwt.verify(token, keys.jsonKey);
+        const decodedToken = verifyToken(token);
+        console.log('Decoded token in getUSer:', decodedToken);
         const userId = decodedToken.user_id;
 
-        const userQuery = `SELECT * FROM users WHERE user_id = $1`;
+        const userQuery = 'SELECT * FROM users WHERE user_id = $1';
         const userResult = await pgClient.query(userQuery, [userId]);
 
         if (userResult.rows.length === 0) {
@@ -106,7 +203,7 @@ app.post('/getUser', authenticateToken, async (req, res) => {
 
         // Check if the user is associated with an organization
         if (userResult.rows[0].organization_id !== null) {
-            const orgQuery = `SELECT name FROM organizations WHERE organization_id = $1`;
+            const orgQuery = 'SELECT name FROM organizations WHERE organization_id = $1';
             const orgResult = await pgClient.query(orgQuery, [userResult.rows[0].organization_id]);
             
             if (orgResult.rows.length > 0) {
@@ -134,65 +231,6 @@ app.post('/getUser', authenticateToken, async (req, res) => {
     }
 });
 
-
-app.post('/users/login', async (req, res) => {
-   const username=req.body.username;
-   const firebasekey=req.body.firebaseToken;
-   //firebase login check 
-    const decodedToken = await verifyIdToken(firebasekey);
-   console.log(username);
-   // make user object out of db entry 
-    const userQuery = `SELECT * FROM users WHERE username = $1`;
-    const userResult = await pgClient.query(userQuery, [username]);
-    if (userResult.rows.length === 0) {
-        return res.status(404).send('User not found');
-    }
-    //check if user is an owner of an organization 
-    let isOwnerResult = await isOwner(pgClient, req.body.organization, userResult.rows[0].user_id);
-    const user = {
-        user_id: userResult.rows[0].user_id,
-        username: userResult.rows[0].username,
-        role: userResult.rows[0].role,
-        organization_id: userResult.rows[0].organization_id,
-        owner: isOwnerResult.isOwner
-    }
-   const accessToken = generateToken(user);
-   const refreshToken = jwt.sign(user,keys.refreshKey);
-   res.json({accessToken: accessToken,refreshToken:refreshToken});
-});
-app.post('/users/token', (req, res) => {
-    const refreshToken = req.body.token;
-    if (refreshToken == null) return res.sendStatus(401);
-  
-    jwt.verify(refreshToken, keys.refreshKey, async (err, decoded) => {
-      if (err) return res.sendStatus(403);
-  
-      try {
-        const query = 'SELECT * FROM users WHERE user_id = $1';
-        const { rows } = await pool.query(query, [decoded.user_id]);
-  
-        if (rows.length === 0) {
-          return res.status(404).json({ error: 'User not found' });
-        }
-  
-        const user = {
-          user_id: rows[0].user_id,
-          username: rows[0].username,
-          role: rows[0].role,
-          organization_id: rows[0].organization_id,
-        };
-  
-        const accessToken = generateToken(user);
-        res.json({ accessToken });
-      } catch (error) {
-        console.error('Error fetching user:', error);
-        res.status(500).send('Server Error');
-      }
-    });
-  });
-  app.post('/users/logout', (req, res) => {
-    // Implement logout functionality here
-  });
 //postgres firebase synch
 app.post('/users/create', async (req, res) => {
     const { uid, email } = req.body;

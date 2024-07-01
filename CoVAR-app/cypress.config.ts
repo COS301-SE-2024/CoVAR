@@ -4,7 +4,12 @@ export default defineConfig({
   e2e: {
     baseUrl: "http://localhost:3050",
     setupNodeEvents(on, config) {
-      // implement node event listeners here
+      on('task', {
+        logDOM(domString) {
+          console.log(domString);
+          return null;
+        }
+      });
     },
   },
 });

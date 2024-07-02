@@ -1,21 +1,65 @@
 {
-  "name": "server",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "author": "Astro",
-  "license": "ISC",
+  "name": "covar-app",
+  "version": "0.1.0",
+  "private": true,
   "dependencies": {
-    "body-parser": "^1.19.0",
-    "cors": "^2.8.5",
-    "express": "^4.17.1",
-    "firebase-admin": "^12.2.0",
-    "jsonwebtoken": "^9.0.2",
-    "nodemon": "^2.0.7",
-    "pg": "^8.5.1"
+    "@emotion/react": "^11.11.4",
+    "@emotion/styled": "^11.11.5",
+    "@mui/icons-material": "^5.15.19",
+    "@mui/material": "^5.15.19",
+    "@mui/x-charts": "^7.6.1",
+    "@mui/x-data-grid": "^7.6.1",
+    "@testing-library/jest-dom": "^5.17.0",
+    "@testing-library/user-event": "^13.5.0",
+    "@types/jest": "^27.5.2",
+    "@types/node": "^16.18.97",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "axios": "^0.24.0",
+    "firebase": "^10.12.2",
+    "i": "^0.3.7",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.23.1",
+    "recharts": "^2.12.7",
+    "typescript": "^4.9.5",
+    "web-vitals": "^2.1.4"
+  },
+  "devDependencies": {
+    "@babel/plugin-proposal-private-property-in-object": "^7.16.7",
+    "@testing-library/react": "^15.0.7",
+    "@typescript-eslint/eslint-plugin": "^7.11.0",
+    "@typescript-eslint/parser": "^7.11.0",
+    "cypress": "^13.11.0",
+    "eslint": "^8.57.0",
+    "eslint-plugin-react": "^7.34.2",
+    "react-scripts": "5.0.1"
   },
   "scripts": {
-    "start": "node index.js",
-    "dev": "nodemon index.js"
+    "dev": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test --coverage --watchAll=false",
+    "lint": "eslint . --ext .jsx,.ts,.tsx",
+    "cypress:run": "cypress run",
+    "cypress:open": "cypress open",
+    "eject": "react-scripts eject"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
   }
 }

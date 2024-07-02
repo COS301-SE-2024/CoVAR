@@ -15,13 +15,14 @@ async function verifyIdToken(idToken) {
     }
   }
 const keys = require('./keys');
+const jwtFunctions = require('./jwtFunctions');
+const { generateToken, generateRefreshToken, verifyToken, authenticateToken } = jwtFunctions;
+const { isOwner } = require('./serverHelperFunctions');
 
 // Express App Setup
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
-const jwt = require('jsonwebtoken');
-const fs = require('fs');
 
 const app = express();
 app.use(cors());
@@ -49,41 +50,6 @@ pgClient.connect()
 
 app.use(express.json());
 
-const privateKey = fs.readFileSync('private.pem', 'utf8');
-const publicKey = fs.readFileSync('public.pem', 'utf8');
-const refreshPrivateKey = fs.readFileSync('refreshPrivate.pem', 'utf8');
-const refreshPublicKey = fs.readFileSync('refreshPublic.pem', 'utf8');
-console.log('Keys loaded');
-console.log('Private key:', privateKey);
-console.log('Public key:', publicKey);
-console.log('Refresh private key:', refreshPrivateKey);
-console.log('Refresh public key:', refreshPublicKey);
-
-function generateToken(user) {
-    return jwt.sign(user, privateKey, { algorithm: 'RS256', expiresIn: '15m' });
-}
-
-function generateRefreshToken(user) {
-    return jwt.sign(user, refreshPrivateKey, { algorithm: 'RS256', expiresIn: '7d' });
-}
-function verifyToken(token) {
-    return jwt.verify(token, publicKey, { algorithms: ['RS256'] });
-}
-function authenticateToken(req, res, next) {
-    const authHeader = req.headers['authorization'];
-    console.log(authHeader);
-    const token = authHeader && authHeader.split(' ')[1];
-    if (token == null) return res.sendStatus(401);
-
-    jwt.verify(token, publicKey, { algorithms: ['RS256'] }, (err, user) => {
-        if (err) {
-            console.error('Token verification error:', err);
-            return res.sendStatus(403);
-        }
-        req.user = user;
-        next();
-    });
-}
 
 
 app.post('/users/login', async (req, res) => {
@@ -158,18 +124,6 @@ app.post('/users/logout', (req, res) => {
     // Implement logout functionality here
 });
 
-async function isOwner(pgClient, OrgName, OwnerId) {
-    const ownerResult = await pgClient.query('SELECT owner FROM organizations WHERE name = $1', [OrgName]);
-    if (ownerResult.rows.length === 0) {
-        return { isOwner: false, error: 'Organization not found' };
-    }
-    
-    if (ownerResult.rows[0].owner !== OwnerId) {
-        return { isOwner: false, error: 'Not authorized as owner of the organization' };
-    }
-    
-    return { isOwner: true };
-}
 
 // Express route handlers
 
@@ -334,7 +288,7 @@ app.post('/organizations/create',authenticateToken, async (req, res) => {
 });
 
 // Add user to organization
-app.post('/organizations/:id/add_user', async (req, res) => {
+app.post('/organizations/:id/add_user',  authenticateToken, async (req, res) => {
     const { id: OwnerId } = req.params;
     const { organizationId, username } = req.body;
     console.log("owner",OwnerId);
@@ -371,7 +325,7 @@ app.post('/organizations/:id/add_user', async (req, res) => {
 });
 
 // Remove user from organization
-app.post('/organizations/:id/remove_user', async (req, res) => {
+app.post('/organizations/:id/remove_user',  authenticateToken , async (req, res) => {
     const { id: OwnerId } = req.params;
     const { organizationId,  username } = req.body;
     
@@ -408,7 +362,7 @@ app.post('/organizations/:id/remove_user', async (req, res) => {
     }
 });
 //change org name
-app.patch('/organizations/:id/change_name', async (req, res) => {
+app.patch('/organizations/:id/change_name', authenticateToken , async (req, res) => {
     const { id: OwnerId } = req.params;
     const { OrgName, newName } = req.body;
 
@@ -435,7 +389,7 @@ app.patch('/organizations/:id/change_name', async (req, res) => {
     }
 });
 //fetch users of an org
-app.post('/organizations/users', async (req, res) => {
+app.post('/organizations/users',  authenticateToken ,async (req, res) => {
     console.log("Getting users from an organization");
     const { org_id } = req.body;
     try {
@@ -447,7 +401,7 @@ app.post('/organizations/users', async (req, res) => {
     }
 });
 //fetch org of a user
-app.get('/users/:id/organization', async (req, res) => {
+app.get('/users/:id/organization', authenticateToken ,async (req, res) => {
     const { id } = req.params;
     try {
         const org = await pgClient.query('SELECT * FROM organizations WHERE organization_id = (SELECT organization_id FROM users WHERE user_id = $1)', [id]);
@@ -458,7 +412,7 @@ app.get('/users/:id/organization', async (req, res) => {
     }
 });
 // Update user role
-app.patch('/users/:id/role', authenticateToken,async (req, res) => {
+app.patch('/users/:id/role', authenticateToken ,async (req, res) => {
     const { id } = req.params;
     const { role } = req.body;
 
@@ -475,7 +429,7 @@ app.patch('/users/:id/role', authenticateToken,async (req, res) => {
 
 
 // Assign a client to a VA
-app.post('/users/:id/assign', authenticateToken,async (req, res) => {
+app.post('/users/:id/assign', authenticateToken ,async (req, res) => {
     const { id } = req.params; // VA id
     const { clientUsername } = req.body;
     console.log('clientUsername:', clientUsername);
@@ -508,7 +462,7 @@ app.post('/users/:id/assign', authenticateToken,async (req, res) => {
 
 
 // Get all clients assigned to a VA
-app.get('/users/:id/assigned_clients' , authenticateToken,async (req, res) => {
+app.get('/users/:id/assigned_clients' , authenticateToken ,async (req, res) => {
     const { id } = req.params;
     try {
         const clients = await pgClient.query('SELECT * FROM users WHERE user_id IN (SELECT client FROM assignment WHERE va = $1)', [id]);
@@ -521,7 +475,7 @@ app.get('/users/:id/assigned_clients' , authenticateToken,async (req, res) => {
 );
 
 // Get all organizations assigned to a VA
-app.get('/users/:id/assigned_organizations' , authenticateToken,async (req, res) => {
+app.get('/users/:id/assigned_organizations' , authenticateToken ,async (req, res) => {
     const { id } = req.params;
     try {
         const organizations = await pgClient.query('SELECT * FROM organizations WHERE organization_id IN (SELECT organization FROM assignment WHERE va = $1)', [id]);

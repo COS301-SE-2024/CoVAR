@@ -40,6 +40,8 @@
     "build": "react-scripts build",
     "test": "react-scripts test --coverage --watchAll=false",
     "lint": "eslint . --ext .jsx,.ts,.tsx",
+    "cypress:run": "cypress run",
+    "cypress:open": "cypress open",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {

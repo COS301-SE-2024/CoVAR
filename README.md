@@ -39,8 +39,8 @@ The CoVAR project by BlueVision ITM aims to develop a comprehensive vulnerabilit
 * [Demo 2 Video](https://drive.google.com/file/d/1Dpynfe4pK_SkFPkS9EYfpClK6Z_cxYXn/view?usp=sharing)
 
 ## Documentation
-* [Requirements and Design (SRS) Document]([https://docs.google.com/document/d/1s2uAfdf_fLEJWLY-tfxag7N8J47CfNq7ohyjqHn1tZE](https://docs.google.com/document/d/1rhLhNdHQONaVFSU4WyOLPm6ZoKlxLMqk/edit?usp=sharing&ouid=112929114105055327648&rtpof=true&sd=true))
-* [Architectural Structural Design]([https://docs.google.com/document/d/1s2uAfdf_fLEJWLY-tfxag7N8J47CfNq7ohyjqHn1tZE](https://docs.google.com/document/d/1rhLhNdHQONaVFSU4WyOLPm6ZoKlxLMqk/edit?usp=sharing&ouid=112929114105055327648&rtpof=true&sd=true))
+* [Requirements and Design (SRS) Document](https://docs.google.com/document/d/1rhLhNdHQONaVFSU4WyOLPm6ZoKlxLMqk/edit?usp=sharing&ouid=112929114105055327648&rtpof=true&sd=true)
+* [Architectural Structural Design](https://docs.google.com/document/d/1rhLhNdHQONaVFSU4WyOLPm6ZoKlxLMqk/edit?usp=sharing&ouid=112929114105055327648&rtpof=true&sd=true)
 * [Coding and Testing Standards](https://docs.google.com/document/d/19x0yDaAYaYr555nFialOXTFLBrfKUHfo8NFclaq-4Zg/edit?usp=sharing)
 * [Project Board](https://github.com/orgs/COS301-SE-2024/projects/94)
 

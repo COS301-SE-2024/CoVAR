@@ -27,6 +27,7 @@ function authenticateToken(req, res, next) {
     jwt.verify(token, publicKey, { algorithms: ['RS256'] }, (err, user) => {
         if (err) {
             console.error('Token verification error:', err);
+            console.log('Token:', token);
             return res.sendStatus(403);
         }
         req.user = user;

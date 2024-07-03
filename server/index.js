@@ -58,7 +58,7 @@ app.post('/users/login', async (req, res) => {
     try {
         // Firebase login check 
         const decodedToken = await verifyIdToken(firebaseToken);
-        console.log(username);
+        //console.log(username);
 
         // Make user object out of db entry 
         const userQuery = 'SELECT * FROM users WHERE username = $1';
@@ -142,7 +142,7 @@ app.post('/getUser', authenticateToken, async (req, res) => {
 
     try {
         const decodedToken = verifyToken(token);
-        console.log('Decoded token in getUSer:', decodedToken);
+        //console.log('Decoded token in getUSer:', decodedToken);
         const userId = decodedToken.user_id;
 
         const userQuery = 'SELECT * FROM users WHERE user_id = $1';
@@ -291,9 +291,9 @@ app.post('/organizations/create',authenticateToken, async (req, res) => {
 app.post('/organizations/:id/add_user',  authenticateToken, async (req, res) => {
     const { id: OwnerId } = req.params;
     const { organizationId, username } = req.body;
-    console.log("owner",OwnerId);
-    console.log("org",organizationId);
-    console.log("username",username);
+    // console.log("owner",OwnerId);
+    // console.log("org",organizationId);
+    // console.log("username",username);
     try {
         //get org name 
         const orgQuery = `SELECT name FROM organizations WHERE organization_id = $1`;
@@ -390,7 +390,7 @@ app.patch('/organizations/:id/change_name', authenticateToken , async (req, res)
 });
 //fetch users of an org
 app.post('/organizations/users',  authenticateToken ,async (req, res) => {
-    console.log("Getting users from an organization");
+    //console.log("Getting users from an organization");
     const { org_id } = req.body;
     try {
         const users = await pgClient.query('SELECT * FROM users WHERE organization_id = $1', [org_id]);
@@ -430,6 +430,7 @@ app.patch('/users/:id/role', authenticateToken ,async (req, res) => {
 
 // Assign a client to a VA
 app.post('/users/:id/assign', authenticateToken ,async (req, res) => {
+    console.log('Assigning a client to a VA');
     const { id } = req.params; // VA id
     const { clientUsername } = req.body;
     console.log('clientUsername:', clientUsername);

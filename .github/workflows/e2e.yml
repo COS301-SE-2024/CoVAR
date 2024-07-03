@@ -44,6 +44,13 @@ jobs:
         run: |
           echo ${{ secrets.SCHEMA }} > schema.sql
 
+      - name: Create Pem Files
+        run: |
+          echo ${{ secrets.PUBLIC }} > server/public.pem
+          echo ${{ secrets.PRIVATE }} > server/private.pem
+          echo ${{ secrets.REFRESH_PUBLIC }} > server/refreshPublic.pem
+          echo ${{ secrets.REFRESH_PRIVATE }} > server/refreshPrivate.pem
+          
       - name: Clean up any existing Docker containers and networks
         run: |
           docker-compose down || true

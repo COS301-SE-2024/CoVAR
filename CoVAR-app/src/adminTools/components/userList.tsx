@@ -43,7 +43,7 @@ const UserList = () => {
         };
         getToken();
     }
-    , []);
+    , [accessToken]);
     useEffect(() => {
         const loadUsers = async () => {
             try {
@@ -60,7 +60,7 @@ const UserList = () => {
         };
 
         loadUsers();
-    }, []);
+    }, [accessToken]);
 
     useEffect(() => {
         const loadOrganizations = async () => {
@@ -77,7 +77,7 @@ const UserList = () => {
         };
 
         loadOrganizations();
-    }, []);
+    }, [accessToken]);
 
     const handleRoleToggle = async (user: User) => {
         if (!user) {

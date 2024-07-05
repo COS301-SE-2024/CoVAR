@@ -1,57 +1,98 @@
-import React, { useState } from 'react';
-import { Box, Button, Typography, Paper } from '@mui/material';
+import React, { useEffect, useState } from 'react';
+import { Box, Button, Typography, List, ListItem, ListItemText, ListItemSecondaryAction, Paper } from '@mui/material';
 import { mainContentStyles } from '../styles/sidebarStyle';
-import { uploadBoxStyles, uploadButtonStyles } from '../styles/evaluateStyle';
+import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+
+interface User {
+  user_id: number;
+  username: string;
+  organization: string | null;
+}
+
+interface Organization {
+  organization_id: number;
+  name: string;
+  owner: string;
+}
 
 const Evaluate: React.FC = () => {
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [users, setUsers] = useState<User[]>([]);
+  const [organizations, setOrganizations] = useState<Organization[]>([]);
+  const navigate = useNavigate();
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files && event.target.files[0];
-    if (file) {
-      setSelectedFile(file);
-    }
+  useEffect(() => {
+    const fetchAssignedUsers = async () => {
+      try {
+        const response = await axios.get('/api/users/assigned_clients');
+        setUsers(response.data);
+        console.log('Assigned users:', response.data);
+      } catch (err) {
+        console.error('Error fetching assigned users:', err);
+      }
+    };
+
+    const fetchAssignedOrganizations = async () => {
+      try {
+        const response = await axios.get('/api/users/assigned_organizations');
+        setOrganizations(response.data);
+        console.log('Assigned organizations:', response.data);
+      } catch (err) {
+        console.error('Error fetching assigned organizations:', err);
+      }
+    };
+
+    fetchAssignedUsers();
+    fetchAssignedOrganizations();
+  }, []);
+
+ 
+
+  const handleUserButtonClick = (user: User) => {
+    navigate(`/evaluate/user/${user.username}`);
   };
 
-  const handleSubmitFile = () => {
-    console.log('File submitted:', selectedFile);
-
+  const handleOrganizationButtonClick = (organization: Organization) => {
+    navigate(`/evaluate/organization/${organization.name}`);
   };
 
   return (
-      <Box sx={mainContentStyles}>
-        <Paper sx={uploadBoxStyles}>
-          <Typography variant="h6">
-            Upload a Vulnerability Assessment
-          </Typography>
-          <input
-            type="file"
-            accept=".pdf,.csv"
-            onChange={handleFileChange}
-            style={{ display: 'none' }}
-            id="file-upload"
-          />
-          <label htmlFor="file-upload">
-            <Button variant="contained" component="span" sx={uploadButtonStyles}>
-              Upload File
-            </Button>
-          </label>
-          {selectedFile && (
-            <>
-              <Typography variant="body2">
-                Selected File: {selectedFile.name}
-              </Typography>
-              <Button
-                variant="contained"
-                sx={{ ...uploadButtonStyles, marginTop: 2 }}
-                onClick={handleSubmitFile}
-              >
-                Submit File
-              </Button>
-            </>
-          )}
-        </Paper>
-      </Box>
+    <Box sx={mainContentStyles}>
+      
+      <Typography variant="h6" sx={{ marginTop: 4 }}>
+        Assigned Clients and Organizations
+      </Typography>
+      <Paper elevation={3} sx={{ padding: 2, marginTop: 2 }}>
+        <List>
+          {users.map(user => (
+            <ListItem key={user.user_id} sx={{ marginBottom: 1, padding: 1, borderRadius: 1, boxShadow: 1 }}>
+              <ListItemText primary={`User: ${user.username}`} />
+              <ListItemSecondaryAction>
+                <Button
+                  variant="contained"
+                  onClick={() => handleUserButtonClick(user)}
+                >
+                  Evaluate
+                </Button>
+              </ListItemSecondaryAction>
+            </ListItem>
+          ))}
+          {organizations.map(org => (
+            <ListItem key={org.organization_id} sx={{ marginBottom: 1, padding: 1, borderRadius: 1, boxShadow: 1 }}>
+              <ListItemText primary={`Organization: ${org.name}`} />
+              <ListItemSecondaryAction>
+                <Button
+                  variant="contained"
+                  onClick={() => handleOrganizationButtonClick(org)}
+                >
+                  Evaluate
+                </Button>
+              </ListItemSecondaryAction>
+            </ListItem>
+          ))}
+        </List>
+      </Paper>
+    </Box>
   );
 };
 

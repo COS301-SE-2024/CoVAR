@@ -1,19 +1,20 @@
 const admin = require('firebase-admin');
 const serviceAccount = require('./covar-7c8b5-firebase-adminsdk-85918-b6654147c1');
 
+
 admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount)
+    credential: admin.credential.cert(serviceAccount)
 });
 
 async function verifyIdToken(idToken) {
     try {
-      const decodedToken = await admin.auth().verifyIdToken(idToken);
-      return decodedToken;
+        const decodedToken = await admin.auth().verifyIdToken(idToken);
+        return decodedToken;
     } catch (error) {
-      console.error('Error verifying Firebase ID token:', error);
-      throw new Error('Unauthorized');
+        console.error('Error verifying Firebase ID token:', error);
+        throw new Error('Unauthorized');
     }
-  }
+}
 const keys = require('./keys');
 
 // Express App Setup
@@ -47,17 +48,17 @@ pgClient.connect()
     .catch((err) => console.error('Connection error', err.stack));
 
 app.use(express.json());
-function generateToken(user){
-    return jwt.sign(user,keys.jsonKey,{expiresIn:'15 m'});
+function generateToken(user) {
+    return jwt.sign(user, keys.jsonKey, { expiresIn: '15 m' });
 }
-function authenticateToken(req,res,next){
+function authenticateToken(req, res, next) {
     console.log("authenticating");
     const authHeader = req.headers['authorization'];
     console.log(authHeader);
     const token = authHeader && authHeader.split(' ')[1];
-    if(token == null) return res.sendStatus(401);
-    jwt.verify(token,keys.jsonKey,(err,user)=>{
-        if(err) return res.sendStatus(403);
+    if (token == null) return res.sendStatus(401);
+    jwt.verify(token, keys.jsonKey, (err, user) => {
+        if (err) return res.sendStatus(403);
         req.user = user;
         next();
     });
@@ -68,16 +69,16 @@ async function isOwner(pgClient, OrgName, OwnerId) {
     if (ownerResult.rows.length === 0) {
         return { isOwner: false, error: 'Organization not found' };
     }
-    
+
     if (ownerResult.rows[0].owner !== OwnerId) {
         return { isOwner: false, error: 'Not authorized as owner of the organization' };
     }
-    
+
     return { isOwner: true };
 }
 // Express route handlers
 
-app.get('/users/all', authenticateToken,async (req, res) => {
+app.get('/users/all', authenticateToken, async (req, res) => {
     try {
         const users = await pgClient.query('SELECT * FROM users');
         res.send(users.rows);
@@ -108,7 +109,7 @@ app.post('/getUser', authenticateToken, async (req, res) => {
         if (userResult.rows[0].organization_id !== null) {
             const orgQuery = `SELECT name FROM organizations WHERE organization_id = $1`;
             const orgResult = await pgClient.query(orgQuery, [userResult.rows[0].organization_id]);
-            
+
             if (orgResult.rows.length > 0) {
                 orgName = orgResult.rows[0].name;
                 // Check if user is an owner of the organization
@@ -136,12 +137,12 @@ app.post('/getUser', authenticateToken, async (req, res) => {
 
 
 app.post('/users/login', async (req, res) => {
-   const username=req.body.username;
-   const firebasekey=req.body.firebaseToken;
-   //firebase login check 
+    const username = req.body.username;
+    const firebasekey = req.body.firebaseToken;
+    //firebase login check 
     const decodedToken = await verifyIdToken(firebasekey);
-   console.log(username);
-   // make user object out of db entry 
+    console.log(username);
+    // make user object out of db entry 
     const userQuery = `SELECT * FROM users WHERE username = $1`;
     const userResult = await pgClient.query(userQuery, [username]);
     if (userResult.rows.length === 0) {
@@ -156,43 +157,43 @@ app.post('/users/login', async (req, res) => {
         organization_id: userResult.rows[0].organization_id,
         owner: isOwnerResult.isOwner
     }
-   const accessToken = generateToken(user);
-   const refreshToken = jwt.sign(user,keys.refreshKey);
-   res.json({accessToken: accessToken,refreshToken:refreshToken});
+    const accessToken = generateToken(user);
+    const refreshToken = jwt.sign(user, keys.refreshKey);
+    res.json({ accessToken: accessToken, refreshToken: refreshToken });
 });
 app.post('/users/token', (req, res) => {
     const refreshToken = req.body.token;
     if (refreshToken == null) return res.sendStatus(401);
-  
+
     jwt.verify(refreshToken, keys.refreshKey, async (err, decoded) => {
-      if (err) return res.sendStatus(403);
-  
-      try {
-        const query = 'SELECT * FROM users WHERE user_id = $1';
-        const { rows } = await pool.query(query, [decoded.user_id]);
-  
-        if (rows.length === 0) {
-          return res.status(404).json({ error: 'User not found' });
+        if (err) return res.sendStatus(403);
+
+        try {
+            const query = 'SELECT * FROM users WHERE user_id = $1';
+            const { rows } = await pool.query(query, [decoded.user_id]);
+
+            if (rows.length === 0) {
+                return res.status(404).json({ error: 'User not found' });
+            }
+
+            const user = {
+                user_id: rows[0].user_id,
+                username: rows[0].username,
+                role: rows[0].role,
+                organization_id: rows[0].organization_id,
+            };
+
+            const accessToken = generateToken(user);
+            res.json({ accessToken });
+        } catch (error) {
+            console.error('Error fetching user:', error);
+            res.status(500).send('Server Error');
         }
-  
-        const user = {
-          user_id: rows[0].user_id,
-          username: rows[0].username,
-          role: rows[0].role,
-          organization_id: rows[0].organization_id,
-        };
-  
-        const accessToken = generateToken(user);
-        res.json({ accessToken });
-      } catch (error) {
-        console.error('Error fetching user:', error);
-        res.status(500).send('Server Error');
-      }
     });
-  });
-  app.post('/users/logout', (req, res) => {
+});
+app.post('/users/logout', (req, res) => {
     // Implement logout functionality here
-  });
+});
 //postgres firebase synch
 app.post('/users/create', async (req, res) => {
     const { uid, email } = req.body;
@@ -211,28 +212,28 @@ app.post('/users/create', async (req, res) => {
 
             return res.send('User already exists');
         }
-        if(existingUser.rows.length === 0){
-        // User does not exist, proceed with insertion
-        const insertUserQuery = `
+        if (existingUser.rows.length === 0) {
+            // User does not exist, proceed with insertion
+            const insertUserQuery = `
             INSERT INTO users (username, role)
             VALUES ($1, $2)
         `;
-        await pgClient.query(insertUserQuery, [email, role]);
-        
-        res.status(201).send('User created successfully');
+            await pgClient.query(insertUserQuery, [email, role]);
+
+            res.status(201).send('User created successfully');
         }
     } catch (err) {
         console.error('Error creating user:', err);
         res.status(500).send('Server Error');
     }
 });
-  
+
 // Test route
 app.get('/test', (req, res) => {
     res.send('Test route is working');
 });
 //Get all organizations
-app.get('/organizations/all', authenticateToken,async (req, res) => {
+app.get('/organizations/all', authenticateToken, async (req, res) => {
     try {
         const organizations = await pgClient.query('SELECT * FROM organizations');
         res.send(organizations.rows);
@@ -242,7 +243,7 @@ app.get('/organizations/all', authenticateToken,async (req, res) => {
     }
 });
 //create organization
-app.post('/organizations/create',authenticateToken, async (req, res) => {
+app.post('/organizations/create', authenticateToken, async (req, res) => {
     const { name, username } = req.body;
 
     // Validate the input
@@ -299,9 +300,9 @@ app.post('/organizations/create',authenticateToken, async (req, res) => {
 app.post('/organizations/:id/add_user', async (req, res) => {
     const { id: OwnerId } = req.params;
     const { organizationId, username } = req.body;
-    console.log("owner",OwnerId);
-    console.log("org",organizationId);
-    console.log("username",username);
+    console.log("owner", OwnerId);
+    console.log("org", organizationId);
+    console.log("username", username);
     try {
         //get org name 
         const orgQuery = `SELECT name FROM organizations WHERE organization_id = $1`;
@@ -335,8 +336,8 @@ app.post('/organizations/:id/add_user', async (req, res) => {
 // Remove user from organization
 app.post('/organizations/:id/remove_user', async (req, res) => {
     const { id: OwnerId } = req.params;
-    const { organizationId,  username } = req.body;
-    
+    const { organizationId, username } = req.body;
+
     try {
         //get org name
         const orgQuery = `SELECT name FROM organizations WHERE organization_id = $1`;
@@ -352,7 +353,7 @@ app.post('/organizations/:id/remove_user', async (req, res) => {
             return res.status(404).send('User not found');
         }
         //if user to be removed is owner dont remove
-        if(userResult.rows[0].user_id === OwnerId){
+        if (userResult.rows[0].user_id === OwnerId) {
             return res.status(400).send('Owner cannot be removed');
         }
         const userInOrgResult = await pgClient.query('SELECT organization_id FROM users WHERE user_id = $1', [userResult.rows[0].user_id]);
@@ -420,7 +421,7 @@ app.get('/users/:id/organization', async (req, res) => {
     }
 });
 // Update user role
-app.patch('/users/:id/role', authenticateToken,async (req, res) => {
+app.patch('/users/:id/role', authenticateToken, async (req, res) => {
     const { id } = req.params;
     const { role } = req.body;
 
@@ -437,7 +438,7 @@ app.patch('/users/:id/role', authenticateToken,async (req, res) => {
 
 
 // Assign a client to a VA
-app.post('/users/:id/assign', authenticateToken,async (req, res) => {
+app.post('/users/:id/assign', authenticateToken, async (req, res) => {
     const { id } = req.params; // VA id
     const { clientUsername } = req.body;
     console.log('clientUsername:', clientUsername);
@@ -470,7 +471,7 @@ app.post('/users/:id/assign', authenticateToken,async (req, res) => {
 
 
 // Get all clients assigned to a VA
-app.get('/users/:id/assigned_clients' , authenticateToken,async (req, res) => {
+app.get('/users/:id/assigned_clients', authenticateToken, async (req, res) => {
     const { id } = req.params;
     try {
         const clients = await pgClient.query('SELECT * FROM users WHERE user_id IN (SELECT client FROM assignment WHERE va = $1)', [id]);
@@ -482,8 +483,10 @@ app.get('/users/:id/assigned_clients' , authenticateToken,async (req, res) => {
 }
 );
 
+
+
 // Get all organizations assigned to a VA
-app.get('/users/:id/assigned_organizations' , authenticateToken,async (req, res) => {
+app.get('/users/:id/assigned_organizations', authenticateToken, async (req, res) => {
     const { id } = req.params;
     try {
         const organizations = await pgClient.query('SELECT * FROM organizations WHERE organization_id IN (SELECT organization FROM assignment WHERE va = $1)', [id]);
@@ -496,10 +499,40 @@ app.get('/users/:id/assigned_organizations' , authenticateToken,async (req, res)
 }
 );
 
+// Get all clients assigned to logged in VA
+app.get('/users/assigned_clients', authenticateToken, async (req, res) => {
+    const token = req.headers['authorization'].split(' ')[1];
+    const decodedToken = jwt.verify(token, keys.jsonKey);
+    const id = decodedToken.user_id;
+    console.log('VA ID:', id);
+    try {
+        const clients = await pgClient.query('SELECT * FROM users WHERE user_id IN (SELECT client FROM assignment WHERE va = $1)', [id]);
+        res.send(clients.rows);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
+});
+
+// Get all organizations assigned to logged in VA
+app.get('/users/assigned_organizations', authenticateToken, async (req, res) => {
+    const token = req.headers['authorization'].split(' ')[1];
+    const decodedToken = jwt.verify(token, keys.jsonKey);
+    const id = decodedToken.user_id;
+    try {
+        const organizations = await pgClient.query('SELECT * FROM organizations WHERE organization_id IN (SELECT organization FROM assignment WHERE va = $1)', [id]);
+        console.log(organizations.rows);
+        res.send(organizations.rows);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
+});
+
 
 
 // Unassign a client or organization from a VA
-app.post('/users/:id/unassign', authenticateToken,async (req, res) => {
+app.post('/users/:id/unassign', authenticateToken, async (req, res) => {
     const { id } = req.params; // user_id
     const { clientUsername } = req.body;
     try {
@@ -526,6 +559,162 @@ app.post('/users/:id/unassign', authenticateToken,async (req, res) => {
     }
 
 });
+
+
+// Get all uploads for a specific client assigned to logged in VA
+app.get('/uploads/client/:clientName', authenticateToken, async (req, res) => {
+    const token = req.headers['authorization'].split(' ')[1];
+    const decodedToken = jwt.verify(token, keys.jsonKey);
+    const id = decodedToken.user_id;
+    const { clientName } = req.params;
+
+    try {
+        // Get the UUID for the clientName
+        const clientResult = await pgClient.query(
+            'SELECT user_id FROM users WHERE username = $1',
+            [clientName]
+        );
+
+        if (clientResult.rows.length === 0) {
+            return res.status(404).send('Client not found');
+        }
+
+        const clientId = clientResult.rows[0].user_id;
+
+        // Fetch uploads for the client UUID
+        const uploads = await pgClient.query(
+            'SELECT * FROM raw_uploads WHERE va = $1 AND client = $2',
+            [id, clientId]
+        );
+
+        res.send(uploads.rows);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
+});
+// Get all uploads for a specific organization assigned to logged in VA
+app.get('/uploads/organization/:organizationName', authenticateToken, async (req, res) => {
+    const token = req.headers['authorization'].split(' ')[1];
+    const decodedToken = jwt.verify(token, keys.jsonKey);
+    const id = decodedToken.user_id;
+    const { organizationName } = req.params;
+
+    try {
+        // Get the UUID for the organizationName
+        const orgResult = await pgClient.query(
+            'SELECT organization_id FROM organizations WHERE name = $1',
+            [organizationName]
+        );
+
+        if (orgResult.rows.length === 0) {
+            return res.status(404).send('Organization not found');
+        }
+
+        const organizationId = orgResult.rows[0].organization_id;
+
+        // Fetch uploads for the organization UUID
+        const uploads = await pgClient.query(
+            'SELECT * FROM raw_uploads WHERE va = $1 AND organization = $2',
+            [id, organizationId]
+        );
+
+        res.send(uploads.rows);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
+});
+
+// Get file content in raw_uploads table
+app.get('/uploads/file/:loid', authenticateToken, async (req, res) => {
+    const { loid } = req.params;
+
+    try {
+        await pgClient.query('BEGIN');
+
+        // Read the entire large object using lo_get
+        const result = await pgClient.query('SELECT lo_get($1) AS file_content', [loid]);
+        const fileContent = result.rows[0].file_content;
+
+        await pgClient.query('COMMIT');
+
+        // Set the content type and send the file content
+        res.contentType('application/octet-stream');
+        res.send(fileContent);
+    } catch (err) {
+        console.error(err.message);
+        await pgClient.query('ROLLBACK');
+        res.status(500).send('Server Error');
+    } 
+});
+
+
+//upload file to raw_uploads table
+
+app.post('/uploads', authenticateToken, async (req, res) => {
+    const token = req.headers['authorization'].split(' ')[1];
+    const decodedToken = jwt.verify(token, keys.jsonKey);
+    const id = decodedToken.user_id;
+
+    const { clientName, organizationName, type, fileContent, filename } = req.body;
+
+    try {
+        await pgClient.connect(); 
+
+        // Fetch client ID based on clientName
+        let client_id = null;
+        if (clientName) {
+            const clientQuery = 'SELECT user_id FROM users WHERE username = $1';
+            const clientResult = await pgClient.query(clientQuery, [clientName]);
+            client_id = clientResult.rows[0]?.user_id;
+        }
+
+        // Fetch organization ID based on organizationName
+        let organization_id = null;
+        if (organizationName) {
+            const orgQuery = 'SELECT organization_id FROM organizations WHERE organization_name = $1';
+            const orgResult = await pgClient.query(orgQuery, [organizationName]);
+            organization_id = orgResult.rows[0]?.organization_id;
+        }
+
+        // Create a new large object
+        const loCreateQuery = 'SELECT lo_creat(-1)';
+        const loCreateResult = await pgClient.query(loCreateQuery);
+        const loidValue = loCreateResult.rows[0].lo_creat;
+
+        // Open the large object for writing
+        const loOpenQuery = 'SELECT lo_open($1, 131072)';
+        await pgClient.query(loOpenQuery, [loidValue]);
+
+        // Write the file content to the large object
+        const buffer = Buffer.from(fileContent, 'base64');
+        const chunkSize = 16384;
+        let offset = 0;
+        for (let i = 0; i < buffer.length; i += chunkSize) {
+            const chunk = buffer.subarray(i, i + chunkSize);
+            await pgClient.query('SELECT lo_put($1, $2, $3)', [loidValue, offset, chunk]);
+            offset += chunk.length;
+        }
+
+        // Insert into raw_uploads table
+        const query = `
+            INSERT INTO raw_uploads (va, client, organization, type, loid, filename)
+            VALUES ($1, $2, $3, $4, $5, $6)
+            RETURNING upload_id`;
+        
+        const values = [id, client_id, organization_id, type, loidValue, filename];
+        const result = await pgClient.query(query, values);
+        const uploadId = result.rows[0].upload_id;
+
+
+        res.status(201).json({ upload_id: uploadId });
+    } catch (err) {
+        console.error('Error executing query', err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
 
 
 app.listen(5000, err => {

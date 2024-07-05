@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { Button, Card, CardContent, CircularProgress, TextField, Typography } from '@mui/material';
 import { Box } from '@mui/system';
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
-import { getUserRole, fetchUsersByOrg, removeUser, addUser, deleteOrganisation, createOrganisation, changeOrganisationName } from '../requests/requests';
+import { getUserRole, fetchUsers, removeUser, addUser, deleteOrganisation, createOrganisation, changeOrganisationName } from '../requests/requests';
 import { buttonStyles, cardStyles, headingBoxStyles, mainContentStyles, textFieldStyles } from '../styles/organisationStyle';
 
 type User = {
@@ -30,7 +30,7 @@ const Organisation = () => {
             try {
                 const accessToken = localStorage.getItem('accessToken');
                 if (accessToken) {
-                    const usersList = await fetchUsersByOrg(isInOrg, accessToken);
+                    const usersList = await fetchUsers(isInOrg, accessToken);
                     const usersWithId = usersList.map((user: User, index: number) => ({
                         ...user,
                         id: user.id || index.toString(),

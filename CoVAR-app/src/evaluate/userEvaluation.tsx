@@ -73,7 +73,7 @@ const UserEvaluation: React.FC = () => {
             {uploads.map((upload) => (
               <ListItem key={upload.upload_id}>
                 <ListItemText
-                  primary={`File Name: ${upload.filename}, Uploaded At: ${upload.created_at}`}
+                  primary={`File Name: ${upload.filename}, Uploaded At: ${new Date(upload.created_at).toLocaleString()}`}
                 />
                 <Button
                   variant="outlined"

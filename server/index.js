@@ -673,7 +673,7 @@ app.post('/uploads', authenticateToken, async (req, res) => {
         // Fetch organization ID based on organizationName
         let organization_id = null;
         if (organizationName) {
-            const orgQuery = 'SELECT organization_id FROM organizations WHERE organization_name = $1';
+            const orgQuery = 'SELECT organization_id FROM organizations WHERE name = $1';
             const orgResult = await pgClient.query(orgQuery, [organizationName]);
             organization_id = orgResult.rows[0]?.organization_id;
         }
@@ -714,6 +714,38 @@ app.post('/uploads', authenticateToken, async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 });
+
+//remove file from raw_uploads table
+app.delete('/uploads/:upload_id', authenticateToken, async (req, res) => {
+    const { upload_id } = req.params;
+  
+    try {
+      await pgClient.query('BEGIN');
+  
+      // Get the LOID of the file to delete
+      const result = await pgClient.query('SELECT loid FROM raw_uploads WHERE upload_id = $1', [upload_id]);
+      if (result.rows.length === 0) {
+        await pgClient.query('ROLLBACK');
+        return res.status(404).send('File not found');
+      }
+      const loid = result.rows[0].loid;
+  
+      // Unlink the large object
+      await pgClient.query('SELECT lo_unlink($1)', [loid]);
+  
+      // Delete the metadata from the raw_uploads table
+      await pgClient.query('DELETE FROM raw_uploads WHERE upload_id = $1', [upload_id]);
+  
+      await pgClient.query('COMMIT');
+  
+      res.status(200).send('File deleted successfully');
+    } catch (err) {
+      await pgClient.query('ROLLBACK');
+      console.error(err.message);
+      res.status(500).send('Server Error');
+    }
+  });
+
 
 
 

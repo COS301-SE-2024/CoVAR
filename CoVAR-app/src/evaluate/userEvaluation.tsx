@@ -4,6 +4,7 @@ import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import { mainContentStyles } from '../styles/sidebarStyle';
 import FileUpload from './components/fileUpload';
+import { handleDownloadFile } from '../requests/requests';
 
 interface FileUpload {
   upload_id: number;
@@ -43,20 +44,14 @@ const UserEvaluation: React.FC = () => {
     }
   };
 
-  const handleDownloadFile = async (loid: number, fileName: string) => {
+
+  const handleRemoveFile = async (upload_id: number) => {
     try {
-      console.log('Downloading file:', loid, fileName);
-      const response = await axios.get(`/api/uploads/file/${loid}`, {
-        responseType: 'blob', // Important: responseType as blob to handle binary data
-      });
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', fileName);
-      document.body.appendChild(link);
-      link.click();
+      await axios.delete(`/api/uploads/${upload_id}`);
+      // Remove the deleted upload from the state
+      setUploads(uploads.filter(upload => upload.upload_id !== upload_id));
     } catch (error) {
-      console.error('Error downloading file:', error);
+      console.error('Error removing upload:', error);
     }
   };
 
@@ -84,8 +79,16 @@ const UserEvaluation: React.FC = () => {
                   variant="outlined"
                   color="primary"
                   onClick={() => handleDownloadFile(upload.loid, `${upload.filename}`)}
+                  sx={{ marginRight: 2 }}
                 >
                   Download
+                </Button>
+                <Button
+                  variant="outlined"
+                  color="secondary"
+                  onClick={() => handleRemoveFile(upload.upload_id)}
+                >
+                  Remove
                 </Button>
               </ListItem>
             ))}

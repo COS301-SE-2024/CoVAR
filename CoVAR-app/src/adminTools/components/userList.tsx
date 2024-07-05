@@ -1,14 +1,21 @@
 import React, { useEffect, useState } from 'react';
 import { CircularProgress, Button, Typography, Menu, TextField, Autocomplete, Alert } from '@mui/material';
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
-import axios from 'axios';
 import CheckIcon from '@mui/icons-material/Check';
-
+import { 
+    fetchUsers, 
+    fetchOrganisations, 
+    updateUserRole, 
+    fetchAssignedClients, 
+    fetchAssignedOrganisations, 
+    assignClient, 
+    unassignClient 
+} from '../../requests/requests';
 type User = {
     user_id: string;
     username: string;
     role: string;
-    organization: string | null; // Allow null for users without an organization
+    organization: string | null;
 };
 
 type Organization = {
@@ -17,13 +24,8 @@ type Organization = {
     owner: string;
 };
 
-
 const UserList = () => {
     const [users, setUsers] = useState<User[]>([]);
-
-    if (!Array.isArray(users)) {
-        setUsers([]);
-    }
     const [loading, setLoading] = useState(true);
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const [selectedUser, setSelectedUser] = useState<User | null>(null);
@@ -33,35 +35,49 @@ const UserList = () => {
     const [unassignAnchorEl, setUnassignAnchorEl] = useState<null | HTMLElement>(null);
     const [organizations, setOrganizations] = useState<Organization[]>([]);
     const [alert, setAlert] = useState<{visible: boolean, message: string}>({visible: false, message: ''});
-
+    const [accessToken, setAccessToken] = useState(localStorage.getItem('accessToken'));
 
     useEffect(() => {
-        const fetchUsers = async () => {
+        const getToken = () => {
+            setAccessToken(localStorage.getItem('accessToken'));
+        };
+        getToken();
+    }
+    , [accessToken]);
+    useEffect(() => {
+        const loadUsers = async () => {
             try {
-                const response = await axios.get('/api/users/all');
-                setUsers(response.data);
+                if(!accessToken) {
+                    throw new Error('Access token not found');
+                }
+                const users = await fetchUsers(accessToken);
+                console.log('Users:', users);
+                setUsers(users);
                 setLoading(false);
             } catch (error) {
-                console.error('Error fetching users:', error);
                 setLoading(false);
             }
         };
 
-        fetchUsers();
-    }, []);
+        loadUsers();
+    }, [accessToken]);
 
     useEffect(() => {
-        const fetchOrganizations = async () => {
+        const loadOrganizations = async () => {
             try {
-                const response = await axios.get('/api/organizations/all');
-                setOrganizations(response.data);
+                if(!accessToken){
+                    throw new Error('Access token not found');
+                }
+                const organizations = await fetchOrganisations(accessToken);
+                console.log('Organizations:', organizations);
+                setOrganizations(organizations);
             } catch (error) {
                 console.error('Error fetching organizations:', error);
             }
         };
 
-        fetchOrganizations();
-    }, []);
+        loadOrganizations();
+    }, [accessToken]);
 
     const handleRoleToggle = async (user: User) => {
         if (!user) {
@@ -73,7 +89,10 @@ const UserList = () => {
         console.log('Updating user role:', user.user_id, user.role, '->', newRole);
 
         try {
-            await axios.patch(`/api/users/${user.user_id}/role`, { role: newRole });
+            if(!accessToken){
+                throw new Error('Access token not found');
+            }
+            await updateUserRole(user.user_id, newRole,accessToken);
             setUsers(users.map(u => (u.user_id === user.user_id ? { ...u, role: newRole } : u)));
         } catch (error) {
             console.error('Error updating user role:', error);
@@ -89,17 +108,13 @@ const UserList = () => {
         setUnassignAnchorEl(event.currentTarget);
         setSelectedUser(user);
         try {
-            const assignedClients = await axios.get(`/api/users/${user.user_id}/assigned_clients`);
-            setAssignedClients(assignedClients.data);
-            const assignedOrganizations = await axios.get(`/api/users/${user.user_id}/assigned_organizations`);
-            setAssignedOrganizations(assignedOrganizations.data);
-            
-            
-
-
-            // console.log('Assigned clients:', assignedClients.data);
-            // console.log('Assigned organizations:', assignedOrganizations.data);
-
+            if(!accessToken){
+                throw new Error('Access token not found');
+            }
+            const assignedClients = await fetchAssignedClients(user.user_id,accessToken);
+            setAssignedClients(assignedClients);
+            const assignedOrganizations = await fetchAssignedOrganisations(user.user_id,accessToken);
+            setAssignedOrganizations(assignedOrganizations);
         } catch (error) {
             console.error('Error fetching assigned clients:', error);
         }
@@ -119,7 +134,10 @@ const UserList = () => {
     const handleAssignClient = async (clientUsername: string) => {
         if (selectedUser) {
             try {
-                await axios.post(`/api/users/${selectedUser.user_id}/assign`, { clientUsername });
+                if(!accessToken){
+                    throw new Error('Access token not found');
+                }
+                await assignClient(selectedUser.user_id, clientUsername,accessToken);
                 handleMenuClose();
 
                 setAlert({
@@ -135,7 +153,10 @@ const UserList = () => {
     const handleUnassignClient = async (clientUsername: string) => {
         if (selectedUser) {
             try {
-                await axios.post(`/api/users/${selectedUser.user_id}/unassign`, { clientUsername });
+                if(!accessToken){
+                    throw new Error('Access token not found');
+                }
+                await unassignClient(selectedUser.user_id, clientUsername,accessToken);
                 setAssignedClients(assignedClients.filter(client => client.username !== clientUsername));
                 setAssignedOrganizations(assignedOrganizations.filter(org => org.name !== clientUsername));
                 handleUnassignMenuClose();
@@ -144,8 +165,6 @@ const UserList = () => {
                     visible: true,
                     message: `Successfully unassigned ${clientUsername} from ${selectedUser.username}.`
                 });
-    
-                
             } catch (error) {
                 console.error('Error unassigning client:', error);
             }

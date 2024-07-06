@@ -1,5 +1,13 @@
 import axios from 'axios';
-
+export const checkToken = async (accessToken: string) => {
+    try {
+        const response = await axios.post('/api/checkToken', { accessToken });
+        return response.data;
+    } catch (error) {
+        console.error('Error checking token:', error);
+        throw error;
+    }
+};
 export const fetchUsers = async (accessToken: string) => {
     try {
         const response = await axios.get('/api/users/all', {

@@ -50,6 +50,9 @@ app.use(express.json());
 function generateToken(user){
     return jwt.sign(user,keys.jsonKey,{expiresIn:'15 m'});
 }
+app.post('checkToken',authenticateToken,(req,res)=>{
+    res.sendStatus(201);
+});
 function authenticateToken(req,res,next){
     console.log("authenticating");
     const authHeader = req.headers['authorization'];
@@ -127,7 +130,7 @@ app.post('/getUser', authenticateToken, async (req, res) => {
             owner: owner.isOwner
         };
 
-        res.json(user);
+        res.status(201).json(user);
     } catch (err) {
         console.error('Error fetching user:', err);
         res.status(500).json({ error: 'Server Error' });
@@ -158,7 +161,7 @@ app.post('/users/login', async (req, res) => {
     }
    const accessToken = generateToken(user);
    const refreshToken = jwt.sign(user,keys.refreshKey);
-   res.json({accessToken: accessToken,refreshToken:refreshToken});
+   res.status(201).json({accessToken: accessToken,refreshToken:refreshToken});
 });
 app.post('/users/token', (req, res) => {
     const refreshToken = req.body.token;
@@ -209,7 +212,7 @@ app.post('/users/create', async (req, res) => {
         if (existingUser.rows.length > 0) {
             // User already exists
 
-            return res.send('User already exists');
+            return res.status(201).send('User already exists');
         }
         if(existingUser.rows.length === 0){
         // User does not exist, proceed with insertion

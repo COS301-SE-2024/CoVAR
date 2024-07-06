@@ -80,7 +80,8 @@ const Login: React.FC<LoginProps> = ({ toggleForm }) => {
             { accessToken: localStorage.getItem('accessToken') },
             { headers: { Authorization: `Bearer ${response.data.accessToken}` } }
           );
-  
+          //set cookie for middleware 
+          document.cookie = `accessToken=${response.data.accessToken}`;
           //Extract individual properties from getUserResponse.data
           const { user_id, username, role, organization_id } = getUserResponse.data;
           console.log("getUserResponse");
@@ -135,7 +136,8 @@ const Login: React.FC<LoginProps> = ({ toggleForm }) => {
         localStorage.setItem('refreshToken', LoginResponse.data.refreshToken);
         axios.defaults.headers.common['Authorization'] = `Bearer ${LoginResponse.data.accessToken}`;
         axios.defaults.headers.post['Content-Type'] = 'application/json';
-  
+        //set cookie for middleware 
+        document.cookie = `accessToken=${response.data.accessToken}`;
         let getUserResponse;
         try {
           getUserResponse = await axios.post(

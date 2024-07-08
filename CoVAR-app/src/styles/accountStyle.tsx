@@ -1,5 +1,5 @@
+'use client'
 import { SxProps } from '@mui/material/styles';
-
 
 export const accountContainerStyles: SxProps = {
     display: 'flex',

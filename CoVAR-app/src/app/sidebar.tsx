@@ -24,8 +24,6 @@ const Sidebar: React.FC = () => {
   const location = usePathname();
   const theme = useTheme();
 
-
-  
   const [role, setRole] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 

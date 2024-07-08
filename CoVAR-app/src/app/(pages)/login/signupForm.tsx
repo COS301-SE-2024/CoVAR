@@ -68,6 +68,7 @@ const Signup: React.FC<SignupProps> = ({ toggleForm }) => {
         localStorage.setItem('refreshToken', LoginResponse.data.refreshToken);
         axios.defaults.headers.common['Authorization'] = `Bearer ${LoginResponse.data.accessToken}`;
         axios.defaults.headers.post['Content-Type'] = 'application/json';
+        document.cookie = `accessToken=${response.data.accessToken}`;
         let getUserResponse;
         try {
           getUserResponse = await axios.post(
@@ -108,9 +109,11 @@ const Signup: React.FC<SignupProps> = ({ toggleForm }) => {
       const user = userCredential.user;
       await addUserToFirestore(user as User);
       const response = await axios.post('/api/users/create', { uid: user.uid, email: user.email });
-
+      localStorage.setItem('accessToken', response.data.accessToken);
+      localStorage.setItem('refreshToken', response.data.refreshToken);
+      document.cookie = `accessToken=${response.data.accessToken}`;
       if (response.status === 201) {
-        router.replace('/');
+        router.replace('/dashboard');
       } else {
         throw new Error('Failed to create user in PostgreSQL');
       }

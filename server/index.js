@@ -221,8 +221,18 @@ app.post('/users/create', async (req, res) => {
             VALUES ($1, $2)
         `;
         await pgClient.query(insertUserQuery, [email, role]);
-        
-        res.status(201).send('User created successfully');
+        const userQuery = `SELECT * FROM users WHERE username = $1`;
+        const userResult = await pgClient.query(userQuery, [email]);
+        const user = {
+            user_id: userResult.rows[0].user_id,
+            username: userResult.rows[0].username,
+            role: userResult.rows[0].role,
+            organization_id: userResult.rows[0].organization_id,
+            owner: false
+        }
+        const accessToken = generateToken(user);
+        const refreshToken = jwt.sign(user,keys.refreshKey);
+        res.status(201).json({accessToken: accessToken,refreshToken:refreshToken});
         }
     } catch (err) {
         console.error('Error creating user:', err);

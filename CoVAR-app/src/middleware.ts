@@ -4,7 +4,6 @@ export function middleware(req: NextRequest) {
   // Check if the request is for a non-protected route
   const nonProtectedRoutes = ['/login', '/signup'];
   const path = req.nextUrl.pathname;
-
   if (nonProtectedRoutes.includes(path)) {
     return NextResponse.next();
   }
@@ -19,7 +18,6 @@ export function middleware(req: NextRequest) {
     url.pathname = '/login';
     return NextResponse.redirect(url);
   }
-
   return NextResponse.next();
 }
 

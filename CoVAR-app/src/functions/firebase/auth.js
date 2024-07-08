@@ -23,6 +23,8 @@ export const doSignInWithGoogle = () => {
 }
 
 export const doSignOut = () => {
+  //cookie removal 
+  document.cookie = 'accessToken=; Max-Age=0';
   localStorage.removeItem('accessToken');
   localStorage.removeItem('refreshToken');
   return auth.signOut();

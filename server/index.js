@@ -48,9 +48,9 @@ pgClient.connect()
 
 app.use(express.json());
 function generateToken(user){
-    return jwt.sign(user,keys.jsonKey,{expiresIn:'15 m'});
+    return jwt.sign(user,keys.jsonKey,{expiresIn:'1 m'});
 }
-app.post('checkToken',authenticateToken,(req,res)=>{
+app.post('/checkToken',authenticateToken,(req,res)=>{
     res.sendStatus(201);
 });
 function authenticateToken(req,res,next){

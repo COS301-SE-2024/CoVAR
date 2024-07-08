@@ -45,7 +45,7 @@ services:
     stdin_open: true
     build:
       dockerfile: Dockerfile.dev
-      context: './covar-app'
+      context: './CoVAR-app'
     environment:
       - NEXT_PUBLIC_API_KEY=${NEXT_PUBLIC_API_KEY}
       - NEXT_PUBLIC_AUTH_DOMAIN=${NEXT_PUBLIC_AUTH_DOMAIN}
@@ -56,7 +56,7 @@ services:
       - NEXT_PUBLIC_MEASUREMENT_ID=${NEXT_PUBLIC_MEASUREMENT_ID}
     volumes:
       - /app/node_modules
-      - ./covar-app:/app
+      - ./CoVAR-app:/app
 
 volumes:
   postgres_data:

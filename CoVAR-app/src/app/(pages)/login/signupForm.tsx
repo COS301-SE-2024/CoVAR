@@ -1,8 +1,9 @@
 'use client'
-import React from 'react';
+
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTheme, ThemeProvider } from '@mui/material/styles';
-import { Container, Box, Typography, TextField, Button, Link, CssBaseline, Card } from '@mui/material';
+import { Container, Box, Typography, TextField, Button, Link, CssBaseline, Card, Snackbar, Alert } from '@mui/material';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import GoogleIcon from "../../../assets/GoogleIcon";
 import { doCreateUserWithEmailAndPassword, doSignInWithGoogle } from '../../../functions/firebase/auth';
@@ -46,6 +47,8 @@ interface SignupProps {
 const Signup: React.FC<SignupProps> = ({ toggleForm }) => {
   const theme = useTheme();
   const router = useRouter();
+  const [openSnackbar, setOpenSnackbar] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
 
   const signInWithGoogle = async () => {
     try {
@@ -54,19 +57,16 @@ const Signup: React.FC<SignupProps> = ({ toggleForm }) => {
         const { uid, email } = result.user;
         await addUserToFirestore(result.user as User);
         const response = await axios.post('/api/users/create', { uid, email });
-        console.log(response);
         const firebaseToken = await result.user.getIdToken();
-        console.log("Firebase Token:", firebaseToken);
-  
-        const LoginResponse = await axios.post('/api/users/login', {
+
+        const loginResponse = await axios.post('/api/users/login', {
           firebaseToken,
           username: email
         });
-        console.log("Login response:", LoginResponse);
-  
-        localStorage.setItem('accessToken', LoginResponse.data.accessToken);
-        localStorage.setItem('refreshToken', LoginResponse.data.refreshToken);
-        axios.defaults.headers.common['Authorization'] = `Bearer ${LoginResponse.data.accessToken}`;
+
+        localStorage.setItem('accessToken', loginResponse.data.accessToken);
+        localStorage.setItem('refreshToken', loginResponse.data.refreshToken);
+        axios.defaults.headers.common['Authorization'] = `Bearer ${loginResponse.data.accessToken}`;
         axios.defaults.headers.post['Content-Type'] = 'application/json';
         document.cookie = `accessToken=${response.data.accessToken}`;
         let getUserResponse;
@@ -74,11 +74,9 @@ const Signup: React.FC<SignupProps> = ({ toggleForm }) => {
           getUserResponse = await axios.post(
             '/api/getUser',
             { accessToken: localStorage.getItem('accessToken') },
-            { headers: { Authorization: `Bearer ${LoginResponse.data.accessToken}` } }
+            { headers: { Authorization: `Bearer ${loginResponse.data.accessToken}` } }
           );
-          console.log("Get user response:", getUserResponse);
         } catch (error) {
-          console.error("Error fetching user data:", error);
           throw error; // Re-throw the error to be caught by the outer catch block
         }
         if (getUserResponse.status === 200) {
@@ -88,7 +86,8 @@ const Signup: React.FC<SignupProps> = ({ toggleForm }) => {
         }
       }
     } catch (error) {
-      console.error(error);
+      setSnackbarMessage('Error signing in with Google.');
+      setOpenSnackbar(true);
     }
   };
 
@@ -100,7 +99,8 @@ const Signup: React.FC<SignupProps> = ({ toggleForm }) => {
     const passwordConfirm = data.get('passwordConfirm') as string;
 
     if (password !== passwordConfirm) {
-      console.error('Passwords do not match.');
+      setSnackbarMessage('Passwords do not match.');
+      setOpenSnackbar(true);
       return;
     }
 
@@ -117,8 +117,14 @@ const Signup: React.FC<SignupProps> = ({ toggleForm }) => {
       } else {
         throw new Error('Failed to create user in PostgreSQL');
       }
-    } catch (error) {
-      console.error("Error signing up: ", error);
+    } catch (error: any) {
+      if (error.code === "auth/email-already-in-use") {
+        setSnackbarMessage('Email already in use.');
+        setOpenSnackbar(true);
+      } else {
+        setSnackbarMessage('Error signing up.');
+        setOpenSnackbar(true);
+      }
     }
   };
 
@@ -225,6 +231,15 @@ const Signup: React.FC<SignupProps> = ({ toggleForm }) => {
           </Box>
         </Card>
       </Container>
+      <Snackbar
+        open={openSnackbar}
+        autoHideDuration={6000}
+        onClose={() => setOpenSnackbar(false)}
+      >
+        <Alert onClose={() => setOpenSnackbar(false)} severity="error" sx={{ width: '100%' }}>
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
     </ThemeProvider>
   );
 };

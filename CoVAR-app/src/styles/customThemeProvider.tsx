@@ -1,3 +1,4 @@
+'use client'
 import React, { createContext, useState, useMemo, ReactNode } from 'react';
 import { ThemeProvider } from '@mui/material/styles';
 import { lightTheme, darkTheme } from './themes';

@@ -48,35 +48,74 @@ pgClient.connect()
     .catch((err) => console.error('Connection error', err.stack));
 
 app.use(express.json());
-function generateToken(user) {
-    return jwt.sign(user, keys.jsonKey, { expiresIn: '15 m' });
-}
-function authenticateToken(req, res, next) {
-    console.log("authenticating");
-    const authHeader = req.headers['authorization'];
-    console.log(authHeader);
-    const token = authHeader && authHeader.split(' ')[1];
-    if (token == null) return res.sendStatus(401);
-    jwt.verify(token, keys.jsonKey, (err, user) => {
-        if (err) return res.sendStatus(403);
-        req.user = user;
-        next();
+
+app.post('/checkToken',authenticateToken,(req,res)=>{
+    res.sendStatus(201);
+});
+
+app.post('/users/login', async (req, res) => {
+    const { username, firebaseToken } = req.body;
+
+    //firebase login check 
+    const decodedToken = await verifyIdToken(firebaseToken);
+    console.log(username);
+    // make user object out of db entry 
+     const userQuery = `SELECT * FROM users WHERE username = $1`;
+     const userResult = await pgClient.query(userQuery, [username]);
+     if (userResult.rows.length === 0) {
+         return res.status(404).send('User not found');
+     }
+     //check if user is an owner of an organization 
+     let isOwnerResult = await isOwner(pgClient, req.body.organization, userResult.rows[0].user_id);
+     const user = {
+         user_id: userResult.rows[0].user_id,
+         username: userResult.rows[0].username,
+         role: userResult.rows[0].role,
+         organization_id: userResult.rows[0].organization_id,
+         owner: isOwnerResult.isOwner
+     }
+    const accessToken = generateToken(user);
+    const refreshToken = generateRefreshToken(user);
+    res.status(201).json({accessToken: accessToken,refreshToken:refreshToken});
+ });
+
+app.post('/users/token', (req, res) => {
+    const refreshToken = req.body.token;
+    if (refreshToken == null) return res.sendStatus(401);
+
+    jwt.verify(refreshToken, refreshPublicKey, { algorithms: ['RS256'] }, async (err, decoded) => {
+        if (err) {
+            console.error('Refresh token verification error:', err);
+            return res.sendStatus(403);
+        }
+
+        try {
+            const query = 'SELECT * FROM users WHERE user_id = $1';
+            const { rows } = await pgClient.query(query, [decoded.user_id]);
+
+            if (rows.length === 0) {
+                return res.status(404).json({ error: 'User not found' });
+            }
+
+            const user = {
+                user_id: rows[0].user_id,
+                username: rows[0].username,
+                role: rows[0].role,
+                organization_id: rows[0].organization_id,
+            };
+
+            const accessToken = generateToken(user);
+            res.json({ accessToken });
+        } catch (error) {
+            console.error('Error fetching user:', error);
+            res.status(500).send('Server Error');
+        }
     });
-}
+});
 
-async function isOwner(pgClient, OrgName, OwnerId) {
-    const ownerResult = await pgClient.query('SELECT owner FROM organizations WHERE name = $1', [OrgName]);
-    if (ownerResult.rows.length === 0) {
-        return { isOwner: false, error: 'Organization not found' };
-    }
-
-    if (ownerResult.rows[0].owner !== OwnerId) {
-        return { isOwner: false, error: 'Not authorized as owner of the organization' };
-    }
-
-    return { isOwner: true };
-}
-// Express route handlers
+app.post('/users/logout', (req, res) => {
+    // Implement logout functionality here
+});
 
 app.get('/users/all', authenticateToken, async (req, res) => {
     try {
@@ -128,7 +167,7 @@ app.post('/getUser', authenticateToken, async (req, res) => {
             owner: owner.isOwner
         };
 
-        res.json(user);
+        res.status(201).json(user);
     } catch (err) {
         console.error('Error fetching user:', err);
         res.status(500).json({ error: 'Server Error' });
@@ -136,64 +175,40 @@ app.post('/getUser', authenticateToken, async (req, res) => {
 });
 
 
-app.post('/users/login', async (req, res) => {
-    const username = req.body.username;
-    const firebasekey = req.body.firebaseToken;
-    //firebase login check 
-    const decodedToken = await verifyIdToken(firebasekey);
-    console.log(username);
-    // make user object out of db entry 
-    const userQuery = `SELECT * FROM users WHERE username = $1`;
-    const userResult = await pgClient.query(userQuery, [username]);
-    if (userResult.rows.length === 0) {
-        return res.status(404).send('User not found');
-    }
-    //check if user is an owner of an organization 
-    let isOwnerResult = await isOwner(pgClient, req.body.organization, userResult.rows[0].user_id);
-    const user = {
-        user_id: userResult.rows[0].user_id,
-        username: userResult.rows[0].username,
-        role: userResult.rows[0].role,
-        organization_id: userResult.rows[0].organization_id,
-        owner: isOwnerResult.isOwner
-    }
-    const accessToken = generateToken(user);
-    const refreshToken = jwt.sign(user, keys.refreshKey);
-    res.json({ accessToken: accessToken, refreshToken: refreshToken });
-});
+
 app.post('/users/token', (req, res) => {
     const refreshToken = req.body.token;
     if (refreshToken == null) return res.sendStatus(401);
-
+  
     jwt.verify(refreshToken, keys.refreshKey, async (err, decoded) => {
-        if (err) return res.sendStatus(403);
-
-        try {
-            const query = 'SELECT * FROM users WHERE user_id = $1';
-            const { rows } = await pool.query(query, [decoded.user_id]);
-
-            if (rows.length === 0) {
-                return res.status(404).json({ error: 'User not found' });
-            }
-
-            const user = {
-                user_id: rows[0].user_id,
-                username: rows[0].username,
-                role: rows[0].role,
-                organization_id: rows[0].organization_id,
-            };
-
-            const accessToken = generateToken(user);
-            res.json({ accessToken });
-        } catch (error) {
-            console.error('Error fetching user:', error);
-            res.status(500).send('Server Error');
+      if (err) return res.sendStatus(403);
+  
+      try {
+        const query = 'SELECT * FROM users WHERE user_id = $1';
+        const { rows } = await pool.query(query, [decoded.user_id]);
+  
+        if (rows.length === 0) {
+          return res.status(404).json({ error: 'User not found' });
         }
+  
+        const user = {
+          user_id: rows[0].user_id,
+          username: rows[0].username,
+          role: rows[0].role,
+          organization_id: rows[0].organization_id,
+        };
+  
+        const accessToken = generateToken(user);
+        res.json({ accessToken });
+      } catch (error) {
+        console.error('Error fetching user:', error);
+        res.status(500).send('Server Error');
+      }
     });
-});
-app.post('/users/logout', (req, res) => {
+  });
+  app.post('/users/logout', (req, res) => {
     // Implement logout functionality here
-});
+  });
 //postgres firebase synch
 app.post('/users/create', async (req, res) => {
     const { uid, email } = req.body;
@@ -210,7 +225,7 @@ app.post('/users/create', async (req, res) => {
         if (existingUser.rows.length > 0) {
             // User already exists
 
-            return res.send('User already exists');
+            return res.status(201).send('User already exists');
         }
         if (existingUser.rows.length === 0) {
             // User does not exist, proceed with insertion
@@ -218,9 +233,19 @@ app.post('/users/create', async (req, res) => {
             INSERT INTO users (username, role)
             VALUES ($1, $2)
         `;
-            await pgClient.query(insertUserQuery, [email, role]);
-
-            res.status(201).send('User created successfully');
+        await pgClient.query(insertUserQuery, [email, role]);
+        const userQuery = `SELECT * FROM users WHERE username = $1`;
+        const userResult = await pgClient.query(userQuery, [email]);
+        const user = {
+            user_id: userResult.rows[0].user_id,
+            username: userResult.rows[0].username,
+            role: userResult.rows[0].role,
+            organization_id: userResult.rows[0].organization_id,
+            owner: false
+        }
+        const accessToken = generateToken(user);
+        const refreshToken = jwt.sign(user,keys.refreshKey);
+        res.status(201).json({accessToken: accessToken,refreshToken:refreshToken});
         }
     } catch (err) {
         console.error('Error creating user:', err);

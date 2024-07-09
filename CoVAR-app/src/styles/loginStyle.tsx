@@ -1,3 +1,4 @@
+'use client'
 import { SxProps } from '@mui/material/styles';
 import { styled } from '@mui/material/styles';
 import Button from '@mui/material/Button'; // Import MUI Button

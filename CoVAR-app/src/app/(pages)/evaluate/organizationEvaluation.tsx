@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Typography, Paper, Container, List, ListItem, ListItemText, Button } from '@mui/material';
-import { useParams } from 'react-router-dom';
+import { useParams } from '@react-router-dom';
 import axios from 'axios';
-import { mainContentStyles } from '../styles/sidebarStyle';
+import { mainContentStyles } from '../../../styles/sidebarStyle';
 import FileUpload from './components/fileUpload';
-import { handleDownloadFile } from '../requests/requests';
-
+import { handleDownloadFile } from '../../../functions/requests';
 interface FileUpload {
   upload_id: number;
   va: number;

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Button, Typography, Paper } from '@mui/material';
 import axios from 'axios';
-import { uploadBoxStyles, uploadButtonStyles } from '../../styles/evaluateStyle';
+import { uploadBoxStyles, uploadButtonStyles } from '../../../../styles/evaluateStyle';
 
 interface FileUploadProps {
   onFileSubmit: () => void;

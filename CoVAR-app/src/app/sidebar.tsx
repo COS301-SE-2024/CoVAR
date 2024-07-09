@@ -54,7 +54,7 @@ const Sidebar: React.FC = () => {
       await doSignOut();
       router.replace('/login');
     } catch (error) {
-      console.error(error);
+      console.error('signout error',error);
     }
   };
 

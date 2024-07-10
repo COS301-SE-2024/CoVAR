@@ -1,23 +1,7 @@
-const admin = require('firebase-admin');
-const serviceAccount = require('./covar-7c8b5-firebase-adminsdk-85918-b6654147c1');
 const jwt = require('jsonwebtoken');
 const fs = require('fs');
-
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount)
-});
-
-async function verifyIdToken(idToken) {
-    try {
-      const decodedToken = await admin.auth().verifyIdToken(idToken);
-      return decodedToken;
-    } catch (error) {
-      console.error('Error verifying Firebase ID token:', error);
-      throw new Error('Unauthorized');
-    }
-  }
 const keys = require('./keys');
-const { generateToken, generateRefreshToken, verifyToken, authenticateToken } = require('./jwtFunctions');
+const { generateToken, generateRefreshToken, verifyToken, authenticateToken, verifyIdToken } = require('./jwtFunctions');
 const { isOwner } = require('./serverHelperFunctions');
 
 // Express App Setup
@@ -40,7 +24,6 @@ const pgClient = new Pool({
     port: keys.pgPort
 });
 
-
 pgClient.on('error', err => {
     console.error('Unexpected error on idle client', err);
 });
@@ -48,8 +31,6 @@ pgClient.on('error', err => {
 pgClient.connect()
     .then(() => console.log('Connected to PostgreSQL'))
     .catch((err) => console.error('Connection error', err.stack));
-
-app.use(express.json());
 
 app.post('/checkToken',authenticateToken,(req,res)=>{
     res.sendStatus(201);

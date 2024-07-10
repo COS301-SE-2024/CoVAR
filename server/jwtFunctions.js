@@ -35,9 +35,28 @@ function authenticateToken(req, res, next) {
     });
 }
 
+// Firebase sdk
+const admin = require('firebase-admin');
+const serviceAccount = require('./covar-7c8b5-firebase-adminsdk-85918-b6654147c1');
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount)
+});
+
+async function verifyIdToken(idToken) {
+    try {
+      const decodedToken = await admin.auth().verifyIdToken(idToken);
+      return decodedToken;
+    } catch (error) {
+      console.error('Error verifying Firebase ID token:', error);
+      throw new Error('Unauthorized');
+    }
+}
+
 module.exports = {
     generateToken,
     generateRefreshToken,
     verifyToken,
-    authenticateToken
+    authenticateToken,
+    verifyIdToken
 };

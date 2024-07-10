@@ -1,6 +1,6 @@
+'use client'
 import React from 'react';
 import { List, ListItem, ListItemText, Box } from '@mui/material';
-import { listContainerStyles } from '../../styles/dashboardStyle';
 
 const ReportList: React.FC = () => {
     const reports = [

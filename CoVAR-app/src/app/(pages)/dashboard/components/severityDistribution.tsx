@@ -1,5 +1,5 @@
+'use client'
 import React from 'react';
-import { Box, Typography, Paper } from '@mui/material';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 
 const pieData = [

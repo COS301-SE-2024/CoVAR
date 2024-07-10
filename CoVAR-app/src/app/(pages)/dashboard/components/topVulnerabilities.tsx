@@ -1,3 +1,4 @@
+'use client'
 import React from 'react';
 import { Box, Typography, Paper, List, ListItem, ListItemText } from '@mui/material';
 
@@ -13,7 +14,7 @@ const TopVulnerabilities: React.FC = () => {
           <ListItem>
             <ListItemText primary="High Vulnerability 1" secondary="Description of the vulnerability." />
           </ListItem>
-          {/* Add more list items as needed */}
+          {/* other items */}
         </List>
       </Box>
     </Paper>

@@ -23,3 +23,10 @@ export const uploadButtonStyles: SxProps<Theme> = (theme) => ({
     backgroundColor: theme.palette.primary.dark,
   },
 });
+
+export const mainContentStyles: SxProps<Theme> = {
+  flexGrow: 1,
+  backgroundColor: (theme) => theme.palette.background.default,
+  padding: (theme) => theme.spacing(3),
+  color: (theme) => theme.palette.text.primary,
+};

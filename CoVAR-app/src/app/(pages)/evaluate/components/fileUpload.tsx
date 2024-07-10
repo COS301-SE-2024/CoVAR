@@ -29,13 +29,18 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileSubmit, client, organizat
     reader.onloadend = async () => {
       const base64File = reader.result?.toString().split(',')[1]; // Extract base64 content
       if (base64File) {
+        const token = localStorage.getItem('accessToken');
         try {
           await axios.post('/api/uploads', {
             clientName: client,
             organizationName: organization,
             type: selectedFile.type,
             fileContent: base64File,
-            filename: selectedFile.name
+            filename: selectedFile.name,
+          }, {
+            headers: { 
+              Authorization: `Bearer ${token}`,
+            },
           });
           onFileSubmit();
         } catch (err) {

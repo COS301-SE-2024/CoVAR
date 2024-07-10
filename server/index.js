@@ -16,12 +16,15 @@ async function verifyIdToken(idToken) {
     }
 }
 const keys = require('./keys');
+const jwtFunctions = require('./jwtFunctions');
+const { generateToken, generateRefreshToken, verifyToken, authenticateToken } = jwtFunctions;
+const { isOwner } = require('./serverHelperFunctions');
+
 
 // Express App Setup
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
-const jwt = require('jsonwebtoken');
 
 const app = express();
 app.use(cors());
@@ -49,7 +52,7 @@ pgClient.connect()
 
 app.use(express.json());
 
-app.post('/checkToken',authenticateToken,(req,res)=>{
+app.post('/checkToken', authenticateToken, (req, res) => {
     res.sendStatus(201);
 });
 
@@ -60,24 +63,24 @@ app.post('/users/login', async (req, res) => {
     const decodedToken = await verifyIdToken(firebaseToken);
     console.log(username);
     // make user object out of db entry 
-     const userQuery = `SELECT * FROM users WHERE username = $1`;
-     const userResult = await pgClient.query(userQuery, [username]);
-     if (userResult.rows.length === 0) {
-         return res.status(404).send('User not found');
-     }
-     //check if user is an owner of an organization 
-     let isOwnerResult = await isOwner(pgClient, req.body.organization, userResult.rows[0].user_id);
-     const user = {
-         user_id: userResult.rows[0].user_id,
-         username: userResult.rows[0].username,
-         role: userResult.rows[0].role,
-         organization_id: userResult.rows[0].organization_id,
-         owner: isOwnerResult.isOwner
-     }
+    const userQuery = `SELECT * FROM users WHERE username = $1`;
+    const userResult = await pgClient.query(userQuery, [username]);
+    if (userResult.rows.length === 0) {
+        return res.status(404).send('User not found');
+    }
+    //check if user is an owner of an organization 
+    let isOwnerResult = await isOwner(pgClient, req.body.organization, userResult.rows[0].user_id);
+    const user = {
+        user_id: userResult.rows[0].user_id,
+        username: userResult.rows[0].username,
+        role: userResult.rows[0].role,
+        organization_id: userResult.rows[0].organization_id,
+        owner: isOwnerResult.isOwner
+    }
     const accessToken = generateToken(user);
     const refreshToken = generateRefreshToken(user);
-    res.status(201).json({accessToken: accessToken,refreshToken:refreshToken});
- });
+    res.status(201).json({ accessToken: accessToken, refreshToken: refreshToken });
+});
 
 app.post('/users/token', (req, res) => {
     const refreshToken = req.body.token;
@@ -131,10 +134,11 @@ app.post('/getUser', authenticateToken, async (req, res) => {
     const token = req.body.accessToken;
 
     try {
-        const decodedToken = jwt.verify(token, keys.jsonKey);
+        const decodedToken = verifyToken(token);
+        //console.log('Decoded token in getUSer:', decodedToken);
         const userId = decodedToken.user_id;
 
-        const userQuery = `SELECT * FROM users WHERE user_id = $1`;
+        const userQuery = 'SELECT * FROM users WHERE user_id = $1';
         const userResult = await pgClient.query(userQuery, [userId]);
 
         if (userResult.rows.length === 0) {
@@ -146,7 +150,7 @@ app.post('/getUser', authenticateToken, async (req, res) => {
 
         // Check if the user is associated with an organization
         if (userResult.rows[0].organization_id !== null) {
-            const orgQuery = `SELECT name FROM organizations WHERE organization_id = $1`;
+            const orgQuery = 'SELECT name FROM organizations WHERE organization_id = $1';
             const orgResult = await pgClient.query(orgQuery, [userResult.rows[0].organization_id]);
 
             if (orgResult.rows.length > 0) {
@@ -179,36 +183,36 @@ app.post('/getUser', authenticateToken, async (req, res) => {
 app.post('/users/token', (req, res) => {
     const refreshToken = req.body.token;
     if (refreshToken == null) return res.sendStatus(401);
-  
+
     jwt.verify(refreshToken, keys.refreshKey, async (err, decoded) => {
-      if (err) return res.sendStatus(403);
-  
-      try {
-        const query = 'SELECT * FROM users WHERE user_id = $1';
-        const { rows } = await pool.query(query, [decoded.user_id]);
-  
-        if (rows.length === 0) {
-          return res.status(404).json({ error: 'User not found' });
+        if (err) return res.sendStatus(403);
+
+        try {
+            const query = 'SELECT * FROM users WHERE user_id = $1';
+            const { rows } = await pool.query(query, [decoded.user_id]);
+
+            if (rows.length === 0) {
+                return res.status(404).json({ error: 'User not found' });
+            }
+
+            const user = {
+                user_id: rows[0].user_id,
+                username: rows[0].username,
+                role: rows[0].role,
+                organization_id: rows[0].organization_id,
+            };
+
+            const accessToken = generateToken(user);
+            res.json({ accessToken });
+        } catch (error) {
+            console.error('Error fetching user:', error);
+            res.status(500).send('Server Error');
         }
-  
-        const user = {
-          user_id: rows[0].user_id,
-          username: rows[0].username,
-          role: rows[0].role,
-          organization_id: rows[0].organization_id,
-        };
-  
-        const accessToken = generateToken(user);
-        res.json({ accessToken });
-      } catch (error) {
-        console.error('Error fetching user:', error);
-        res.status(500).send('Server Error');
-      }
     });
-  });
-  app.post('/users/logout', (req, res) => {
+});
+app.post('/users/logout', (req, res) => {
     // Implement logout functionality here
-  });
+});
 //postgres firebase synch
 app.post('/users/create', async (req, res) => {
     const { uid, email } = req.body;
@@ -233,19 +237,19 @@ app.post('/users/create', async (req, res) => {
             INSERT INTO users (username, role)
             VALUES ($1, $2)
         `;
-        await pgClient.query(insertUserQuery, [email, role]);
-        const userQuery = `SELECT * FROM users WHERE username = $1`;
-        const userResult = await pgClient.query(userQuery, [email]);
-        const user = {
-            user_id: userResult.rows[0].user_id,
-            username: userResult.rows[0].username,
-            role: userResult.rows[0].role,
-            organization_id: userResult.rows[0].organization_id,
-            owner: false
-        }
-        const accessToken = generateToken(user);
-        const refreshToken = jwt.sign(user,keys.refreshKey);
-        res.status(201).json({accessToken: accessToken,refreshToken:refreshToken});
+            await pgClient.query(insertUserQuery, [email, role]);
+            const userQuery = `SELECT * FROM users WHERE username = $1`;
+            const userResult = await pgClient.query(userQuery, [email]);
+            const user = {
+                user_id: userResult.rows[0].user_id,
+                username: userResult.rows[0].username,
+                role: userResult.rows[0].role,
+                organization_id: userResult.rows[0].organization_id,
+                owner: false
+            }
+            const accessToken = generateToken(user);
+            const refreshToken = generateRefreshToken(user);
+            res.status(201).json({ accessToken: accessToken, refreshToken: refreshToken });
         }
     } catch (err) {
         console.error('Error creating user:', err);
@@ -322,12 +326,12 @@ app.post('/organizations/create', authenticateToken, async (req, res) => {
 });
 
 // Add user to organization
-app.post('/organizations/:id/add_user', async (req, res) => {
+app.post('/organizations/:id/add_user', authenticateToken, async (req, res) => {
     const { id: OwnerId } = req.params;
     const { organizationId, username } = req.body;
-    console.log("owner", OwnerId);
-    console.log("org", organizationId);
-    console.log("username", username);
+    // console.log("owner",OwnerId);
+    // console.log("org",organizationId);
+    // console.log("username",username);
     try {
         //get org name 
         const orgQuery = `SELECT name FROM organizations WHERE organization_id = $1`;
@@ -359,7 +363,7 @@ app.post('/organizations/:id/add_user', async (req, res) => {
 });
 
 // Remove user from organization
-app.post('/organizations/:id/remove_user', async (req, res) => {
+app.post('/organizations/:id/remove_user', authenticateToken, async (req, res) => {
     const { id: OwnerId } = req.params;
     const { organizationId, username } = req.body;
 
@@ -396,7 +400,7 @@ app.post('/organizations/:id/remove_user', async (req, res) => {
     }
 });
 //change org name
-app.patch('/organizations/:id/change_name', async (req, res) => {
+app.patch('/organizations/:id/change_name', authenticateToken, async (req, res) => {
     const { id: OwnerId } = req.params;
     const { OrgName, newName } = req.body;
 
@@ -423,8 +427,8 @@ app.patch('/organizations/:id/change_name', async (req, res) => {
     }
 });
 //fetch users of an org
-app.post('/organizations/users', async (req, res) => {
-    console.log("Getting users from an organization");
+app.post('/organizations/users', authenticateToken, async (req, res) => {
+    //console.log("Getting users from an organization");
     const { org_id } = req.body;
     try {
         const users = await pgClient.query('SELECT * FROM users WHERE organization_id = $1', [org_id]);
@@ -435,7 +439,7 @@ app.post('/organizations/users', async (req, res) => {
     }
 });
 //fetch org of a user
-app.get('/users/:id/organization', async (req, res) => {
+app.get('/users/:id/organization', authenticateToken, async (req, res) => {
     const { id } = req.params;
     try {
         const org = await pgClient.query('SELECT * FROM organizations WHERE organization_id = (SELECT organization_id FROM users WHERE user_id = $1)', [id]);
@@ -464,6 +468,7 @@ app.patch('/users/:id/role', authenticateToken, async (req, res) => {
 
 // Assign a client to a VA
 app.post('/users/:id/assign', authenticateToken, async (req, res) => {
+    console.log('Assigning a client to a VA');
     const { id } = req.params; // VA id
     const { clientUsername } = req.body;
     console.log('clientUsername:', clientUsername);
@@ -508,8 +513,6 @@ app.get('/users/:id/assigned_clients', authenticateToken, async (req, res) => {
 }
 );
 
-
-
 // Get all organizations assigned to a VA
 app.get('/users/:id/assigned_organizations', authenticateToken, async (req, res) => {
     const { id } = req.params;
@@ -527,7 +530,7 @@ app.get('/users/:id/assigned_organizations', authenticateToken, async (req, res)
 // Get all clients assigned to logged in VA
 app.get('/users/assigned_clients', authenticateToken, async (req, res) => {
     const token = req.headers['authorization'].split(' ')[1];
-    const decodedToken = jwt.verify(token, keys.jsonKey);
+    const decodedToken = verifyToken(token);
     const id = decodedToken.user_id;
     console.log('VA ID:', id);
     try {
@@ -542,11 +545,11 @@ app.get('/users/assigned_clients', authenticateToken, async (req, res) => {
 // Get all organizations assigned to logged in VA
 app.get('/users/assigned_organizations', authenticateToken, async (req, res) => {
     const token = req.headers['authorization'].split(' ')[1];
-    const decodedToken = jwt.verify(token, keys.jsonKey);
+    const decodedToken = verifyToken(token);
     const id = decodedToken.user_id;
     try {
         const organizations = await pgClient.query('SELECT * FROM organizations WHERE organization_id IN (SELECT organization FROM assignment WHERE va = $1)', [id]);
-        console.log(organizations.rows);
+        console.log('organizations: ', organizations.rows);
         res.send(organizations.rows);
     } catch (err) {
         console.error(err.message);
@@ -589,7 +592,7 @@ app.post('/users/:id/unassign', authenticateToken, async (req, res) => {
 // Get all uploads for a specific client assigned to logged in VA
 app.get('/uploads/client/:clientName', authenticateToken, async (req, res) => {
     const token = req.headers['authorization'].split(' ')[1];
-    const decodedToken = jwt.verify(token, keys.jsonKey);
+    const decodedToken = verifyToken(token);
     const id = decodedToken.user_id;
     const { clientName } = req.params;
 
@@ -621,7 +624,7 @@ app.get('/uploads/client/:clientName', authenticateToken, async (req, res) => {
 // Get all uploads for a specific organization assigned to logged in VA
 app.get('/uploads/organization/:organizationName', authenticateToken, async (req, res) => {
     const token = req.headers['authorization'].split(' ')[1];
-    const decodedToken = jwt.verify(token, keys.jsonKey);
+    const decodedToken = verifyIdToken(token);
     const id = decodedToken.user_id;
     const { organizationName } = req.params;
 
@@ -671,46 +674,50 @@ app.get('/uploads/file/:loid', authenticateToken, async (req, res) => {
         console.error(err.message);
         await pgClient.query('ROLLBACK');
         res.status(500).send('Server Error');
-    } 
+    }
 });
 
 
 //upload file to raw_uploads table
 
 app.post('/uploads', authenticateToken, async (req, res) => {
-    await handleFileUpload(req, res, pgClient);
+    const token = req.headers['authorization'].split(' ')[1];
+    const decodedToken = verifyToken(token);
+    const vaId = decodedToken.user_id;
+     
+    await handleFileUpload(req, res, pgClient, vaId);
 });
 
 //remove file from raw_uploads table
 app.delete('/uploads/:upload_id', authenticateToken, async (req, res) => {
     const { upload_id } = req.params;
-  
+
     try {
-      await pgClient.query('BEGIN');
-  
-      // Get the LOID of the file to delete
-      const result = await pgClient.query('SELECT loid FROM raw_uploads WHERE upload_id = $1', [upload_id]);
-      if (result.rows.length === 0) {
-        await pgClient.query('ROLLBACK');
-        return res.status(404).send('File not found');
-      }
-      const loid = result.rows[0].loid;
-  
-      // Unlink the large object
-      await pgClient.query('SELECT lo_unlink($1)', [loid]);
-  
-      // Delete the metadata from the raw_uploads table
-      await pgClient.query('DELETE FROM raw_uploads WHERE upload_id = $1', [upload_id]);
-  
-      await pgClient.query('COMMIT');
-  
-      res.status(200).send('File deleted successfully');
+        await pgClient.query('BEGIN');
+
+        // Get the LOID of the file to delete
+        const result = await pgClient.query('SELECT loid FROM raw_uploads WHERE upload_id = $1', [upload_id]);
+        if (result.rows.length === 0) {
+            await pgClient.query('ROLLBACK');
+            return res.status(404).send('File not found');
+        }
+        const loid = result.rows[0].loid;
+
+        // Unlink the large object
+        await pgClient.query('SELECT lo_unlink($1)', [loid]);
+
+        // Delete the metadata from the raw_uploads table
+        await pgClient.query('DELETE FROM raw_uploads WHERE upload_id = $1', [upload_id]);
+
+        await pgClient.query('COMMIT');
+
+        res.status(200).send('File deleted successfully');
     } catch (err) {
-      await pgClient.query('ROLLBACK');
-      console.error(err.message);
-      res.status(500).send('Server Error');
+        await pgClient.query('ROLLBACK');
+        console.error(err.message);
+        res.status(500).send('Server Error');
     }
-  });
+});
 
 
 

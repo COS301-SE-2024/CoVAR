@@ -1,12 +1,10 @@
 
 const keys = require('./keys'); 
-const jwt = require('jsonwebtoken');
 
-const handleFileUpload = async (req, res, pgClient) => {
-    const token = req.headers['authorization'].split(' ')[1];
-    const decodedToken = jwt.verify(token, keys.jsonKey);
-    const id = decodedToken.user_id;
 
+const handleFileUpload = async (req, res, pgClient, vaId) => {
+    
+     
     const { clientName, organizationName, type, fileContent, filename } = req.body;
 
     try {
@@ -53,7 +51,7 @@ const handleFileUpload = async (req, res, pgClient) => {
             VALUES ($1, $2, $3, $4, $5, $6)
             RETURNING upload_id`;
 
-        const values = [id, client_id, organization_id, type, loidValue, filename];
+        const values = [vaId, client_id, organization_id, type, loidValue, filename];
         const result = await pgClient.query(query, values);
         const uploadId = result.rows[0].upload_id;
 

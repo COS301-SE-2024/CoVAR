@@ -1,5 +1,7 @@
 const admin = require('firebase-admin');
 const serviceAccount = require('./covar-7c8b5-firebase-adminsdk-85918-b6654147c1');
+const jwt = require('jsonwebtoken');
+const fs = require('fs');
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount)
@@ -15,8 +17,7 @@ async function verifyIdToken(idToken) {
     }
   }
 const keys = require('./keys');
-const jwtFunctions = require('./jwtFunctions');
-const { generateToken, generateRefreshToken, verifyToken, authenticateToken } = jwtFunctions;
+const { generateToken, generateRefreshToken, verifyToken, authenticateToken } = require('./jwtFunctions');
 const { isOwner } = require('./serverHelperFunctions');
 
 // Express App Setup
@@ -58,7 +59,7 @@ app.post('/users/login', async (req, res) => {
     const { username, firebaseToken } = req.body;
 
     //firebase login check 
-    const decodedToken = await verifyIdToken(firebaseToken);
+    await verifyIdToken(firebaseToken);
     console.log(username);
     // make user object out of db entry 
      const userQuery = `SELECT * FROM users WHERE username = $1`;
@@ -78,8 +79,9 @@ app.post('/users/login', async (req, res) => {
     const accessToken = generateToken(user);
     const refreshToken = generateRefreshToken(user);
     res.status(201).json({accessToken: accessToken,refreshToken:refreshToken});
- });
+});
 
+const refreshPublicKey = fs.readFileSync('refreshPublic.pem', 'utf8');
 app.post('/users/token', (req, res) => {
     const refreshToken = req.body.token;
     if (refreshToken == null) return res.sendStatus(401);
@@ -112,10 +114,6 @@ app.post('/users/token', (req, res) => {
             res.status(500).send('Server Error');
         }
     });
-});
-
-app.post('/users/logout', (req, res) => {
-    // Implement logout functionality here
 });
 
 app.get('/users/all', authenticateToken, async (req, res) => {
@@ -176,44 +174,9 @@ app.post('/getUser', authenticateToken, async (req, res) => {
     }
 });
 
-
-
-app.post('/users/token', (req, res) => {
-    const refreshToken = req.body.token;
-    if (refreshToken == null) return res.sendStatus(401);
-  
-    jwt.verify(refreshToken, keys.refreshKey, async (err, decoded) => {
-      if (err) return res.sendStatus(403);
-  
-      try {
-        const query = 'SELECT * FROM users WHERE user_id = $1';
-        const { rows } = await pool.query(query, [decoded.user_id]);
-  
-        if (rows.length === 0) {
-          return res.status(404).json({ error: 'User not found' });
-        }
-  
-        const user = {
-          user_id: rows[0].user_id,
-          username: rows[0].username,
-          role: rows[0].role,
-          organization_id: rows[0].organization_id,
-        };
-  
-        const accessToken = generateToken(user);
-        res.json({ accessToken });
-      } catch (error) {
-        console.error('Error fetching user:', error);
-        res.status(500).send('Server Error');
-      }
-    });
-  });
-  app.post('/users/logout', (req, res) => {
-    // Implement logout functionality here
-  });
 //postgres firebase synch
 app.post('/users/create', async (req, res) => {
-    const { uid, email } = req.body;
+    const { email } = req.body;
     const role = 'client'; // Default role
 
 
@@ -255,10 +218,6 @@ app.post('/users/create', async (req, res) => {
     }
 });
   
-// Test route
-app.get('/test', (req, res) => {
-    res.send('Test route is working');
-});
 //Get all organizations
 app.get('/organizations/all', authenticateToken,async (req, res) => {
     try {
@@ -269,7 +228,8 @@ app.get('/organizations/all', authenticateToken,async (req, res) => {
         res.status(500).send('Server Error');
     }
 });
-//create organization
+
+//Create organization
 app.post('/organizations/create',authenticateToken, async (req, res) => {
     const { name, username } = req.body;
 
@@ -327,9 +287,7 @@ app.post('/organizations/create',authenticateToken, async (req, res) => {
 app.post('/organizations/:id/add_user',  authenticateToken, async (req, res) => {
     const { id: OwnerId } = req.params;
     const { organizationId, username } = req.body;
-    // console.log("owner",OwnerId);
-    // console.log("org",organizationId);
-    // console.log("username",username);
+
     try {
         //get org name 
         const orgQuery = `SELECT name FROM organizations WHERE organization_id = $1`;
@@ -337,7 +295,7 @@ app.post('/organizations/:id/add_user',  authenticateToken, async (req, res) => 
         const OrgName = orgResult.rows[0].name;
         let ownerResult = await isOwner(pgClient, OrgName, OwnerId);
         if (!ownerResult.isOwner) {
-            return res.status(error === 'Organization not found' ? 404 : 403).send(error);
+            return res.status(ownerResult.error === 'Organization not found' ? 404 : 403).send(ownerResult.error);
         }
 
         const userResult = await pgClient.query('SELECT user_id FROM users WHERE username = $1', [username]);
@@ -366,20 +324,20 @@ app.post('/organizations/:id/remove_user',  authenticateToken , async (req, res)
     const { organizationId,  username } = req.body;
     
     try {
-        //get org name
+        //Get org name
         const orgQuery = `SELECT name FROM organizations WHERE organization_id = $1`;
         const orgResult = await pgClient.query(orgQuery, [organizationId]);
         const OrgName = orgResult.rows[0].name;
         let ownerResult = await isOwner(pgClient, OrgName, OwnerId);
         if (!ownerResult.isOwner) {
-            return res.status(error === 'Organization not found' ? 404 : 403).send(error);
+            return res.status(ownerResult.error === 'Organization not found' ? 404 : 403).send(ownerResult.error);
         }
 
         const userResult = await pgClient.query('SELECT user_id FROM users WHERE username = $1', [username]);
         if (userResult.rows.length === 0) {
             return res.status(404).send('User not found');
         }
-        //if user to be removed is owner dont remove
+        //If user to be removed is owner dont remove
         if(userResult.rows[0].user_id === OwnerId){
             return res.status(400).send('Owner cannot be removed');
         }
@@ -397,7 +355,8 @@ app.post('/organizations/:id/remove_user',  authenticateToken , async (req, res)
         res.status(500).send('Server Error');
     }
 });
-//change org name
+
+// Change org name
 app.patch('/organizations/:id/change_name', authenticateToken , async (req, res) => {
     const { id: OwnerId } = req.params;
     const { OrgName, newName } = req.body;
@@ -406,7 +365,7 @@ app.patch('/organizations/:id/change_name', authenticateToken , async (req, res)
         // Check if the owner is the owner of the organization
         let ownerResult = await isOwner(pgClient, OrgName, OwnerId);
         if (!ownerResult.isOwner) {
-            return res.status(error === 'Organization not found' ? 404 : 403).send(error);
+            return res.status(ownerResult.error === 'Organization not found' ? 404 : 403).send(ownerResult.error);
         }
 
         // Check if the new name is already taken
@@ -424,6 +383,7 @@ app.patch('/organizations/:id/change_name', authenticateToken , async (req, res)
         res.status(500).send('Server Error');
     }
 });
+
 //fetch users of an org
 app.post('/organizations/users',  authenticateToken ,async (req, res) => {
     //console.log("Getting users from an organization");
@@ -436,6 +396,7 @@ app.post('/organizations/users',  authenticateToken ,async (req, res) => {
         res.status(500).send('Server Error');
     }
 });
+
 //fetch org of a user
 app.get('/users/:id/organization', authenticateToken ,async (req, res) => {
     const { id } = req.params;
@@ -447,6 +408,7 @@ app.get('/users/:id/organization', authenticateToken ,async (req, res) => {
         res.status(500).send('Server Error');
     }
 });
+
 // Update user role
 app.patch('/users/:id/role', authenticateToken ,async (req, res) => {
     const { id } = req.params;
@@ -462,7 +424,6 @@ app.patch('/users/:id/role', authenticateToken ,async (req, res) => {
         res.status(500).send('Server Error');
     }
 });
-
 
 // Assign a client to a VA
 app.post('/users/:id/assign', authenticateToken ,async (req, res) => {
@@ -497,7 +458,6 @@ app.post('/users/:id/assign', authenticateToken ,async (req, res) => {
     }
 });
 
-
 // Get all clients assigned to a VA
 app.get('/users/:id/assigned_clients' , authenticateToken ,async (req, res) => {
     const { id } = req.params;
@@ -508,8 +468,7 @@ app.get('/users/:id/assigned_clients' , authenticateToken ,async (req, res) => {
         console.error(err.message);
         res.status(500).send('Server Error');
     }
-}
-);
+});
 
 // Get all organizations assigned to a VA
 app.get('/users/:id/assigned_organizations' , authenticateToken ,async (req, res) => {
@@ -524,8 +483,6 @@ app.get('/users/:id/assigned_organizations' , authenticateToken ,async (req, res
     }
 }
 );
-
-
 
 // Unassign a client or organization from a VA
 app.post('/users/:id/unassign', authenticateToken,async (req, res) => {
@@ -556,7 +513,6 @@ app.post('/users/:id/unassign', authenticateToken,async (req, res) => {
 
 });
 
-
-app.listen(5000, err => {
+app.listen(5000, () => {
     console.log('Listening');
 });

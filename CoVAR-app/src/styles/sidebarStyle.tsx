@@ -19,6 +19,7 @@ export const mainContentStyles: SxProps<Theme> = (theme) => ({
   flexGrow: 1,
   backgroundColor: theme.palette.background.default,
   padding: theme.spacing(3),
+  overflowY: 'auto',
 });
 
 export const sidebarItemStyles: SxProps<Theme> = (theme) => ({

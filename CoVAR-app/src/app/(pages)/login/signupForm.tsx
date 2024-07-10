@@ -1,5 +1,6 @@
 'use client'
-import React from 'react';
+
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTheme, ThemeProvider } from '@mui/material/styles';
 import { Container, Box, Typography, TextField, Button, Link, CssBaseline, Card } from '@mui/material';
@@ -46,6 +47,7 @@ interface SignupProps {
 const Signup: React.FC<SignupProps> = ({ toggleForm }) => {
   const theme = useTheme();
   const router = useRouter();
+  const [error, setError] = useState('');
 
   const signInWithGoogle = async () => {
     try {
@@ -54,19 +56,16 @@ const Signup: React.FC<SignupProps> = ({ toggleForm }) => {
         const { uid, email } = result.user;
         await addUserToFirestore(result.user as User);
         const response = await axios.post('/api/users/create', { uid, email });
-        console.log(response);
         const firebaseToken = await result.user.getIdToken();
-        console.log("Firebase Token:", firebaseToken);
-  
-        const LoginResponse = await axios.post('/api/users/login', {
+
+        const loginResponse = await axios.post('/api/users/login', {
           firebaseToken,
           username: email
         });
-        console.log("Login response:", LoginResponse);
-  
-        localStorage.setItem('accessToken', LoginResponse.data.accessToken);
-        localStorage.setItem('refreshToken', LoginResponse.data.refreshToken);
-        axios.defaults.headers.common['Authorization'] = `Bearer ${LoginResponse.data.accessToken}`;
+
+        localStorage.setItem('accessToken', loginResponse.data.accessToken);
+        localStorage.setItem('refreshToken', loginResponse.data.refreshToken);
+        axios.defaults.headers.common['Authorization'] = `Bearer ${loginResponse.data.accessToken}`;
         axios.defaults.headers.post['Content-Type'] = 'application/json';
         document.cookie = `accessToken=${response.data.accessToken}`;
         let getUserResponse;
@@ -74,11 +73,9 @@ const Signup: React.FC<SignupProps> = ({ toggleForm }) => {
           getUserResponse = await axios.post(
             '/api/getUser',
             { accessToken: localStorage.getItem('accessToken') },
-            { headers: { Authorization: `Bearer ${LoginResponse.data.accessToken}` } }
+            { headers: { Authorization: `Bearer ${loginResponse.data.accessToken}` } }
           );
-          console.log("Get user response:", getUserResponse);
         } catch (error) {
-          console.error("Error fetching user data:", error);
           throw error; // Re-throw the error to be caught by the outer catch block
         }
         if (getUserResponse.status === 200) {
@@ -88,7 +85,7 @@ const Signup: React.FC<SignupProps> = ({ toggleForm }) => {
         }
       }
     } catch (error) {
-      console.error(error);
+      setError('Error signing in with Google.');
     }
   };
 
@@ -100,7 +97,7 @@ const Signup: React.FC<SignupProps> = ({ toggleForm }) => {
     const passwordConfirm = data.get('passwordConfirm') as string;
 
     if (password !== passwordConfirm) {
-      console.error('Passwords do not match.');
+      setError('Passwords do not match.');
       return;
     }
 
@@ -117,8 +114,12 @@ const Signup: React.FC<SignupProps> = ({ toggleForm }) => {
       } else {
         throw new Error('Failed to create user in PostgreSQL');
       }
-    } catch (error) {
-      console.error("Error signing up: ", error);
+    } catch (error: any) {
+      if (error.code === "auth/email-already-in-use") {
+        setError('Email already in use.');
+      } else {
+        setError('Error signing up.');
+      }
     }
   };
 
@@ -221,6 +222,11 @@ const Signup: React.FC<SignupProps> = ({ toggleForm }) => {
                   Log in
                 </Link>
               </Box>
+              {error && (
+                <Typography variant="body2" color="error" id="error" sx={{ mt: 2 }}>
+                  {error}
+                </Typography>
+              )}
             </Box>
           </Box>
         </Card>

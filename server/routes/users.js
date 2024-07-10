@@ -1,9 +1,7 @@
 const express = require('express');
-const { authenticateToken, generateToken, verifyToken } = require('../lib/securityFunctions');
+const { authenticateToken, generateToken, verifyToken, generateRefreshToken } = require('../lib/securityFunctions');
 const { isOwner } = require('../lib/serverHelperFunctions');
 const pgClient = require('../lib/postgres');
-const jwt = require('jsonwebtoken');
-const keys = require('../keys');
 
 const router = express.Router();
 
@@ -100,7 +98,7 @@ router.post('/users/create', async (req, res) => {
             owner: false
         }
         const accessToken = generateToken(user);
-        const refreshToken = jwt.sign(user, keys.refreshKey);
+        const refreshToken = generateRefreshToken(user);
         res.status(201).json({accessToken: accessToken,refreshToken:refreshToken});
         }
     } catch (err) {

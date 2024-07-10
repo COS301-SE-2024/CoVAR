@@ -4,7 +4,7 @@ const fs = require('fs');
 const privateKey = fs.readFileSync('private.pem', 'utf8');
 const publicKey = fs.readFileSync('public.pem', 'utf8');
 const refreshPrivateKey = fs.readFileSync('refreshPrivate.pem', 'utf8');
-const refreshPublicKey = fs.readFileSync('refreshPublic.pem', 'utf8');
+// const refreshPublicKey = fs.readFileSync('refreshPublic.pem', 'utf8');
 
 function generateToken(user) {
     return jwt.sign(user, privateKey, { algorithm: 'RS256', expiresIn: '15m' });
@@ -35,9 +35,28 @@ function authenticateToken(req, res, next) {
     });
 }
 
+// Firebase sdk
+const admin = require('firebase-admin');
+const serviceAccount = require('../covar-7c8b5-firebase-adminsdk-85918-b6654147c1');
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount)
+});
+
+async function verifyIdToken(idToken) {
+    try {
+      const decodedToken = await admin.auth().verifyIdToken(idToken);
+      return decodedToken;
+    } catch (error) {
+      console.error('Error verifying Firebase ID token:', error);
+      throw new Error('Unauthorized');
+    }
+}
+
 module.exports = {
     generateToken,
     generateRefreshToken,
     verifyToken,
-    authenticateToken
+    authenticateToken,
+    verifyIdToken
 };

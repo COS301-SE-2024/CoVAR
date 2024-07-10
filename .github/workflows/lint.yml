@@ -28,3 +28,22 @@ jobs:
       - name: Lint Codebase
         run:  |
           cd CoVAR-app && npm run lint
+  
+  lint_backend:
+    name: Lint Backend
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout "${{ github.repository }}"
+        uses: actions/checkout@v3
+      - name: Set up Node v21
+        uses: actions/setup-node@v3
+        with:
+          node-version: '21.x'
+
+      - name: Install dependencies
+        run:  |
+          cd server && npm ci
+
+      - name: Lint Codebase
+        run:  |
+          cd server && npm run lint

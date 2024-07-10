@@ -246,7 +246,7 @@ app.post('/users/create', async (req, res) => {
             owner: false
         }
         const accessToken = generateToken(user);
-        const refreshToken = jwt.sign(user,keys.refreshKey);
+        const refreshToken = generateRefreshToken(user);
         res.status(201).json({accessToken: accessToken,refreshToken:refreshToken});
         }
     } catch (err) {

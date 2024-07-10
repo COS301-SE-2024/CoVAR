@@ -10,7 +10,12 @@ import {
 } from "firebase/auth";
 
 export const doCreateUserWithEmailAndPassword = (email, password) => {
-  return createUserWithEmailAndPassword(auth, email, password);
+  try {
+    return createUserWithEmailAndPassword(auth, email, password);
+  } catch (error) {
+    console.error('Error creating user with email and password:', error);
+    throw error; // Re-throw the error to be caught by the calling function
+  }
 }
 
 export const doSignInWithEmailAndPassword = (email, password) => {

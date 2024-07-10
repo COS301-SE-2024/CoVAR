@@ -37,7 +37,7 @@ function authenticateToken(req, res, next) {
 
 // Firebase sdk
 const admin = require('firebase-admin');
-const serviceAccount = require('./covar-7c8b5-firebase-adminsdk-85918-b6654147c1');
+const serviceAccount = require('../covar-7c8b5-firebase-adminsdk-85918-b6654147c1');
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount)

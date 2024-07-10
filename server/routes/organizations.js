@@ -19,7 +19,9 @@ router.get('/organizations/all', authenticateToken,async (req, res) => {
 //Create organization
 router.post('/organizations/create',authenticateToken, async (req, res) => {
     const { name, username } = req.body;
-
+    if (!name || !username) {
+        return res.status(400).send('Name and username are required');
+    }
     // Validate the input
     if (!name || !username) {
         return res.status(400).send('Name and username are required');

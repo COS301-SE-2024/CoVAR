@@ -468,17 +468,17 @@ app.patch('/users/:id/role', authenticateToken, async (req, res) => {
 
 // Assign a client to a VA
 app.post('/users/:id/assign', authenticateToken, async (req, res) => {
-    console.log('Assigning a client to a VA');
+    
     const { id } = req.params; // VA id
     const { clientUsername } = req.body;
-    console.log('clientUsername:', clientUsername);
+    
 
     try {
         // Check if the clientUsername is an organization
         const organizationResult = await pgClient.query('SELECT organization_id FROM organizations WHERE name = $1', [clientUsername]);
         if (organizationResult.rows.length > 0) {
             const organizationId = organizationResult.rows[0].organization_id;
-            console.log('Assigning an organization to the VA');
+            
             await pgClient.query('INSERT INTO assignment (va, organization) VALUES ($1, $2)', [id, organizationId]);
             return res.send('Organization assigned successfully');
         }
@@ -490,7 +490,7 @@ app.post('/users/:id/assign', authenticateToken, async (req, res) => {
         }
 
         const clientId = clientResult.rows[0].user_id;
-        console.log('Assigning a normal client to the VA');
+        
         await pgClient.query('INSERT INTO assignment (va, client) VALUES ($1, $2)', [id, clientId]);
         res.send('Client assigned successfully');
     } catch (err) {
@@ -518,7 +518,7 @@ app.get('/users/:id/assigned_organizations', authenticateToken, async (req, res)
     const { id } = req.params;
     try {
         const organizations = await pgClient.query('SELECT * FROM organizations WHERE organization_id IN (SELECT organization FROM assignment WHERE va = $1)', [id]);
-        console.log(organizations.rows);
+        
         res.send(organizations.rows);
     } catch (err) {
         console.error(err.message);
@@ -532,7 +532,7 @@ app.get('/users/assigned_clients', authenticateToken, async (req, res) => {
     const token = req.headers['authorization'].split(' ')[1];
     const decodedToken = verifyToken(token);
     const id = decodedToken.user_id;
-    console.log('VA ID:', id);
+    
     try {
         const clients = await pgClient.query('SELECT * FROM users WHERE user_id IN (SELECT client FROM assignment WHERE va = $1)', [id]);
         res.send(clients.rows);
@@ -549,7 +549,7 @@ app.get('/users/assigned_organizations', authenticateToken, async (req, res) => 
     const id = decodedToken.user_id;
     try {
         const organizations = await pgClient.query('SELECT * FROM organizations WHERE organization_id IN (SELECT organization FROM assignment WHERE va = $1)', [id]);
-        console.log('organizations: ', organizations.rows);
+        
         res.send(organizations.rows);
     } catch (err) {
         console.error(err.message);
@@ -624,7 +624,7 @@ app.get('/uploads/client/:clientName', authenticateToken, async (req, res) => {
 // Get all uploads for a specific organization assigned to logged in VA
 app.get('/uploads/organization/:organizationName', authenticateToken, async (req, res) => {
     const token = req.headers['authorization'].split(' ')[1];
-    const decodedToken = verifyIdToken(token);
+    const decodedToken = verifyToken(token);
     const id = decodedToken.user_id;
     const { organizationName } = req.params;
 

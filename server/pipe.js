@@ -25,6 +25,7 @@ const handleFileUpload = async (req, res, pgClient, vaId) => {
             const orgResult = await pgClient.query(orgQuery, [organizationName]);
             organization_id = orgResult.rows[0]?.organization_id;
         }
+        
 
         // Create a new large object
         const loCreateQuery = 'SELECT lo_creat(-1)';

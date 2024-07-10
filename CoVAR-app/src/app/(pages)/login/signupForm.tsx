@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTheme, ThemeProvider } from '@mui/material/styles';
-import { Container, Box, Typography, TextField, Button, Link, CssBaseline, Card, Snackbar, Alert } from '@mui/material';
+import { Container, Box, Typography, TextField, Button, Link, CssBaseline, Card } from '@mui/material';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import GoogleIcon from "../../../assets/GoogleIcon";
 import { doCreateUserWithEmailAndPassword, doSignInWithGoogle } from '../../../functions/firebase/auth';
@@ -47,8 +47,7 @@ interface SignupProps {
 const Signup: React.FC<SignupProps> = ({ toggleForm }) => {
   const theme = useTheme();
   const router = useRouter();
-  const [openSnackbar, setOpenSnackbar] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [error, setError] = useState('');
 
   const signInWithGoogle = async () => {
     try {
@@ -86,8 +85,7 @@ const Signup: React.FC<SignupProps> = ({ toggleForm }) => {
         }
       }
     } catch (error) {
-      setSnackbarMessage('Error signing in with Google.');
-      setOpenSnackbar(true);
+      setError('Error signing in with Google.');
     }
   };
 
@@ -99,8 +97,7 @@ const Signup: React.FC<SignupProps> = ({ toggleForm }) => {
     const passwordConfirm = data.get('passwordConfirm') as string;
 
     if (password !== passwordConfirm) {
-      setSnackbarMessage('Passwords do not match.');
-      setOpenSnackbar(true);
+      setError('Passwords do not match.');
       return;
     }
 
@@ -119,11 +116,9 @@ const Signup: React.FC<SignupProps> = ({ toggleForm }) => {
       }
     } catch (error: any) {
       if (error.code === "auth/email-already-in-use") {
-        setSnackbarMessage('Email already in use.');
-        setOpenSnackbar(true);
+        setError('Email already in use.');
       } else {
-        setSnackbarMessage('Error signing up.');
-        setOpenSnackbar(true);
+        setError('Error signing up.');
       }
     }
   };
@@ -227,19 +222,15 @@ const Signup: React.FC<SignupProps> = ({ toggleForm }) => {
                   Log in
                 </Link>
               </Box>
+              {error && (
+                <Typography variant="body2" color="error" id="error" sx={{ mt: 2 }}>
+                  {error}
+                </Typography>
+              )}
             </Box>
           </Box>
         </Card>
       </Container>
-      <Snackbar
-        open={openSnackbar}
-        autoHideDuration={6000}
-        onClose={() => setOpenSnackbar(false)}
-      >
-        <Alert onClose={() => setOpenSnackbar(false)} severity="error" sx={{ width: '100%' }}>
-          {snackbarMessage}
-        </Alert>
-      </Snackbar>
     </ThemeProvider>
   );
 };

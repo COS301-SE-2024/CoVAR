@@ -96,7 +96,7 @@ const Login: React.FC<LoginProps> = ({ toggleForm }) => {
           throw new Error('User not found in Firebase Auth');
         }
       } catch (error) {
-        console.error('login in with email error',error);
+        //console.error('login in with email error',error);
         setIsSigningIn(false);
         setError('Failed to sign in. Please check your credentials.');
       }

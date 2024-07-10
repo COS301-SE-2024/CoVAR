@@ -1,7 +1,7 @@
 const jwt = require('jsonwebtoken');
 const fs = require('fs');
 const keys = require('./keys');
-const { generateToken, generateRefreshToken, verifyToken, authenticateToken, verifyIdToken } = require('./jwtFunctions');
+const { generateToken, generateRefreshToken, verifyToken, authenticateToken, verifyIdToken } = require('./securityFunctions');
 const { isOwner } = require('./serverHelperFunctions');
 
 // Express App Setup

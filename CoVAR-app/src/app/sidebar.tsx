@@ -27,23 +27,23 @@ const Sidebar: React.FC = () => {
   const [role, setRole] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
-  useEffect(() => {
-    const fetchUserRole = async () => {
-      try {
-        const accessToken = localStorage.getItem('accessToken');
-        if (accessToken) {
-          const data = await getUserRole(accessToken);
-          setRole(data.role);
-        }
-      } catch (error) {
-        console.error("Error fetching user role:", error);
-      } finally {
-        setLoading(false);
+  const fetchUserRole = async () => {
+    try {
+      const accessToken = localStorage.getItem('accessToken');
+      if (accessToken) {
+        const data = await getUserRole(accessToken);
+        setRole(data.role);
       }
-    };
+    } catch (error) {
+      console.error("Error fetching user role:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchUserRole();
-  }, []);
+  }, [location]);
 
   if (location === '/login'){
     return null;

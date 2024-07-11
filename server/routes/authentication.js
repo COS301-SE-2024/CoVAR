@@ -11,11 +11,11 @@ router.post('/checkToken',authenticateToken,(req,res)=>{
     res.sendStatus(201);
 });
 
-router.post('/users/login', async (req, res) => {
-    const { username, firebaseToken } = req.body;
+router.post('/users/login',verifyIdToken ,async (req, res) => {
+    const { username} = req.body;
 
     //firebase login check 
-    await verifyIdToken(firebaseToken);
+    //await verifyIdToken(firebaseToken);
     console.log(username);
     // make user object out of db entry 
      const userQuery = `SELECT * FROM users WHERE username = $1`;

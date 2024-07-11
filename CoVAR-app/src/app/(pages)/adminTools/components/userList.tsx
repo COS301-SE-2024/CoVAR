@@ -86,7 +86,7 @@ const UserList = () => {
             return;
         }
 
-        const newRole = user.role === 'VA' ? 'client' : 'VA';
+        const newRole = user.role === 'va' ? 'client' : 'va';
         console.log('Updating user role:', user.user_id, user.role, '->', newRole);
 
         try {
@@ -173,7 +173,7 @@ const UserList = () => {
     };
 
     const filteredUsers = users.filter(user =>
-        user.username.toLowerCase().includes(searchTerm.toLowerCase()) && user.role !== 'VA'
+        user.username.toLowerCase().includes(searchTerm.toLowerCase()) && user.role !== 'va'
     );
 
     const filteredOrganizations = organizations.filter(org =>
@@ -217,7 +217,7 @@ const UserList = () => {
                             ADMIN
                         </Typography>
                     );
-                } else if (params.row.role === 'VA') {
+                } else if (params.row.role === 'va') {
                     return (
                         <>
                             <Button

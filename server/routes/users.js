@@ -1,12 +1,17 @@
 const express = require('express');
 const { authenticateToken, generateToken, verifyToken, generateRefreshToken } = require('../lib/securityFunctions');
-const { isOwner } = require('../lib/serverHelperFunctions');
+const { isOwner,isAdmin } = require('../lib/serverHelperFunctions');
 const pgClient = require('../lib/postgres');
 
 const router = express.Router();
 
 router.get('/users/all', authenticateToken, async (req, res) => {
     try {
+        const userId = req.user.user_id;
+        const adminResult =  await isAdmin(pgClient,userId);
+        if(!adminResult.isAdmin){
+            return res.status(403).send('Not authorized as admin');
+        }
         const users = await pgClient.query('SELECT * FROM users');
         res.send(users.rows);
     } catch (err) {
@@ -17,7 +22,9 @@ router.get('/users/all', authenticateToken, async (req, res) => {
 
 router.post('/getUser', authenticateToken, async (req, res) => {
     const token = req.body.accessToken;
-
+    if(!token){
+        return res.status(400).send('Token is required');
+    }
     try {
         const decodedToken = verifyToken(token);
         //console.log('Decoded token in getUSer:', decodedToken);
@@ -67,8 +74,9 @@ router.post('/getUser', authenticateToken, async (req, res) => {
 router.post('/users/create', async (req, res) => {
     const { email } = req.body;
     const role = 'client'; // Default role
-
-
+    if(!email){
+        return res.status(400).send('Email is required');
+    }
     try {
         // Check if user with email already exists
         const checkUserQuery = `
@@ -110,6 +118,9 @@ router.post('/users/create', async (req, res) => {
 //fetch org of a user
 router.get('/users/:id/organization', authenticateToken ,async (req, res) => {
     const { id } = req.params;
+    if(!id){
+        return res.status(400).send('User id is required');
+    }  
     try {
         const org = await pgClient.query('SELECT * FROM organizations WHERE organization_id = (SELECT organization_id FROM users WHERE user_id = $1)', [id]);
         res.send(org.rows);
@@ -123,8 +134,15 @@ router.get('/users/:id/organization', authenticateToken ,async (req, res) => {
 router.patch('/users/:id/role', authenticateToken ,async (req, res) => {
     const { id } = req.params;
     const { role } = req.body;
-
+    if(!id || !role){
+        return res.status(400).send('User id and role are required');
+    }
     try {
+        const userId = req.user.user_id;
+        const adminResult =  await isAdmin(pgClient,userId);
+        if(!adminResult.isAdmin){
+            return res.status(403).send('Not authorized as admin');
+        }
         // Using parameterized query to prevent SQL injection
         const queryText = 'UPDATE users SET role = $1 WHERE user_id = $2';
         await pgClient.query(queryText, [role, id]);
@@ -141,8 +159,16 @@ router.post('/users/:id/assign', authenticateToken ,async (req, res) => {
     const { id } = req.params; // VA id
     const { clientUsername } = req.body;
     console.log('clientUsername:', clientUsername);
+    if(!id || !clientUsername){
+        return res.status(400).send('User id and clientUsername are required');
+    }
 
     try {
+        const userId = req.user.user_id;
+        const adminResult =  await isAdmin(pgClient,userId);
+        if(!adminResult.isAdmin){
+            return res.status(403).send('Not authorized as admin');
+        }
         // Check if the clientUsername is an organization
         const organizationResult = await pgClient.query('SELECT organization_id FROM organizations WHERE name = $1', [clientUsername]);
         if (organizationResult.rows.length > 0) {
@@ -171,7 +197,15 @@ router.post('/users/:id/assign', authenticateToken ,async (req, res) => {
 // Get all clients assigned to a VA
 router.get('/users/:id/assigned_clients' , authenticateToken ,async (req, res) => {
     const { id } = req.params;
+    if(!id){
+        return res.status(400).send('User id is required');
+    }
     try {
+        const userId = req.user.user_id;
+        const adminResult =  await isAdmin(pgClient,userId);
+        if(!adminResult.isAdmin){
+            return res.status(403).send('Not authorized as admin');
+        }
         const clients = await pgClient.query('SELECT * FROM users WHERE user_id IN (SELECT client FROM assignment WHERE va = $1)', [id]);
         res.send(clients.rows);
     } catch (err) {
@@ -183,7 +217,15 @@ router.get('/users/:id/assigned_clients' , authenticateToken ,async (req, res) =
 // Get all organizations assigned to a VA
 router.get('/users/:id/assigned_organizations' , authenticateToken ,async (req, res) => {
     const { id } = req.params;
+    if(!id){
+        return res.status(400).send('User id is required');
+    }
     try {
+        const userId = req.user.user_id;
+        const adminResult =  await isAdmin(pgClient,userId);
+        if(!adminResult.isAdmin){
+            return res.status(403).send('Not authorized as admin');
+        }
         const organizations = await pgClient.query('SELECT * FROM organizations WHERE organization_id IN (SELECT organization FROM assignment WHERE va = $1)', [id]);
         console.log(organizations.rows);
         res.send(organizations.rows);
@@ -198,7 +240,15 @@ router.get('/users/:id/assigned_organizations' , authenticateToken ,async (req, 
 router.post('/users/:id/unassign', authenticateToken,async (req, res) => {
     const { id } = req.params; // user_id
     const { clientUsername } = req.body;
+    if(!id || !clientUsername){
+        return res.status(400).send('User id and clientUsername are required');
+    }
     try {
+        const userId = req.user.user_id;
+        const adminResult =  await isAdmin(pgClient,userId);
+        if(!adminResult.isAdmin){
+            return res.status(403).send('Not authorized as admin');
+        }
         // Check if the clientUsername is an organization
         const organizationResult = await pgClient.query('SELECT organization_id FROM organizations WHERE name = $1', [clientUsername]);
         if (organizationResult.rows.length > 0) {

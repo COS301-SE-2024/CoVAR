@@ -1,6 +1,8 @@
 const express = require('express');
+
 const { authenticateToken, verifyToken } = require('../lib/securityFunctions');
-const { isOwner } = require('../lib/serverHelperFunctions');
+const { isOwner,isAdmin } = require('../lib/serverHelperFunctions');
+
 const pgClient = require('../lib/postgres');
 
 const router = express.Router();
@@ -8,6 +10,11 @@ const router = express.Router();
 //Get all organizations
 router.get('/organizations/all', authenticateToken,async (req, res) => {
     try {
+        const userId = req.user.user_id;
+        const adminResult =  await isAdmin(pgClient,userId);
+        if(!adminResult.isAdmin){
+            return res.status(403).send('Not authorized as admin');
+        }
         const organizations = await pgClient.query('SELECT * FROM organizations');
         res.send(organizations.rows);
     } catch (err) {
@@ -19,8 +26,6 @@ router.get('/organizations/all', authenticateToken,async (req, res) => {
 //Create organization
 router.post('/organizations/create',authenticateToken, async (req, res) => {
     const { name, username } = req.body;
-
-    // Validate the input
     if (!name || !username) {
         return res.status(400).send('Name and username are required');
     }

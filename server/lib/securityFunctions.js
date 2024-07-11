@@ -43,14 +43,17 @@ admin.initializeApp({
   credential: admin.credential.cert(serviceAccount)
 });
 
-async function verifyIdToken(idToken) {
+async function verifyIdToken(req,res,next) {
+    const idToken = req.body.firebaseToken;
     try {
       const decodedToken = await admin.auth().verifyIdToken(idToken);
-      return decodedToken;
+      req.user = decodedToken;
+      next();
     } catch (error) {
       console.error('Error verifying Firebase ID token:', error);
-      throw new Error('Unauthorized');
+      return res.sendStatus(403);
     }
+    
 }
 
 module.exports = {

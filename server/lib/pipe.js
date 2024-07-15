@@ -1,6 +1,7 @@
 
+const pgClient = require('./postgres');
 
-const handleFileUpload = async (req, res, pgClient, vaId) => {
+const handleFileUpload = async (req, res, vaId) => {
     const { clientName, organizationName, type, fileContent, filename } = req.body;
 
     try {

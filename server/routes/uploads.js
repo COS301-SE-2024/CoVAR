@@ -39,7 +39,7 @@ router.post('/uploads', authenticateToken, async (req, res) => {
     const decodedToken = verifyToken(token);
     const vaId = decodedToken.user_id;
      
-    await handleFileUpload(req, res, pgClient, vaId);
+    await handleFileUpload(req, res, vaId);
 });
 
 //remove file from raw_uploads table

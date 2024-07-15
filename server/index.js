@@ -1,4 +1,4 @@
-const pgClient = require('./lib/postgres');
+const pgClient = require('../lib/postgres');
 
 
 // Express App Setup
@@ -30,10 +30,6 @@ app.use(authentication);
 app.use(users);
 app.use(organizations);
 app.use(uploads);
-
-
-
-
 
 
 app.listen(5000, () => {

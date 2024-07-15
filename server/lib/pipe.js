@@ -1,8 +1,6 @@
 
 
 const handleFileUpload = async (req, res, pgClient, vaId) => {
-    
-     
     const { clientName, organizationName, type, fileContent, filename } = req.body;
 
     try {

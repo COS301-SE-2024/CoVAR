@@ -1,8 +1,6 @@
 describe('Login E2E Tests', () => {
     beforeEach(() => {
       cy.visit('/login') 
-
-      console.log(Cypress.env());
     })
   
     it('displays an error message with incorrect credentials', () => {
@@ -15,8 +13,8 @@ describe('Login E2E Tests', () => {
     })
   
     it('successfully logs in with correct credentials', () => {
-      cy.get('input[name="email"]', { timeout: 4000 }).type(Cypress.env('client_username'))
-      cy.get('input[name="password"]').type(Cypress.env('client_password')) 
+      cy.get('input[name="email"]', { timeout: 4000 }).type(Cypress.env('client_username'), { log: false })
+      cy.get('input[name="password"]').type(Cypress.env('client_password'), { log: false }) 
       cy.get('button[type="submit"]').click() 
   
       cy.wait(2500)

@@ -50,6 +50,10 @@ jobs:
           echo ${{ secrets.PRIVATE }} > server/private.pem
           echo ${{ secrets.REFRESH_PUBLIC }} > server/refreshPublic.pem
           echo ${{ secrets.REFRESH_PRIVATE }} > server/refreshPrivate.pem
+      
+      - name: Create cypress env file
+        run: |
+          echo ${{ secrets.CYPRESS_ENV }} > CoVAR-app/cypress.env.json
           
       - name: Clean up any existing Docker containers and networks
         run: |

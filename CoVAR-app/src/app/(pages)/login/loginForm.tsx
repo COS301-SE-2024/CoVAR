@@ -267,7 +267,7 @@ const Login: React.FC<LoginProps> = ({ toggleForm }) => {
                 <Typography variant="body2" sx={{ color: theme.palette.text.primary }}>
                   Don&apos;t have an account?
                 </Typography>
-                <Link href="#" variant="body2" sx={{ color: theme.palette.text.secondary, ml: 1 }} onClick={toggleForm}>
+                <Link href="#" variant="body2" id="signupToggle" sx={{ color: theme.palette.text.secondary, ml: 1 }} onClick={toggleForm}>
                   Sign up
                 </Link>
               </Box>

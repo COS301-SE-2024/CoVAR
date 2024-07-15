@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Box, Button, Typography, List, ListItem, ListItemText, ListItemSecondaryAction, Paper } from '@mui/material';
-import { mainContentStyles } from '../../../styles/sidebarStyle';
+import { evaluateLaunchStyles } from '../../../styles/evaluateStyle';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
 
@@ -21,6 +21,7 @@ interface Organization {
 const Evaluate: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [organizations, setOrganizations] = useState<Organization[]>([]);
+  const [loading, setLoading] = useState(true); // To manage loading state
   const router = useRouter();
 
   useEffect(() => {
@@ -33,9 +34,11 @@ const Evaluate: React.FC = () => {
           },
         });
         setUsers(response.data);
+        setLoading(false);
         console.log('Assigned users:', response.data);
       } catch (err) {
         console.error('Error fetching assigned users:', err);
+        setLoading(false);
       }
     };
 
@@ -48,9 +51,11 @@ const Evaluate: React.FC = () => {
           },
         });
         setOrganizations(response.data);
+        setLoading(false);
         console.log('Assigned organizations:', response.data);
       } catch (err) {
         console.error('Error fetching assigned organizations:', err);
+        setLoading(false);
       }
     };
 
@@ -67,39 +72,45 @@ const Evaluate: React.FC = () => {
   };
 
   return (
-    <Box sx={mainContentStyles}>
+    <Box sx={evaluateLaunchStyles}>
       <Typography variant="h6" sx={{ marginTop: 4 }}>
         Assigned Clients and Organizations
       </Typography>
       <Paper elevation={3} sx={{ padding: 2, marginTop: 2 }}>
-        <List>
-          {users.map(user => (
-            <ListItem key={user.user_id} sx={{ marginBottom: 1, padding: 1, borderRadius: 1, boxShadow: 1 }}>
-              <ListItemText primary={`User: ${user.username}`} />
-              <ListItemSecondaryAction>
-                <Button
-                  variant="contained"
-                  onClick={() => handleUserButtonClick(user)}
-                >
-                  Evaluate
-                </Button>
-              </ListItemSecondaryAction>
-            </ListItem>
-          ))}
-          {organizations.map(org => (
-            <ListItem key={org.organization_id} sx={{ marginBottom: 1, padding: 1, borderRadius: 1, boxShadow: 1 }}>
-              <ListItemText primary={`Organization: ${org.name}`} />
-              <ListItemSecondaryAction>
-                <Button
-                  variant="contained"
-                  onClick={() => handleOrganizationButtonClick(org)}
-                >
-                  Evaluate
-                </Button>
-              </ListItemSecondaryAction>
-            </ListItem>
-          ))}
-        </List>
+        {loading ? (
+          <Typography>Loading...</Typography>
+        ) : users.length === 0 && organizations.length === 0 ? (
+          <Typography>No assigned clients or organizations found.</Typography>
+        ) : (
+          <List>
+            {users.map(user => (
+              <ListItem key={user.user_id} sx={{ marginBottom: 1, padding: 1, borderRadius: 1, boxShadow: 1 }}>
+                <ListItemText primary={`User: ${user.username}`} />
+                <ListItemSecondaryAction>
+                  <Button
+                    variant="contained"
+                    onClick={() => handleUserButtonClick(user)}
+                  >
+                    Evaluate
+                  </Button>
+                </ListItemSecondaryAction>
+              </ListItem>
+            ))}
+            {organizations.map(org => (
+              <ListItem key={org.organization_id} sx={{ marginBottom: 1, padding: 1, borderRadius: 1, boxShadow: 1 }}>
+                <ListItemText primary={`Organization: ${org.name}`} />
+                <ListItemSecondaryAction>
+                  <Button
+                    variant="contained"
+                    onClick={() => handleOrganizationButtonClick(org)}
+                  >
+                    Evaluate
+                  </Button>
+                </ListItemSecondaryAction>
+              </ListItem>
+            ))}
+          </List>
+        )}
       </Paper>
     </Box>
   );

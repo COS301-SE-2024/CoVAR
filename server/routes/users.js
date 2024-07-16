@@ -73,7 +73,7 @@ router.post('/getUser', authenticateToken, async (req, res) => {
 //postgres firebase synch
 router.post('/users/create', async (req, res) => {
     const { email } = req.body;
-    const role = 'client'; // Default role
+    const role = 'unauthorised'; // Default role
     if(!email){
         return res.status(400).send('Email is required');
     }

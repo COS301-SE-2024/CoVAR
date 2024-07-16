@@ -1,3 +1,4 @@
+'use client'
 import React from 'react';
 import { Box, Typography, CircularProgress, Card, Button } from '@mui/material';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';

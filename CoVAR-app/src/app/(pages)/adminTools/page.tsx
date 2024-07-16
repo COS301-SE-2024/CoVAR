@@ -9,7 +9,8 @@ const AdminTools: React.FC = () => {
   return (
       <Box sx={mainContentStyles}>
         <UserList />
-        <br />
+        <br></br>
+        <br></br>
         <AuthoriseUser/>
       </Box>
   );

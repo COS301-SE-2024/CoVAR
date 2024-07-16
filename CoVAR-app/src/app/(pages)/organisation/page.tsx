@@ -374,11 +374,11 @@ const Organisation = () => {
                                 onChange={(e) => setConfirmDisbandOrganisationName(e.target.value)}
                                 sx={textFieldStyles}
                             />
-                            <br />
-                            <br />
                             <Button
                                 variant="contained"
                                 sx={{
+                                    mt: 3,  
+                                    mb: 2, 
                                     backgroundColor: '#D11C45',
                                     color: '#FFFFFF',
                                     width: '100%',

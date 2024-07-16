@@ -100,12 +100,12 @@ const AuthoriseUser: React.FC = () => {
                 />
                 <Button
                     variant="contained"
-                    sx={{ ...buttonStyles, mt: 2 }}
+                    sx={{ ...buttonStyles, mt: 3 }}
                     onClick={handleAuthorizeUser}
                 >
                     Authorise User
                 </Button>
-                <Box sx={{ mt: 2, textAlign: 'center' }}>
+                <Box sx={{ mt: 1, textAlign: 'center' }}>
                     {message && (
                         <Typography 
                             variant="body2" 

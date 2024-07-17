@@ -283,6 +283,8 @@ router.get('/users/unauthorized', authenticateToken, async (req, res) => {
         res.send(unauthorizedUsers.rows);
     } catch (err) {
         console.error('Error fetching unauthorized users:', err);
+    }
+});
 
 // Get all uploads for a specific client assigned to logged in VA
 router.get('/uploads/client/:clientName', authenticateToken, async (req, res) => {
@@ -341,6 +343,8 @@ router.patch('/users/authorize', authenticateToken, async (req, res) => {
         res.send('User role updated to client successfully');
     } catch (err) {
         console.error('Error updating user role:', err);
+    }
+});
 
 // Get all clients assigned to logged in VA
 router.get('/users/assigned_clients', authenticateToken, async (req, res) => {

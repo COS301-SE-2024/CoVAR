@@ -216,6 +216,8 @@ export const authorizeUser = async (username: string, accessToken: string) => {
     } catch (error) {
         console.error('Error updating user role:', error);
         throw error;
+    }
+};
 
 export const handleDownloadFile = async (loid: number, fileName: string) => {
     try {

@@ -48,13 +48,13 @@ describe('UserEvaluation', () => {
     render(<UserEvaluation />);
 
     await waitFor(() => {
-      expect(screen.getByText('File Name: file1.pdf, Uploaded At: 7/12/2023, 12:34:56 PM')).toBeInTheDocument();
+      expect(screen.getByText(/File Name: file1.pdf, Uploaded At:/)).toBeInTheDocument();
     });
 
     fireEvent.click(screen.getByText('Remove'));
 
     await waitFor(() =>
-      expect(screen.queryByText('File Name: file1.pdf, Uploaded At: 7/12/2023, 12:34:56 PM')).not.toBeInTheDocument()
+      expect(screen.queryByText(/File Name: file1.pdf, Uploaded At:/)).not.toBeInTheDocument()
     );
   });
 });

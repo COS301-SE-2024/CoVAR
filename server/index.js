@@ -1,4 +1,4 @@
-const pgClient = require('../lib/postgres');
+const pgClient = require('./lib/postgres');
 
 
 // Express App Setup

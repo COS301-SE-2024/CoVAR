@@ -136,6 +136,7 @@ const Sidebar: React.FC = () => {
         </Link>
         <Link href='/organisation'>
           <ListItem
+            test-id="organisationLink"
             sx={{
               ...sidebarItemStyles,
               backgroundColor: isActive('/organisation') ? theme.palette.primary.main : 'inherit',

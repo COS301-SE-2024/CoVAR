@@ -218,7 +218,7 @@ const Sidebar: React.FC = () => {
         </Link>
       </List>
       <Button
-        data-testid="logoutButton"
+        test-id="logoutButton"
         variant="contained"
         color="primary"
         startIcon={<ExitToAppIcon />}

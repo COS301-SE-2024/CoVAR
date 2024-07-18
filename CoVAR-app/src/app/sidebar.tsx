@@ -45,7 +45,7 @@ const Sidebar: React.FC = () => {
     fetchUserRole();
   }, [location]);
 
-  if (location === '/login'){
+  if (location === '/login' || location === '/'){
     return null;
   } 
 

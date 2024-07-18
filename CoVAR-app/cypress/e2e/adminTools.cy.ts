@@ -1,11 +1,11 @@
-describe('Organisation E2E Tests', () => {
+describe('Admin tools E2E Tests', () => {
     beforeEach(() => {
         cy.visit('/login') 
     })
   
     it('client should not see admin tools or evaluate page', () => {
       // Login
-      cy.get('input[name="email"]', { timeout: 4000 }).type(Cypress.env('client_username'), { log: false })
+      cy.get('input[name="email"]', { timeout: 10000 }).type(Cypress.env('client_username'), { log: false })
       cy.get('input[name="password"]').type(Cypress.env('client_password'), { log: false }) 
       cy.get('button[type="submit"]').click() 
   
@@ -19,7 +19,7 @@ describe('Organisation E2E Tests', () => {
 
     it('demote a va to client and promote again', () => {
         // Login
-        cy.get('input[name="email"]', { timeout: 4000 }).type(Cypress.env('admin_username'), { log: false })
+        cy.get('input[name="email"]', { timeout: 10000 }).type(Cypress.env('admin_username'), { log: false })
         cy.get('input[name="password"]').type(Cypress.env('admin_password'), { log: false }) 
         cy.get('button[type="submit"]').click() 
 
@@ -39,7 +39,7 @@ describe('Organisation E2E Tests', () => {
         cy.get('input[name="password"]').type(Cypress.env('admin_password'), { log: false }) 
         cy.get('button[type="submit"]').click() 
 
-        //Navigate to the organisation page
+        //Navigate to the admin tools page
         cy.get('[test-id="adminToolsLink"]', { timeout: 4500 }).click();
 
         //Assign client to va

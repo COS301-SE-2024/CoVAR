@@ -12,7 +12,8 @@ permissions:
 jobs:
   run_tests:
     name: Build Codebase
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-
+    timeout-minutes: 5
     steps:
       - name: Checkout "${{ github.repository }}"
         uses: actions/checkout@v4

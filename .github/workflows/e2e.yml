@@ -67,7 +67,7 @@ jobs:
       - name: Wait for services to be ready
         run: |
           echo "Waiting for services to be ready..."
-          sleep 50
+          sleep 20
 
       - name: Run Cypress tests
         run: docker run --network host -v $PWD/CoVAR-app:/CoVAR-app -w /CoVAR-app cypress/included:13.11.0 --config-file cypress.config.js

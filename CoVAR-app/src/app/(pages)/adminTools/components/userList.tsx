@@ -263,7 +263,7 @@ const UserList = () => {
                                 }}
                                 onClick={(event) => handleUnassignMenuOpen(event, params.row)}
                             >
-                                Un-Assign Client
+                                Remove Client
                             </Button>
                         </>
                     );

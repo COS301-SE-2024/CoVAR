@@ -12,7 +12,7 @@ router.get('/users/all', authenticateToken, async (req, res) => {
         if(!adminResult.isAdmin){
             return res.status(403).send('Not authorized as admin');
         }
-        const users = await pgClient.query('SELECT * FROM users');
+        const users = await pgClient.query("SELECT u.user_id, u.username, u.role, o.name AS organization FROM users u LEFT JOIN organizations o ON u.organization_id = o.organization_id;");
         res.send(users.rows);
     } catch (err) {
         console.error('Error fetching users:', err);

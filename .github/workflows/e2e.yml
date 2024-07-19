@@ -8,7 +8,7 @@ on:
 jobs:
   e2e-tests:
     runs-on: ubuntu-latest
-
+    timeout-minutes: 15
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -50,6 +50,10 @@ jobs:
           echo ${{ secrets.PRIVATE }} > server/private.pem
           echo ${{ secrets.REFRESH_PUBLIC }} > server/refreshPublic.pem
           echo ${{ secrets.REFRESH_PRIVATE }} > server/refreshPrivate.pem
+      
+      - name: Create cypress env file
+        run: |
+          echo ${{ secrets.CYPRESS_ENV }} > CoVAR-app/cypress.env.json
           
       - name: Clean up any existing Docker containers and networks
         run: |

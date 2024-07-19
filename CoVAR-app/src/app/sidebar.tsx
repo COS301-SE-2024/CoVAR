@@ -97,6 +97,7 @@ const Sidebar: React.FC = () => {
         {(role === "va" || role === "admin") && (
           <Link href='/evaluate'>
             <ListItem
+              test-id="evaluateLink"
               sx={{
                 ...sidebarItemStyles,
                 backgroundColor: isActive('/evaluate') ? theme.palette.primary.main : 'inherit',
@@ -136,6 +137,7 @@ const Sidebar: React.FC = () => {
         </Link>
         <Link href='/organisation'>
           <ListItem
+            test-id="organisationLink"
             sx={{
               ...sidebarItemStyles,
               backgroundColor: isActive('/organisation') ? theme.palette.primary.main : 'inherit',
@@ -175,6 +177,7 @@ const Sidebar: React.FC = () => {
         {role === "admin" && (
           <Link href='/adminTools'>
             <ListItem
+              test-id="adminToolsLink"
               sx={{
                 ...sidebarItemStyles,
                 backgroundColor: isActive('/adminTools') ? theme.palette.primary.main : 'inherit',
@@ -215,6 +218,7 @@ const Sidebar: React.FC = () => {
         </Link>
       </List>
       <Button
+        test-id="logoutButton"
         variant="contained"
         color="primary"
         startIcon={<ExitToAppIcon />}

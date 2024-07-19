@@ -49,36 +49,33 @@ const Organisation = () => {
         }
     }, [isInOrg]);
 
-    useEffect(() => {
-        const fetchUserRole = async () => {
-            try {
-                const accessToken = localStorage.getItem('accessToken');
-                if (accessToken) {
-                    const userData = await getUserRole(accessToken);
-                    console.log('User data:', userData);
-                    setIsOwner(userData.owner); // Assuming 'owner' is the correct key in userData
-                    setIsInOrg(userData.organization_id);
-                    setUsername(userData.username);
-                    setOwnerId(userData.user_id);
-                    console.log("User role:", userData.role);
-                    console.log("Is owner:", userData.owner);
-                    console.log("Is in org:", userData.organization_id);
-                    // Set the organisation name if user is in an organisation
-                    if (userData.orgName) {
-                        setOrganisationName(userData.orgName);
-                    }
+    const fetchUserRole = async () => {
+        try {
+            const accessToken = localStorage.getItem('accessToken');
+            if (accessToken) {
+                const userData = await getUserRole(accessToken);
+                console.log('User data:', userData);
+                setIsOwner(userData.owner); // Assuming 'owner' is the correct key in userData
+                setIsInOrg(userData.organization_id);
+                setUsername(userData.username);
+                setOwnerId(userData.user_id);
+                console.log("User role:", userData.role);
+                console.log("Is owner:", userData.owner);
+                console.log("Is in org:", userData.organization_id);
+                // Set the organisation name if user is in an organisation
+                if (userData.orgName) {
+                    setOrganisationName(userData.orgName);
                 }
-            } catch (error) {
-                console.error('Error fetching user role:', error);
             }
-        };
-
-        fetchUserRole();
-    }, []);
+        } catch (error) {
+            console.error('Error fetching user role:', error);
+        }
+    };
 
     useEffect(() => {
+        fetchUserRole();
         fetchUsersList();
-    }, [fetchUsersList]);
+    }, [isInOrg, fetchUsersList]);
 
     const handleRemoveUser = async (user: User) => {
         try {
@@ -150,12 +147,15 @@ const Organisation = () => {
 
     const handleCreateNewOrganisation = async () => {
         try {
+            setLoading(true);
             const accessToken = localStorage.getItem('accessToken');
             if (accessToken && username) {
                 const orgData = await createOrganisation(organisationName, username, accessToken);
                 setIsInOrg(orgData.id);
                 setOrganisationName(orgData.name); // Set the organisation name
+
             }
+            setLoading(false);
         } catch (error) {
             console.error('Error creating organisation:', error);
         }

@@ -23,7 +23,7 @@ const Sidebar: React.FC = () => {
   const router = useRouter();
   const location = usePathname();
   const theme = useTheme();
-
+  const NextRouter = require('next/router');
   const [role, setRole] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
@@ -31,7 +31,7 @@ const Sidebar: React.FC = () => {
     try {
       const accessToken = localStorage.getItem('accessToken');
       if (accessToken) {
-        const data = await getUserRole(accessToken);
+        const data = await getUserRole(accessToken, NextRouter);
         setRole(data.role);
       }
     } catch (error) {

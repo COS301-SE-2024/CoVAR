@@ -5,6 +5,7 @@ import { Box } from '@mui/system';
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import { getUserRole, fetchUsersByOrg, removeUser, addUser, deleteOrganisation, createOrganisation, changeOrganisationName } from '../../../functions/requests';
 import { buttonStyles, cardStyles, headingBoxStyles, mainContentStyles, textFieldStyles } from '../../../styles/organisationStyle';
+import next from 'next';
 
 type User = {
     id: string;
@@ -25,13 +26,14 @@ const Organisation = () => {
     const [isInOrg, setIsInOrg] = useState<string | null>(null);
     const [username, setUsername] = useState<string | null>(null);
     const [ownerId, setOwnerId] = useState<string | null>(null);
+    const NextRouter = require('next/router');
 
     const fetchUsersList = useCallback(async () => {
         if (isInOrg) {
             try {
                 const accessToken = localStorage.getItem('accessToken');
                 if (accessToken) {
-                    const usersList = await fetchUsersByOrg(isInOrg, accessToken);
+                    const usersList = await fetchUsersByOrg(isInOrg, accessToken, NextRouter);
                     const usersWithId = usersList.map((user: User, index: number) => ({
                         ...user,
                         id: user.id || index.toString(),
@@ -54,7 +56,7 @@ const Organisation = () => {
             try {
                 const accessToken = localStorage.getItem('accessToken');
                 if (accessToken) {
-                    const userData = await getUserRole(accessToken);
+                    const userData = await getUserRole(accessToken, NextRouter);
                     console.log('User data:', userData);
                     setIsOwner(userData.owner); // Assuming 'owner' is the correct key in userData
                     setIsInOrg(userData.organization_id);
@@ -84,7 +86,7 @@ const Organisation = () => {
         try {
             const accessToken = localStorage.getItem('accessToken');
             if (accessToken && isInOrg && ownerId) {
-                const status = await removeUser(isInOrg, ownerId, user.email, accessToken);
+                const status = await removeUser(isInOrg, ownerId, user.email, accessToken, NextRouter);
                 if (status === 200) {
                     setUsers(users.filter((u) => u.id !== user.id));
                 }
@@ -98,7 +100,7 @@ const Organisation = () => {
         try {
             const accessToken = localStorage.getItem('accessToken');
             if (accessToken && isInOrg && ownerId) {
-                await addUser(isInOrg, ownerId, newMemberEmail, accessToken);
+                await addUser(isInOrg, ownerId, newMemberEmail, accessToken, NextRouter);
                 setNewMemberEmail('');
                 fetchUsersList();
             }
@@ -114,7 +116,8 @@ const Organisation = () => {
                 const status = await deleteOrganisation(
                     isInOrg,
                     confirmDisbandOrganisationName,
-                    accessToken
+                    accessToken,
+                    NextRouter
                 );
                 if (status === 200) {
                     setIsInOrg(null);
@@ -136,7 +139,8 @@ const Organisation = () => {
                     (ownerId !== null ? ownerId : ''),
                     organisationName,
                     confirmChangeOrganisationName,
-                    accessToken
+                    accessToken,
+                    NextRouter
                 );
                 if (status === 200) {
                     setOrganisationName(confirmChangeOrganisationName);
@@ -152,7 +156,7 @@ const Organisation = () => {
         try {
             const accessToken = localStorage.getItem('accessToken');
             if (accessToken && username) {
-                const orgData = await createOrganisation(organisationName, username, accessToken);
+                const orgData = await createOrganisation(organisationName, username, accessToken, NextRouter);
                 setIsInOrg(orgData.id);
                 setOrganisationName(orgData.name); // Set the organisation name
             }

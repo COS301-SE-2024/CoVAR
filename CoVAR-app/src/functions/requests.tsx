@@ -1,213 +1,258 @@
-import axios from 'axios';
-export const checkToken = async (accessToken: string) => {
+import axios, { AxiosRequestConfig } from 'axios';
+import { NextRouter } from 'next/router';
+import { doSignOut } from './firebase/auth';
+const signOut = async () => {
     try {
-        const response = await axios.post('/api/checkToken', { accessToken });
+        await doSignOut();
+    } catch (error) {
+        console.error('signout error', error);
+    }
+};
+
+const refreshAccessToken = async (router: NextRouter): Promise<string> => {
+    console.log('Refreshing access token...');
+    try {
+        const token = localStorage.getItem('refreshToken');
+        const response = await axios.post('/api/users/refresh', { token });
+        localStorage.setItem('accessToken', response.data.accessToken);
+        return response.data.accessToken;
+    } catch (error) {
+        console.error('Error refreshing access token:', error);
+        await signOut(); // Sign out the user
+        router.replace('/login'); // Navigate to the login page
+        throw error;
+    }
+};
+
+const retryRequestWithNewToken = async (originalRequest: AxiosRequestConfig, router: NextRouter) => {
+    console.log('Retrying request with new token...');
+    const newAccessToken = await refreshAccessToken(router);
+    console.log('New access token:', newAccessToken);
+
+    const updatedRequest = {
+        ...originalRequest,
+        headers: {
+            ...originalRequest.headers,
+            Authorization: `Bearer ${newAccessToken}`
+        }
+    };
+
+    if (updatedRequest.data && updatedRequest.data.accessToken) {
+        updatedRequest.data.accessToken = newAccessToken;
+    }
+
+    console.log('Updated request:', updatedRequest);
+
+    const method = updatedRequest.method?.toLowerCase();
+
+    switch (method) {
+        case 'get':
+            return axios.get(updatedRequest.url as string, { headers: updatedRequest.headers });
+        case 'post':
+            return axios.post(updatedRequest.url as string, updatedRequest.data, { headers: updatedRequest.headers });
+        case 'put':
+            return axios.put(updatedRequest.url as string, updatedRequest.data, { headers: updatedRequest.headers });
+        case 'patch':
+            return axios.patch(updatedRequest.url as string, updatedRequest.data, { headers: updatedRequest.headers });
+        case 'delete':
+            return axios.delete(updatedRequest.url as string, { headers: updatedRequest.headers });
+        default:
+            throw new Error(`Unsupported request method: ${method}`);
+    }
+};
+
+const handleRequest = async (request: AxiosRequestConfig, router: NextRouter) => {
+    try {
+        console.log('Sending request...');
+        console.log('Request:', request);
+        const response = await axios(request);
+        console.log('Response:', response);
         return response.data;
-    } catch (error) {
-        console.error('Error checking token:', error);
-        throw error;
-    }
-};
-export const fetchUsers = async (accessToken: string) => {
-    try {
-        const response = await axios.get('/api/users/all', {
-            headers: { Authorization: `Bearer ${accessToken}` },
-        });
-        return response.data;
-    } catch (error) {
-        console.error('Error fetching users:', error);
-        throw error;
-    }
-};
-
-export const fetchOrganisations = async (accessToken: string) => {
-    try {
-        const response = await axios.get('/api/organizations/all', {
-            headers: { Authorization: `Bearer ${accessToken}` },
-        });
-        return response.data;
-    } catch (error) {
-        console.error('Error fetching organizations:', error);
-        throw error;
+    } catch (error: any) {
+        console.error('Error in handle request:', error);
+        if (error.response && error.response.status === 403) {
+            try {
+                console.log('Error config:', error.config);
+                const response = await retryRequestWithNewToken(error.config, router);
+                console.log('Returning after retry');
+                return response.data;
+            } catch (retryError) {
+                console.error('Error after retrying request:', retryError);
+                throw retryError;
+            }
+        } else {
+            console.error('Request error:', error);
+            throw error;
+        }
     }
 };
 
-export const updateUserRole = async (userId: string, role: string, accessToken: string) => {
-    try {
-        await axios.patch(`/api/users/${userId}/role`, { role }, {
-            headers: { Authorization: `Bearer ${accessToken}` },
-        });
-    } catch (error) {
-        console.error('Error updating user role:', error);
-        throw error;
-    }
+// Exported functions
+export const checkToken = async (accessToken: string, router: NextRouter) => {
+    const request = {
+        method: 'post',
+        url: '/api/checkToken',
+        data: { accessToken },
+    };
+    return await handleRequest(request, router);
 };
 
-export const fetchAssignedClients = async (userId: string, accessToken: string) => {
-    try {
-        const response = await axios.get(`/api/users/${userId}/assigned_clients`, {
-            headers: { Authorization: `Bearer ${accessToken}` },
-        });
-        return response.data;
-    } catch (error) {
-        console.error('Error fetching assigned clients:', error);
-        throw error;
-    }
+export const fetchUsers = async (accessToken: string, router: NextRouter) => {
+    const request = {
+        method: 'get',
+        url: '/api/users/all',
+        headers: { Authorization: `Bearer ${accessToken}` },
+    };
+    return await handleRequest(request, router);
 };
 
-export const fetchAssignedOrganisations = async (userId: string, accessToken: string) => {
-    try {
-        const response = await axios.get(`/api/users/${userId}/assigned_organizations`, {
-            headers: { Authorization: `Bearer ${accessToken}` },
-        });
-        return response.data;
-    } catch (error) {
-        console.error('Error fetching assigned organizations:', error);
-        throw error;
-    }
+export const fetchOrganisations = async (accessToken: string, router: NextRouter) => {
+    const request = {
+        method: 'get',
+        url: '/api/organizations/all',
+        headers: { Authorization: `Bearer ${accessToken}` },
+    };
+    return await handleRequest(request, router);
 };
 
-export const assignClient = async (userId: string, clientUsername: string, accessToken: string) => {
-    try {
-        await axios.post(`/api/users/${userId}/assign`, { clientUsername }, {
-            headers: { Authorization: `Bearer ${accessToken}` },
-        });
-    } catch (error) {
-        console.error('Error assigning client:', error);
-        throw error;
-    }
+export const updateUserRole = async (userId: string, role: string, accessToken: string, router: NextRouter) => {
+    const request = {
+        method: 'patch',
+        url: `/api/users/${userId}/role`,
+        data: { role },
+        headers: { Authorization: `Bearer ${accessToken}` },
+    };
+    await await handleRequest(request, router);
 };
 
-export const unassignClient = async (userId: string, clientUsername: string, accessToken: string) => {
-    try {
-        await axios.post(`/api/users/${userId}/unassign`, { clientUsername }, {
-            headers: { Authorization: `Bearer ${accessToken}` },
-        });
-    } catch (error) {
-        console.error('Error unassigning client:', error);
-        throw error;
-    }
+export const fetchAssignedClients = async (userId: string, accessToken: string, router: NextRouter) => {
+    const request = {
+        method: 'get',
+        url: `/api/users/${userId}/assigned_clients`,
+        headers: { Authorization: `Bearer ${accessToken}` },
+    };
+    return await handleRequest(request, router);
 };
 
-export const getUserRole = async (accessToken: string) => {
-    try {
-        const response = await axios.post(
-            '/api/getUser',
-            { accessToken },
-            { headers: { Authorization: `Bearer ${accessToken}` } }
-        );
-        return response.data;
-    } catch (error) {
-        console.error("Error fetching user role:", error);
-        throw error;
-    }
+export const fetchAssignedOrganisations = async (userId: string, accessToken: string, router: NextRouter) => {
+    const request = {
+        method: 'get',
+        url: `/api/users/${userId}/assigned_organizations`,
+        headers: { Authorization: `Bearer ${accessToken}` },
+    };
+    return await handleRequest(request, router);
 };
 
-export const fetchUsersByOrg = async (orgId: string, accessToken: string) => {
-    try {
-        const response = await axios.post(
-            '/api/organizations/users',
-            { org_id: orgId },
-            { headers: { Authorization: `Bearer ${accessToken}` } }
-        );
-        return response.data.map((user: any) => ({
-            id: user.user_id,
-            email: user.username,
-            role: user.role,
-            createdAt: user.createdAt,
-        }));
-    } catch (error) {
-        console.error('Error fetching users:', error);
-        throw error;
-    }
+export const assignClient = async (userId: string, clientUsername: string, accessToken: string, router: NextRouter) => {
+    const request = {
+        method: 'post',
+        url: `/api/users/${userId}/assign`,
+        data: { clientUsername },
+        headers: { Authorization: `Bearer ${accessToken}` },
+    };
+    await await handleRequest(request, router);
 };
 
-export const removeUser = async (orgId: string, ownerId: string, email: string, accessToken: string) => {
-    try {
-        const response = await axios.post(
-            `/api/organizations/${ownerId}/remove_user`,
-            { organizationId: orgId, username: email },
-            { headers: { Authorization: `Bearer ${accessToken}` } }
-        );
-        return response.status;
-    } catch (error) {
-        console.error('Error removing user:', error);
-        throw error;
-    }
+export const unassignClient = async (userId: string, clientUsername: string, accessToken: string, router: NextRouter) => {
+    const request = {
+        method: 'post',
+        url: `/api/users/${userId}/unassign`,
+        data: { clientUsername },
+        headers: { Authorization: `Bearer ${accessToken}` },
+    };
+    await await handleRequest(request, router);
 };
 
-export const addUser = async (orgId: string, ownerId: string, email: string, accessToken: string) => {
-    try {
-        const response = await axios.post(
-            `/api/organizations/${ownerId}/add_user`,
-            { organizationId: orgId, username: email },
-            { headers: { Authorization: `Bearer ${accessToken}` } }
-        );
-        return response.data;
-    } catch (error) {
-        console.error('Error adding member:', error);
-        throw error;
-    }
+export const getUserRole = async (accessToken: string, router: NextRouter) => {
+    const request = {
+        method: 'post',
+        url: '/api/getUser',
+        data: { accessToken },
+        headers: { Authorization: `Bearer ${accessToken}` },
+    };
+    return await handleRequest(request, router);
 };
 
-export const deleteOrganisation = async (orgId: string, organisationName: string, accessToken: string) => {
-    try {
-        const response = await axios.post(
-            `/api/organizations/${orgId}/delete`,
-            { organizationId: orgId, OrgName: organisationName },
-            { headers: { Authorization: `Bearer ${accessToken}` } }
-        );
-        return response.status;
-    } catch (error) {
-        console.error('Error deleting organisation:', error);
-        throw error;
-    }
+export const fetchUsersByOrg = async (orgId: string, accessToken: string, router: NextRouter) => {
+    const request = {
+        method: 'post',
+        url: '/api/organizations/users',
+        data: { org_id: orgId },
+        headers: { Authorization: `Bearer ${accessToken}` },
+    };
+    return await handleRequest(request, router);
 };
 
-export const changeOrganisationName = async (ownerId: string, organisationName: string, newName: string, accessToken: string) => {
-    try {
-        const response = await axios.patch(
-            `/api/organizations/${ownerId}/change_name`,
-            { OrgName: organisationName, newName: newName },
-            { headers: { Authorization: `Bearer ${accessToken}` } }
-        );
-        return response.status;
-    } catch (error) {
-        console.error('Error changing organization name:', error);
-        throw error;
-    }
+export const removeUser = async (orgId: string, ownerId: string, email: string, accessToken: string, router: NextRouter) => {
+    const request = {
+        method: 'post',
+        url: `/api/organizations/${ownerId}/remove_user`,
+        data: { organizationId: orgId, username: email },
+        headers: { Authorization: `Bearer ${accessToken}` },
+    };
+    return await handleRequest(request, router);
 };
 
-export const createOrganisation = async (organisationName: string, username: string, accessToken: string) => {
-    try {
-        const response = await axios.post(
-            '/api/organizations/create',
-            { name: organisationName, username },
-            { headers: { Authorization: `Bearer ${accessToken}` } }
-        );
-        return response.data;
-    } catch (error) {
-        console.error('Error creating organization:', error);
-        throw error;
-    }
+export const addUser = async (orgId: string, ownerId: string, email: string, accessToken: string, router: NextRouter) => {
+    const request = {
+        method: 'post',
+        url: `/api/organizations/${ownerId}/add_user`,
+        data: { organizationId: orgId, username: email },
+        headers: { Authorization: `Bearer ${accessToken}` },
+    };
+    return await handleRequest(request, router);
 };
 
-export const handleDownloadFile = async (loid: number, fileName: string) => {
+export const deleteOrganisation = async (orgId: string, organisationName: string, accessToken: string, router: NextRouter) => {
+    const request = {
+        method: 'post',
+        url: `/api/organizations/${orgId}/delete`,
+        data: { organizationId: orgId, OrgName: organisationName },
+        headers: { Authorization: `Bearer ${accessToken}` },
+    };
+    return await handleRequest(request, router);
+};
+
+export const changeOrganisationName = async (ownerId: string, organisationName: string, newName: string, accessToken: string, router: NextRouter) => {
+    const request = {
+        method: 'patch',
+        url: `/api/organizations/${ownerId}/change_name`,
+        data: { OrgName: organisationName, newName: newName },
+        headers: { Authorization: `Bearer ${accessToken}` },
+    };
+    return await handleRequest(request, router);
+};
+
+export const createOrganisation = async (organisationName: string, username: string, accessToken: string, router: NextRouter) => {
+    const request = {
+        method: 'post',
+        url: '/api/organizations/create',
+        data: { name: organisationName, username },
+        headers: { Authorization: `Bearer ${accessToken}` },
+    };
+    return await handleRequest(request, router);
+};
+
+export const handleDownloadFile = async (loid: number, fileName: string, router: NextRouter) => {
     try {
         const token = localStorage.getItem('accessToken');
-        const response = await axios.get(`/api/uploads/file/${loid}`, {
-            responseType: 'blob', // Important: responseType as blob to handle binary data
+        const request = {
+            method: 'get',
+            url: `/api/uploads/file/${loid}`,
+            responseType: 'blob',
             headers: {
                 Authorization: `Bearer ${token}`,
             },
-        });
-        const url = window.URL.createObjectURL(new Blob([response.data]));
+        };
+
+        const response = await handleRequest(request, router);
+        const url = window.URL.createObjectURL(new Blob([response]));
         const link = document.createElement('a');
         link.href = url;
         link.setAttribute('download', fileName);
         document.body.appendChild(link);
         link.click();
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error downloading file:', error);
     }
 };

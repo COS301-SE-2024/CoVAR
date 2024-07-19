@@ -6,7 +6,7 @@ import axios from 'axios';
 import { mainContentStyles } from '../../../../../styles/evaluateStyle';
 import FileUpload from '../../components/fileUpload';
 import { handleDownloadFile } from '../../../../../functions/requests';
-
+const NextRouter = require('next/router');
 interface FileUpload {
   upload_id: number;
   va: number;
@@ -98,7 +98,7 @@ const UserEvaluation: React.FC = () => {
                 <Button
                   variant="outlined"
                   color="primary"
-                  onClick={() => handleDownloadFile(upload.loid, `${upload.filename}`)}
+                  onClick={() => handleDownloadFile(upload.loid, `${upload.filename}`, NextRouter)}
                   sx={{ marginRight: 2 }}
                 >
                   Download

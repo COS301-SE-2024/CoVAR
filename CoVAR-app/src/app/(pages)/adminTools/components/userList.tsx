@@ -37,7 +37,7 @@ const UserList = () => {
     const [organizations, setOrganizations] = useState<Organization[]>([]);
     const [alert, setAlert] = useState<{visible: boolean, message: string}>({visible: false, message: ''});
     const [accessToken, setAccessToken] = useState(localStorage.getItem('accessToken'));
-
+    const NextRouter = require('next/router');
     useEffect(() => {
         const getToken = () => {
             setAccessToken(localStorage.getItem('accessToken'));
@@ -51,7 +51,7 @@ const UserList = () => {
                 if(!accessToken) {
                     throw new Error('Access token not found');
                 }
-                const users = await fetchUsers(accessToken);
+                const users = await fetchUsers(accessToken,NextRouter);
                 console.log('Users:', users);
                 setUsers(users);
                 setLoading(false);
@@ -69,7 +69,7 @@ const UserList = () => {
                 if(!accessToken){
                     throw new Error('Access token not found');
                 }
-                const organizations = await fetchOrganisations(accessToken);
+                const organizations = await fetchOrganisations(accessToken,NextRouter);
                 console.log('Organizations:', organizations);
                 setOrganizations(organizations);
             } catch (error) {
@@ -93,7 +93,7 @@ const UserList = () => {
             if(!accessToken){
                 throw new Error('Access token not found');
             }
-            await updateUserRole(user.user_id, newRole,accessToken);
+            await updateUserRole(user.user_id, newRole,accessToken,NextRouter);
             setUsers(users.map(u => (u.user_id === user.user_id ? { ...u, role: newRole } : u)));
         } catch (error) {
             console.error('Error updating user role:', error);
@@ -112,9 +112,9 @@ const UserList = () => {
             if(!accessToken){
                 throw new Error('Access token not found');
             }
-            const assignedClients = await fetchAssignedClients(user.user_id,accessToken);
+            const assignedClients = await fetchAssignedClients(user.user_id,accessToken,NextRouter);
             setAssignedClients(assignedClients);
-            const assignedOrganizations = await fetchAssignedOrganisations(user.user_id,accessToken);
+            const assignedOrganizations = await fetchAssignedOrganisations(user.user_id,accessToken,NextRouter);
             setAssignedOrganizations(assignedOrganizations);
         } catch (error) {
             console.error('Error fetching assigned clients:', error);
@@ -138,7 +138,7 @@ const UserList = () => {
                 if(!accessToken){
                     throw new Error('Access token not found');
                 }
-                await assignClient(selectedUser.user_id, clientUsername,accessToken);
+                await assignClient(selectedUser.user_id, clientUsername,accessToken,NextRouter);
                 handleMenuClose();
 
                 setAlert({
@@ -157,7 +157,7 @@ const UserList = () => {
                 if(!accessToken){
                     throw new Error('Access token not found');
                 }
-                await unassignClient(selectedUser.user_id, clientUsername,accessToken);
+                await unassignClient(selectedUser.user_id, clientUsername,accessToken,NextRouter);
                 setAssignedClients(assignedClients.filter(client => client.username !== clientUsername));
                 setAssignedOrganizations(assignedOrganizations.filter(org => org.name !== clientUsername));
                 handleUnassignMenuClose();

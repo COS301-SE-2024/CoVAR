@@ -69,7 +69,7 @@ describe('Admin tools E2E Tests', () => {
         cy.get('[test-id="adminToolsLink"]', { timeout: 4500 }).click();
 
         //Remove client from va
-        cy.get('.MuiDataGrid-root .MuiDataGrid-row').contains(Cypress.env('va_username'), { log: false }).closest('.MuiDataGrid-row').contains('button', 'Un-Assign Client').click();
+        cy.get('.MuiDataGrid-root .MuiDataGrid-row').contains(Cypress.env('va_username'), { log: false }).closest('.MuiDataGrid-row').contains('button', 'Remove Client').click();
         cy.get('.MuiFormControl-root > .MuiInputBase-root').type(Cypress.env('client_username') + '{enter}', { log: false });
 
         cy.contains('Successfully unassigned', { timeout: 2000 }).should('exist');

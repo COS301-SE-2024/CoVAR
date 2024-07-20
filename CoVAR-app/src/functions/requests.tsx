@@ -37,8 +37,16 @@ const retryRequestWithNewToken = async (originalRequest: AxiosRequestConfig, rou
         }
     };
 
-    if (updatedRequest.data && updatedRequest.data.accessToken) {
-        updatedRequest.data.accessToken = newAccessToken;
+    if (typeof updatedRequest.data === 'string') {
+        try {
+            const data = JSON.parse(updatedRequest.data);
+            if (data && data.accessToken) {
+                data.accessToken = newAccessToken;
+                updatedRequest.data = JSON.stringify(data);
+            }
+        } catch (error) {
+            console.error('Error parsing request data:', error);
+        }
     }
 
     console.log('Updated request:', updatedRequest);

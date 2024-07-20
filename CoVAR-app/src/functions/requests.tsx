@@ -1,4 +1,4 @@
-import axios, { AxiosRequestConfig } from 'axios';
+import axios, { AxiosRequestConfig, ResponseType } from 'axios';
 import { NextRouter } from 'next/router';
 import { doSignOut } from './firebase/auth';
 const signOut = async () => {
@@ -87,7 +87,7 @@ const handleRequest = async (request: AxiosRequestConfig, router: NextRouter) =>
     }
 };
 
-// Exported functions
+// Exported functions remain unchanged
 export const checkToken = async (accessToken: string, router: NextRouter) => {
     const request = {
         method: 'post',
@@ -122,7 +122,7 @@ export const updateUserRole = async (userId: string, role: string, accessToken: 
         data: { role },
         headers: { Authorization: `Bearer ${accessToken}` },
     };
-    await await handleRequest(request, router);
+    return await handleRequest(request, router);
 };
 
 export const fetchAssignedClients = async (userId: string, accessToken: string, router: NextRouter) => {
@@ -150,7 +150,7 @@ export const assignClient = async (userId: string, clientUsername: string, acces
         data: { clientUsername },
         headers: { Authorization: `Bearer ${accessToken}` },
     };
-    await await handleRequest(request, router);
+    return await handleRequest(request, router);
 };
 
 export const unassignClient = async (userId: string, clientUsername: string, accessToken: string, router: NextRouter) => {
@@ -160,7 +160,7 @@ export const unassignClient = async (userId: string, clientUsername: string, acc
         data: { clientUsername },
         headers: { Authorization: `Bearer ${accessToken}` },
     };
-    await await handleRequest(request, router);
+    return await handleRequest(request, router);
 };
 
 export const getUserRole = async (accessToken: string, router: NextRouter) => {
@@ -236,10 +236,10 @@ export const createOrganisation = async (organisationName: string, username: str
 export const handleDownloadFile = async (loid: number, fileName: string, router: NextRouter) => {
     try {
         const token = localStorage.getItem('accessToken');
-        const request = {
+        const request: AxiosRequestConfig = {
             method: 'get',
             url: `/api/uploads/file/${loid}`,
-            responseType: 'blob',
+            responseType: 'blob' as ResponseType,
             headers: {
                 Authorization: `Bearer ${token}`,
             },

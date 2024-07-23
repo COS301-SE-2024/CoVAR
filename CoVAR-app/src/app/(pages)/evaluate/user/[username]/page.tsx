@@ -6,7 +6,7 @@ import axios from 'axios';
 import { mainContentStyles } from '../../../../../styles/evaluateStyle';
 import FileUpload from '../../components/fileUpload';
 import { handleDownloadFile } from '../../../../../functions/requests';
-const NextRouter = require('next/router');
+import { useRouter } from 'next/router';
 interface FileUpload {
   upload_id: number;
   va: number;
@@ -19,6 +19,10 @@ interface FileUpload {
 }
 
 const UserEvaluation: React.FC = () => {
+  const router = useRouter();
+  const redirectToLogin = () => {
+    router.replace('/login');
+  };
   const pathname = usePathname();
   const username = pathname.split('/').pop(); 
   
@@ -35,8 +39,11 @@ const UserEvaluation: React.FC = () => {
           },
         });
         setUploads(response.data);
-      } catch (error) {
+      } catch (error:any) {
         console.error('Error fetching uploads:', error);
+        if(error.response?.status === 403) {
+          redirectToLogin();
+        }
       }
     };
 
@@ -55,8 +62,11 @@ const UserEvaluation: React.FC = () => {
         },
       });
       setUploads(response.data);
-    } catch (error) {
+    } catch (error:any) {
       console.error('Error fetching uploads:', error);
+      if(error.response?.status === 403) {
+        redirectToLogin();
+      }
     }
   };
 
@@ -70,8 +80,11 @@ const UserEvaluation: React.FC = () => {
       });
       // Remove the deleted upload from the state
       setUploads(uploads.filter(upload => upload.upload_id !== upload_id));
-    } catch (error) {
+    } catch (error:any) {
       console.error('Error removing upload:', error);
+      if(error.response?.status === 403) {
+        redirectToLogin();
+      }
     }
   };
 
@@ -98,7 +111,7 @@ const UserEvaluation: React.FC = () => {
                 <Button
                   variant="outlined"
                   color="primary"
-                  onClick={() => handleDownloadFile(upload.loid, `${upload.filename}`, NextRouter)}
+                  onClick={() => handleDownloadFile(upload.loid, `${upload.filename}`)}
                   sx={{ marginRight: 2 }}
                 >
                   Download

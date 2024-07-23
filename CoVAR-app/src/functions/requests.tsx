@@ -1,6 +1,6 @@
 import axios, { AxiosRequestConfig, ResponseType } from 'axios';
-import { NextRouter } from 'next/router';
 import { doSignOut } from './firebase/auth';
+
 const signOut = async () => {
     try {
         await doSignOut();
@@ -9,7 +9,7 @@ const signOut = async () => {
     }
 };
 
-const refreshAccessToken = async (router: NextRouter): Promise<string> => {
+const refreshAccessToken = async (): Promise<string> => {
     console.log('Refreshing access token...');
     try {
         const token = localStorage.getItem('refreshToken');
@@ -19,14 +19,19 @@ const refreshAccessToken = async (router: NextRouter): Promise<string> => {
     } catch (error) {
         console.error('Error refreshing access token:', error);
         await signOut(); // Sign out the user
-        router.replace('/login'); // Navigate to the login page
         throw error;
     }
 };
 
-const retryRequestWithNewToken = async (originalRequest: AxiosRequestConfig, router: NextRouter) => {
+const retryRequestWithNewToken = async (originalRequest: AxiosRequestConfig) => {
     console.log('Retrying request with new token...');
-    const newAccessToken = await refreshAccessToken(router);
+    let newAccessToken;
+    try {
+        newAccessToken = await refreshAccessToken();
+    } catch (error) {
+        console.error('Error refreshing access token:', error);
+        throw error;
+    }
     console.log('New access token:', newAccessToken);
 
     const updatedRequest = {
@@ -69,7 +74,7 @@ const retryRequestWithNewToken = async (originalRequest: AxiosRequestConfig, rou
     }
 };
 
-const handleRequest = async (request: AxiosRequestConfig, router: NextRouter) => {
+const handleRequest = async (request: AxiosRequestConfig) => {
     try {
         console.log('Sending request...');
         console.log('Request:', request);
@@ -81,7 +86,7 @@ const handleRequest = async (request: AxiosRequestConfig, router: NextRouter) =>
         if (error.response && error.response.status === 403) {
             try {
                 console.log('Error config:', error.config);
-                const response = await retryRequestWithNewToken(error.config, router);
+                const response = await retryRequestWithNewToken(error.config);
                 console.log('Returning after retry');
                 return response.data;
             } catch (retryError) {
@@ -96,152 +101,152 @@ const handleRequest = async (request: AxiosRequestConfig, router: NextRouter) =>
 };
 
 // Exported functions remain unchanged
-export const checkToken = async (accessToken: string, router: NextRouter) => {
+export const checkToken = async (accessToken: string) => {
     const request = {
         method: 'post',
         url: '/api/checkToken',
         data: { accessToken },
     };
-    return await handleRequest(request, router);
+    return await handleRequest(request);
 };
 
-export const fetchUsers = async (accessToken: string, router: NextRouter) => {
+export const fetchUsers = async (accessToken: string) => {
     const request = {
         method: 'get',
         url: '/api/users/all',
         headers: { Authorization: `Bearer ${accessToken}` },
     };
-    return await handleRequest(request, router);
+    return await handleRequest(request);
 };
 
-export const fetchOrganisations = async (accessToken: string, router: NextRouter) => {
+export const fetchOrganisations = async (accessToken: string) => {
     const request = {
         method: 'get',
         url: '/api/organizations/all',
         headers: { Authorization: `Bearer ${accessToken}` },
     };
-    return await handleRequest(request, router);
+    return await handleRequest(request);
 };
 
-export const updateUserRole = async (userId: string, role: string, accessToken: string, router: NextRouter) => {
+export const updateUserRole = async (userId: string, role: string, accessToken: string) => {
     const request = {
         method: 'patch',
         url: `/api/users/${userId}/role`,
         data: { role },
         headers: { Authorization: `Bearer ${accessToken}` },
     };
-    return await handleRequest(request, router);
+    return await handleRequest(request);
 };
 
-export const fetchAssignedClients = async (userId: string, accessToken: string, router: NextRouter) => {
+export const fetchAssignedClients = async (userId: string, accessToken: string) => {
     const request = {
         method: 'get',
         url: `/api/users/${userId}/assigned_clients`,
         headers: { Authorization: `Bearer ${accessToken}` },
     };
-    return await handleRequest(request, router);
+    return await handleRequest(request);
 };
 
-export const fetchAssignedOrganisations = async (userId: string, accessToken: string, router: NextRouter) => {
+export const fetchAssignedOrganisations = async (userId: string, accessToken: string) => {
     const request = {
         method: 'get',
         url: `/api/users/${userId}/assigned_organizations`,
         headers: { Authorization: `Bearer ${accessToken}` },
     };
-    return await handleRequest(request, router);
+    return await handleRequest(request);
 };
 
-export const assignClient = async (userId: string, clientUsername: string, accessToken: string, router: NextRouter) => {
+export const assignClient = async (userId: string, clientUsername: string, accessToken: string) => {
     const request = {
         method: 'post',
         url: `/api/users/${userId}/assign`,
         data: { clientUsername },
         headers: { Authorization: `Bearer ${accessToken}` },
     };
-    return await handleRequest(request, router);
+    return await handleRequest(request);
 };
 
-export const unassignClient = async (userId: string, clientUsername: string, accessToken: string, router: NextRouter) => {
+export const unassignClient = async (userId: string, clientUsername: string, accessToken: string) => {
     const request = {
         method: 'post',
         url: `/api/users/${userId}/unassign`,
         data: { clientUsername },
         headers: { Authorization: `Bearer ${accessToken}` },
     };
-    return await handleRequest(request, router);
+    return await handleRequest(request);
 };
 
-export const getUserRole = async (accessToken: string, router: NextRouter) => {
+export const getUserRole = async (accessToken: string) => {
     const request = {
         method: 'post',
         url: '/api/getUser',
         data: { accessToken },
         headers: { Authorization: `Bearer ${accessToken}` },
     };
-    return await handleRequest(request, router);
+    return await handleRequest(request);
 };
 
-export const fetchUsersByOrg = async (orgId: string, accessToken: string, router: NextRouter) => {
+export const fetchUsersByOrg = async (orgId: string, accessToken: string) => {
     const request = {
         method: 'post',
         url: '/api/organizations/users',
         data: { org_id: orgId },
         headers: { Authorization: `Bearer ${accessToken}` },
     };
-    return await handleRequest(request, router);
+    return await handleRequest(request);
 };
 
-export const removeUser = async (orgId: string, ownerId: string, email: string, accessToken: string, router: NextRouter) => {
+export const removeUser = async (orgId: string, ownerId: string, email: string, accessToken: string) => {
     const request = {
         method: 'post',
         url: `/api/organizations/${ownerId}/remove_user`,
         data: { organizationId: orgId, username: email },
         headers: { Authorization: `Bearer ${accessToken}` },
     };
-    return await handleRequest(request, router);
+    return await handleRequest(request);
 };
 
-export const addUser = async (orgId: string, ownerId: string, email: string, accessToken: string, router: NextRouter) => {
+export const addUser = async (orgId: string, ownerId: string, email: string, accessToken: string) => {
     const request = {
         method: 'post',
         url: `/api/organizations/${ownerId}/add_user`,
         data: { organizationId: orgId, username: email },
         headers: { Authorization: `Bearer ${accessToken}` },
     };
-    return await handleRequest(request, router);
+    return await handleRequest(request);
 };
 
-export const deleteOrganisation = async (orgId: string, organisationName: string, accessToken: string, router: NextRouter) => {
+export const deleteOrganisation = async (orgId: string, organisationName: string, accessToken: string) => {
     const request = {
         method: 'post',
         url: `/api/organizations/${orgId}/delete`,
         data: { organizationId: orgId, OrgName: organisationName },
         headers: { Authorization: `Bearer ${accessToken}` },
     };
-    return await handleRequest(request, router);
+    return await handleRequest(request);
 };
 
-export const changeOrganisationName = async (ownerId: string, organisationName: string, newName: string, accessToken: string, router: NextRouter) => {
+export const changeOrganisationName = async (ownerId: string, organisationName: string, newName: string, accessToken: string) => {
     const request = {
         method: 'patch',
         url: `/api/organizations/${ownerId}/change_name`,
         data: { OrgName: organisationName, newName: newName },
         headers: { Authorization: `Bearer ${accessToken}` },
     };
-    return await handleRequest(request, router);
+    return await handleRequest(request);
 };
 
-export const createOrganisation = async (organisationName: string, username: string, accessToken: string, router: NextRouter) => {
+export const createOrganisation = async (organisationName: string, username: string, accessToken: string) => {
     const request = {
         method: 'post',
         url: '/api/organizations/create',
         data: { name: organisationName, username },
         headers: { Authorization: `Bearer ${accessToken}` },
     };
-    return await handleRequest(request, router);
+    return await handleRequest(request);
 };
 
-export const handleDownloadFile = async (loid: number, fileName: string, router: NextRouter) => {
+export const handleDownloadFile = async (loid: number, fileName: string) => {
     try {
         const token = localStorage.getItem('accessToken');
         const request: AxiosRequestConfig = {
@@ -253,7 +258,7 @@ export const handleDownloadFile = async (loid: number, fileName: string, router:
             },
         };
 
-        const response = await handleRequest(request, router);
+        const response = await handleRequest(request);
         const url = window.URL.createObjectURL(new Blob([response]));
         const link = document.createElement('a');
         link.href = url;

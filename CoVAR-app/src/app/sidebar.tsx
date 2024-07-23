@@ -23,19 +23,25 @@ const Sidebar: React.FC = () => {
   const router = useRouter();
   const location = usePathname();
   const theme = useTheme();
-  const NextRouter = require('next/router');
   const [role, setRole] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+
+  const redirectToLogin = () => {
+    router.replace('/login');
+  };
 
   const fetchUserRole = async () => {
     try {
       const accessToken = localStorage.getItem('accessToken');
       if (accessToken) {
-        const data = await getUserRole(accessToken, NextRouter);
+        const data = await getUserRole(accessToken);
         setRole(data.role);
       }
-    } catch (error) {
+    } catch (error:any) {
       console.error("Error fetching user role:", error);
+      if (error.response?.status === 403) {
+        redirectToLogin();
+      }
     } finally {
       setLoading(false);
     }
@@ -45,16 +51,16 @@ const Sidebar: React.FC = () => {
     fetchUserRole();
   }, [location]);
 
-  if (location === '/login' || location === '/'){
+  if (location === '/login' || location === '/') {
     return null;
-  } 
+  }
 
   const signOut = async () => {
     try {
       await doSignOut();
       router.replace('/login');
     } catch (error) {
-      console.error('signout error',error);
+      console.error('signout error', error);
     }
   };
 

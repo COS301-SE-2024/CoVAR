@@ -6,7 +6,7 @@ import axios from 'axios';
 import { mainContentStyles } from '../../../../../styles/evaluateStyle';
 import FileUpload from '../../components/fileUpload';
 import { handleDownloadFile } from '../../../../../functions/requests';
-const NextRouter = require('next/router');
+import { useRouter } from 'next/router';
 interface FileUpload {
   upload_id: number;
   va: number;
@@ -19,6 +19,10 @@ interface FileUpload {
 }
 
 const OrganizationEvaluation: React.FC = () => {
+  const router = useRouter();
+  const redirectToLogin = () => {
+    router.replace('/login');
+  };
   const pathname = usePathname();
   const organizationName = pathname.split('/').pop(); 
   const [uploads, setUploads] = useState<FileUpload[]>([]);
@@ -33,8 +37,11 @@ const OrganizationEvaluation: React.FC = () => {
           },
         });
         setUploads(response.data);
-      } catch (error) {
+      } catch (error:any) {
         console.error('Error fetching uploads:', error);
+        if(error.response?.status === 403) {
+          redirectToLogin();
+        }
       }
     };
 
@@ -51,8 +58,11 @@ const OrganizationEvaluation: React.FC = () => {
         },
       });
       setUploads(response.data);
-    } catch (error) {
+    } catch (error:any) {
       console.error('Error fetching uploads:', error);
+      if(error.response?.status === 403) {
+        redirectToLogin();
+      }
     }
   };
 
@@ -66,8 +76,11 @@ const OrganizationEvaluation: React.FC = () => {
       });
       // Remove the deleted upload from the state
       setUploads(uploads.filter(upload => upload.upload_id !== upload_id));
-    } catch (error) {
+    } catch (error:any) {
       console.error('Error removing upload:', error);
+      if(error.response?.status === 403) {
+        redirectToLogin();
+      }
     }
   };
 
@@ -95,7 +108,7 @@ const OrganizationEvaluation: React.FC = () => {
                   variant="outlined"
                   color="primary"
                   onClick={() =>
-                    handleDownloadFile(upload.loid, `${upload.filename}`, NextRouter)
+                    handleDownloadFile(upload.loid, `${upload.filename}`)
                   }
                   sx={{ marginRight: 2 }}
                 >

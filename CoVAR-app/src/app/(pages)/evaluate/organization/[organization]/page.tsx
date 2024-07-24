@@ -1,5 +1,5 @@
 'use client'
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Box, Typography, Paper, Container, List, ListItem, ListItemText, Button } from '@mui/material';
 import { usePathname, useRouter } from 'next/navigation'; 
 import axios from 'axios';
@@ -20,9 +20,9 @@ interface FileUpload {
 
 const OrganizationEvaluation: React.FC = () => {
   const router = useRouter();
-  const redirectToLogin = () => {
+  const redirectToLogin = useCallback(() => {
     router.replace('/login');
-  };
+  }, [router]);
   const pathname = usePathname();
   const organizationName = pathname.split('/').pop(); 
   const [uploads, setUploads] = useState<FileUpload[]>([]);
@@ -46,7 +46,7 @@ const OrganizationEvaluation: React.FC = () => {
     };
 
     fetchUploads();
-  }, [organizationName]);
+  }, [organizationName, redirectToLogin]);
 
   const handleFileSubmit = async () => {
     // Refetch the uploads after a file is uploaded

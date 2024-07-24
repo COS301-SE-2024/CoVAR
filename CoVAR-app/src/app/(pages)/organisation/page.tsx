@@ -27,9 +27,9 @@ const Organisation = () => {
     const [ownerId, setOwnerId] = useState<string | null>(null);
     const router = useRouter();
     
-    const redirectToLogin = () => {
+    const redirectToLogin = useCallback(() => {
         router.replace('/login');
-    };
+    }, [router]);
     const fetchUsersList = useCallback(async () => {
         if (isInOrg) {
             try {
@@ -54,9 +54,9 @@ const Organisation = () => {
         } else {
             setLoading(false);
         }
-    }, [isInOrg]);
+    }, [isInOrg, redirectToLogin]);
 
-    const fetchUserRole = async () => {
+    const fetchUserRole = useCallback(async () => {
         try {
             const accessToken = localStorage.getItem('accessToken');
             if (accessToken) {
@@ -81,12 +81,12 @@ const Organisation = () => {
             } 
         }
     }
-
+    , [redirectToLogin]);
 
     useEffect(() => {
         fetchUserRole();
         fetchUsersList();
-    }, [isInOrg, fetchUsersList]);
+    }, [isInOrg, fetchUsersList, fetchUserRole]);
 
     const handleRemoveUser = async (user: User) => {
         try {

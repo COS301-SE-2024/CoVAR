@@ -1,5 +1,5 @@
 'use client'
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { CircularProgress, Button, Typography, Menu, TextField, Autocomplete, Alert } from '@mui/material';
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import CheckIcon from '@mui/icons-material/Check';
@@ -13,6 +13,7 @@ import {
     unassignClient 
 } from '../../../../functions/requests';
 import { useRouter } from 'next/navigation';
+
 type User = {
     user_id: string;
     username: string;
@@ -39,16 +40,18 @@ const UserList = () => {
     const [alert, setAlert] = useState<{visible: boolean, message: string}>({visible: false, message: ''});
     const [accessToken, setAccessToken] = useState(localStorage.getItem('accessToken'));
     const router = useRouter();
-    const redirectToLogin = () => {
+
+    const redirectToLogin = useCallback(() => {
         router.replace('/login');
-      };
+    }, [router]);
+
     useEffect(() => {
         const getToken = () => {
             setAccessToken(localStorage.getItem('accessToken'));
         };
         getToken();
-    }
-    , [accessToken]);
+    }, []);
+
     useEffect(() => {
         const loadUsers = async () => {
             try {
@@ -69,7 +72,7 @@ const UserList = () => {
         };
 
         loadUsers();
-    }, [accessToken]);
+    }, [accessToken, redirectToLogin]);
 
     useEffect(() => {
         const loadOrganizations = async () => {
@@ -89,7 +92,7 @@ const UserList = () => {
         };
 
         loadOrganizations();
-    }, [accessToken]);
+    }, [accessToken,redirectToLogin]);
 
     const handleRoleToggle = async (user: User) => {
         if (!user) {

@@ -8,7 +8,7 @@ import GroupsIcon from '@mui/icons-material/Groups';
 import LockIcon from '@mui/icons-material/Lock';
 import SettingsIcon from '@mui/icons-material/Settings';
 import { Box, Button, List, ListItem, ListItemIcon, ListItemText, Typography, useTheme } from '@mui/material';
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useState } from 'react';
 
 import { ThemeContext } from '../styles/customThemeProvider';
 import { iconStyles, logoStyles, logoutButtonStyles, sidebarItemStyles, sidebarStyles } from '../styles/sidebarStyle';
@@ -26,11 +26,11 @@ const Sidebar: React.FC = () => {
   const [role, setRole] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
-  const redirectToLogin = () => {
+  const redirectToLogin = useCallback(() => {
     router.replace('/login');
-  };
+  }, [router]);
 
-  const fetchUserRole = async () => {
+  const fetchUserRole = useCallback(async () => {
     try {
       const accessToken = localStorage.getItem('accessToken');
       if (accessToken) {
@@ -45,11 +45,11 @@ const Sidebar: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [redirectToLogin]); 
 
   useEffect(() => {
     fetchUserRole();
-  }, [location]);
+  }, [location, fetchUserRole]);
 
   if (location === '/login' || location === '/') {
     return null;

@@ -1,12 +1,12 @@
 'use client'
 import React, { useState, useEffect } from 'react';
 import { Box, Typography, Paper, Container, List, ListItem, ListItemText, Button } from '@mui/material';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation'; 
 import axios from 'axios';
 import { mainContentStyles } from '../../../../../styles/evaluateStyle';
 import FileUpload from '../../components/fileUpload';
 import { handleDownloadFile } from '../../../../../functions/requests';
-import { useRouter } from 'next/router';
+
 interface FileUpload {
   upload_id: number;
   va: number;
@@ -38,7 +38,7 @@ const OrganizationEvaluation: React.FC = () => {
         });
         setUploads(response.data);
       } catch (error:any) {
-        console.error('Error fetching uploads:', error);
+        //console.error('Error fetching uploads:', error);
         if(error.response?.status === 403) {
           redirectToLogin();
         }
@@ -59,7 +59,7 @@ const OrganizationEvaluation: React.FC = () => {
       });
       setUploads(response.data);
     } catch (error:any) {
-      console.error('Error fetching uploads:', error);
+      //console.error('Error fetching uploads:', error);
       if(error.response?.status === 403) {
         redirectToLogin();
       }
@@ -77,7 +77,7 @@ const OrganizationEvaluation: React.FC = () => {
       // Remove the deleted upload from the state
       setUploads(uploads.filter(upload => upload.upload_id !== upload_id));
     } catch (error:any) {
-      console.error('Error removing upload:', error);
+      //console.error('Error removing upload:', error);
       if(error.response?.status === 403) {
         redirectToLogin();
       }

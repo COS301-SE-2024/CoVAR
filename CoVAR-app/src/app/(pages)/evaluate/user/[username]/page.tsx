@@ -6,7 +6,7 @@ import axios from 'axios';
 import { mainContentStyles } from '../../../../../styles/evaluateStyle';
 import FileUpload from '../../components/fileUpload';
 import { handleDownloadFile } from '../../../../../functions/requests';
-import { useRouter } from 'next/router';
+import { useRouter } from 'next/navigation';
 interface FileUpload {
   upload_id: number;
   va: number;
@@ -40,7 +40,7 @@ const UserEvaluation: React.FC = () => {
         });
         setUploads(response.data);
       } catch (error:any) {
-        console.error('Error fetching uploads:', error);
+        //console.error('Error fetching uploads:', error);
         if(error.response?.status === 403) {
           redirectToLogin();
         }
@@ -63,7 +63,7 @@ const UserEvaluation: React.FC = () => {
       });
       setUploads(response.data);
     } catch (error:any) {
-      console.error('Error fetching uploads:', error);
+      //console.error('Error fetching uploads:', error);
       if(error.response?.status === 403) {
         redirectToLogin();
       }
@@ -81,7 +81,7 @@ const UserEvaluation: React.FC = () => {
       // Remove the deleted upload from the state
       setUploads(uploads.filter(upload => upload.upload_id !== upload_id));
     } catch (error:any) {
-      console.error('Error removing upload:', error);
+      //console.error('Error removing upload:', error);
       if(error.response?.status === 403) {
         redirectToLogin();
       }

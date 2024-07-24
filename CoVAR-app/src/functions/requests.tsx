@@ -10,29 +10,29 @@ const signOut = async () => {
 };
 
 const refreshAccessToken = async (): Promise<string> => {
-    console.log('Refreshing access token...');
+    //console.log('Refreshing access token...');
     try {
         const token = localStorage.getItem('refreshToken');
         const response = await axios.post('/api/users/refresh', { token });
         localStorage.setItem('accessToken', response.data.accessToken);
         return response.data.accessToken;
     } catch (error) {
-        console.error('Error refreshing access token:', error);
+        //console.error('Error refreshing access token:', error);
         await signOut(); // Sign out the user
         throw error;
     }
 };
 
 const retryRequestWithNewToken = async (originalRequest: AxiosRequestConfig) => {
-    console.log('Retrying request with new token...');
+    //console.log('Retrying request with new token...');
     let newAccessToken;
     try {
         newAccessToken = await refreshAccessToken();
     } catch (error) {
-        console.error('Error refreshing access token:', error);
+        //console.error('Error refreshing access token:', error);
         throw error;
     }
-    console.log('New access token:', newAccessToken);
+    //console.log('New access token:', newAccessToken);
 
     const updatedRequest = {
         ...originalRequest,
@@ -54,7 +54,7 @@ const retryRequestWithNewToken = async (originalRequest: AxiosRequestConfig) => 
         }
     }
 
-    console.log('Updated request:', updatedRequest);
+    //console.log('Updated request:', updatedRequest);
 
     const method = updatedRequest.method?.toLowerCase();
 
@@ -76,25 +76,25 @@ const retryRequestWithNewToken = async (originalRequest: AxiosRequestConfig) => 
 
 const handleRequest = async (request: AxiosRequestConfig) => {
     try {
-        console.log('Sending request...');
-        console.log('Request:', request);
+        //console.log('Sending request...');
+        //console.log('Request:', request);
         const response = await axios(request);
-        console.log('Response:', response);
+        //console.log('Response:', response);
         return response.data;
     } catch (error: any) {
-        console.error('Error in handle request:', error);
+        //console.error('Error in handle request:', error);
         if (error.response && error.response.status === 403) {
             try {
-                console.log('Error config:', error.config);
+                //console.log('Error config:', error.config);
                 const response = await retryRequestWithNewToken(error.config);
-                console.log('Returning after retry');
+                //console.log('Returning after retry');
                 return response.data;
             } catch (retryError) {
-                console.error('Error after retrying request:', retryError);
+                //console.error('Error after retrying request:', retryError);
                 throw retryError;
             }
         } else {
-            console.error('Request error:', error);
+            //console.error('Request error:', error);
             throw error;
         }
     }

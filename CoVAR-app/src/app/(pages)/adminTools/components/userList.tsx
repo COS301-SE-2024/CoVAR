@@ -12,7 +12,7 @@ import {
     assignClient, 
     unassignClient 
 } from '../../../../functions/requests';
-import { useRouter } from 'next/router';
+import { useRouter } from 'next/navigation';
 type User = {
     user_id: string;
     username: string;
@@ -56,12 +56,12 @@ const UserList = () => {
                     throw new Error('Access token not found');
                 }
                 const users = await fetchUsers(accessToken);
-                console.log('Users:', users);
+                //console.log('Users:', users);
                 setUsers(users);
                 setLoading(false);
             } catch (error:any) {
                 setLoading(false);
-                console.error('Error fetching users:', error);
+                //console.error('Error fetching users:', error);
                 if(error.response?.status === 403) {
                     redirectToLogin();
                 }
@@ -78,10 +78,10 @@ const UserList = () => {
                     throw new Error('Access token not found');
                 }
                 const organizations = await fetchOrganisations(accessToken);
-                console.log('Organizations:', organizations);
+                //console.log('Organizations:', organizations);
                 setOrganizations(organizations);
             } catch (error:any) {
-                console.error('Error fetching organizations:', error);
+                //console.error('Error fetching organizations:', error);
                 if(error.response?.status === 403) {
                     redirectToLogin();
                 }
@@ -98,7 +98,7 @@ const UserList = () => {
         }
 
         const newRole = user.role === 'va' ? 'client' : 'va';
-        console.log('Updating user role:', user.user_id, user.role, '->', newRole);
+        //console.log('Updating user role:', user.user_id, user.role, '->', newRole);
 
         try {
             if(!accessToken){
@@ -107,7 +107,7 @@ const UserList = () => {
             await updateUserRole(user.user_id, newRole,accessToken);
             setUsers(users.map(u => (u.user_id === user.user_id ? { ...u, role: newRole } : u)));
         } catch (error:any) {
-            console.error('Error updating user role:', error);
+            //console.error('Error updating user role:', error);
             if(error.response?.status === 403) {
                 redirectToLogin();
             }
@@ -131,7 +131,7 @@ const UserList = () => {
             const assignedOrganizations = await fetchAssignedOrganisations(user.user_id,accessToken);
             setAssignedOrganizations(assignedOrganizations);
         } catch (error:any) {
-            console.error('Error fetching assigned clients:', error);
+            //console.error('Error fetching assigned clients:', error);
             if(error.response?.status === 403) {
                 redirectToLogin();
             }
@@ -163,7 +163,7 @@ const UserList = () => {
                     message: `Successfully assigned ${clientUsername} to ${selectedUser.username}.`
                 });
             } catch (error:any) {
-                console.error('Error assigning client:', error);
+                //console.error('Error assigning client:', error);
                 if(error.response?.status === 403) {
                     redirectToLogin();
                 }
@@ -187,7 +187,7 @@ const UserList = () => {
                     message: `Successfully unassigned ${clientUsername} from ${selectedUser.username}.`
                 });
             } catch (error:any) {
-                console.error('Error unassigning client:', error);
+                //console.error('Error unassigning client:', error);
                 if(error.response?.status === 403) {
                     redirectToLogin();
                 }

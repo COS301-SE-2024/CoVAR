@@ -7,11 +7,11 @@ const refreshPrivateKey = fs.readFileSync('refreshPrivate.pem', 'utf8');
 // const refreshPublicKey = fs.readFileSync('refreshPublic.pem', 'utf8');
 
 function generateToken(user) {
-    return jwt.sign(user, privateKey, { algorithm: 'RS256', expiresIn: '10s' });
+    return jwt.sign(user, privateKey, { algorithm: 'RS256', expiresIn: '5min' });
 }
 
 function generateRefreshToken(user) {
-    return jwt.sign(user, refreshPrivateKey, { algorithm: 'RS256', expiresIn: '5s' });
+    return jwt.sign(user, refreshPrivateKey, { algorithm: 'RS256', expiresIn: '7d' });
 }
 
 function verifyToken(token) {

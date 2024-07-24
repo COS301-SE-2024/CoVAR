@@ -81,14 +81,15 @@ const Organisation = () => {
                     redirectToLogin();
                 } 
             }
-        };
-
-        fetchUserRole();
-    }, []);
+        } catch (error) {
+            console.error('Error fetching user role:', error);
+        }
+    };
 
     useEffect(() => {
+        fetchUserRole();
         fetchUsersList();
-    }, [fetchUsersList]);
+    }, [isInOrg, fetchUsersList]);
 
     const handleRemoveUser = async (user: User) => {
         try {
@@ -172,11 +173,13 @@ const Organisation = () => {
 
     const handleCreateNewOrganisation = async () => {
         try {
+            setLoading(true);
             const accessToken = localStorage.getItem('accessToken');
             if (accessToken && username) {
                 const orgData = await createOrganisation(organisationName, username, accessToken);
                 setIsInOrg(orgData.id);
                 setOrganisationName(orgData.name); // Set the organisation name
+
             }
         } catch (error:any) {
             //console.error('Error creating organisation:', error);

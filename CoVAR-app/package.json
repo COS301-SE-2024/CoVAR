@@ -22,7 +22,7 @@
         "next": "14.2.4",
         "react": "^18",
         "react-dom": "^18",
-        "recharts": "^2.12.7"
+        "recharts": "^2.13.0-alpha.4"
     },
     "devDependencies": {
         "@babel/preset-env": "^7.24.7",

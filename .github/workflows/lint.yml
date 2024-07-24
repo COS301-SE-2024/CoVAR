@@ -13,6 +13,7 @@ jobs:
   lint_frontend:
     name: Lint Frontend
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - name: Checkout "${{ github.repository }}"
         uses: actions/checkout@v3
@@ -32,6 +33,7 @@ jobs:
   lint_backend:
     name: Lint Backend
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - name: Checkout "${{ github.repository }}"
         uses: actions/checkout@v3

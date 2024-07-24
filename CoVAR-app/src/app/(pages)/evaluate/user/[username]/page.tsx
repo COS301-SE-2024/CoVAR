@@ -17,6 +17,7 @@ interface FileUpload {
   created_at: string;
   loid: number;
   filename: string;
+  in_report?: boolean;
 }
 
 const UserEvaluation: React.FC = () => {
@@ -24,19 +25,21 @@ const UserEvaluation: React.FC = () => {
   const username = pathname.split('/').pop();
 
   const [uploads, setUploads] = useState<FileUpload[]>([]);
-  const [reports, setReports] = useState<any[][]>([]); 
+  const [reportIds, setReportIds] = useState<number[]>([]); //ReporIds is a list of the ids of the reports that are in the report
+  const [reports, setReports] = useState<any[][]>([]);
 
   useEffect(() => {
     const fetchUploads = async () => {
       try {
         const token = localStorage.getItem('accessToken');
-
         const response = await axios.get(`/api/uploads/client/${username}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
         setUploads(response.data);
+        const inReportIds = response.data.filter((upload: FileUpload) => upload.in_report).map((upload: FileUpload) => upload.upload_id);
+        setReportIds(inReportIds);
       } catch (error) {
         console.error('Error fetching uploads:', error);
       }
@@ -46,6 +49,35 @@ const UserEvaluation: React.FC = () => {
       fetchUploads();
     }
   }, [username]);
+
+
+  useEffect(() => {
+    const fetchReports = async () => {
+      try {
+        const token = localStorage.getItem('accessToken');
+        const fetchedReports = await Promise.all(
+          reportIds.map(async (id) => {
+            const response = await axios.get(`/api/uploads/generateReport/${id}`, {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            });
+            return response.data;
+          })
+        );
+        setReports(fetchedReports);
+      } catch (error) {
+        console.error('Error generating reports:', error);
+      }
+    };
+
+    if (reportIds.length > 0) {
+      fetchReports();
+    } else {
+      setReports([]);
+    }
+
+  }, [reportIds]);
 
   const handleFileSubmit = async () => {
     // Refetch the uploads after a file is uploaded
@@ -57,6 +89,8 @@ const UserEvaluation: React.FC = () => {
         },
       });
       setUploads(response.data);
+      const inReportIds = response.data.filter((upload: FileUpload) => upload.in_report).map((upload: FileUpload) => upload.upload_id);
+      setReportIds(inReportIds);
     } catch (error) {
       console.error('Error fetching uploads:', error);
     }
@@ -72,26 +106,31 @@ const UserEvaluation: React.FC = () => {
       });
       // Remove the deleted upload from the state
       setUploads(uploads.filter(upload => upload.upload_id !== upload_id));
+      setReportIds(reportIds.filter(id => id !== upload_id));
+
     } catch (error) {
       console.error('Error removing upload:', error);
     }
   };
 
-  const handleGenerateReport = async (upload_id: number) => {
+  const handleToggleReport = async (upload_id: number) => {
     try {
-      console.log('Generating report for upload:', upload_id);
       const token = localStorage.getItem('accessToken');
-      const response = await axios.get(`/api/uploads/generateReport/${upload_id}`, {
+  
+      
+      await axios.put(`/api/uploads/inReport/${upload_id}`, null, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
       
-      // Set the report data in state
-      setReports([response.data]);
-      console.log('Generated Report:', reports);
+      if (reportIds.includes(upload_id)) {
+        setReportIds(reportIds.filter(id => id !== upload_id));
+      } else {
+        setReportIds([...reportIds, upload_id]);
+      }
     } catch (error) {
-      console.error('Error generating report:', error);
+      console.error('Error updating report status:', error);
     }
   };
 
@@ -99,7 +138,7 @@ const UserEvaluation: React.FC = () => {
     <Container maxWidth={false} sx={{ ...mainContentStyles, paddingTop: 8, width: '100vw' }}>
       <Grid container spacing={2}>
         <Grid item xs={6}>
-          <Paper sx={{ padding: 4, textAlign: 'center' }}>
+          <Paper sx={{ padding: 4, textAlign: 'center', overflowY: 'auto', maxHeight: '80vh' }}>
             <Typography variant="h4" gutterBottom>
               Evaluate User
             </Typography>
@@ -135,10 +174,10 @@ const UserEvaluation: React.FC = () => {
                     <Button
                       variant="outlined"
                       color="primary"
-                      onClick={() => handleGenerateReport(upload.upload_id)}
+                      onClick={() => handleToggleReport(upload.upload_id)}
                       sx={{ marginLeft: 2 }}
                     >
-                      Generate Report
+                      {reportIds.includes(upload.upload_id) ? 'Remove from Report' : 'Add to Report'}
                     </Button>
                   </ListItem>
                 ))}
@@ -147,7 +186,7 @@ const UserEvaluation: React.FC = () => {
           </Paper>
         </Grid>
         <Grid item xs={6}>
-          <Paper sx={{ padding: 4, textAlign: 'center' }}>
+          <Paper sx={{ textAlign: 'center', overflowY: 'scroll', maxHeight: '80vh' }}>
             <ReportPreview reports={reports} />
           </Paper>
         </Grid>

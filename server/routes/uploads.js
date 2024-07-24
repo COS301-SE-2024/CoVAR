@@ -166,6 +166,45 @@ router.get('/uploads/generateReport/:upload_id', authenticateToken, async (req, 
     }
 });
 
+// Toggle the value in_report to true/false for a specific file
+router.put('/uploads/inReport/:upload_id', authenticateToken, async (req, res) => {
+    const { upload_id } = req.params;
+  
+    try {
+      await pgClient.query('BEGIN');
+  
+      const currentResult = await pgClient.query(
+        'SELECT in_report FROM raw_uploads WHERE upload_id = $1',
+        [upload_id]
+      );
+  
+      if (currentResult.rows.length === 0) {
+        await pgClient.query('ROLLBACK');
+        return res.status(404).send('File not found');
+      }
+  
+      const currentValue = currentResult.rows[0].in_report;
+      const newValue = !currentValue;
+  
+      const updateResult = await pgClient.query(
+        'UPDATE raw_uploads SET in_report = $1 WHERE upload_id = $2 RETURNING *',
+        [newValue, upload_id]
+      );
+  
+      if (updateResult.rows.length === 0) {
+        await pgClient.query('ROLLBACK');
+        return res.status(404).send('File not found');
+      }
+  
+      await pgClient.query('COMMIT');
+      res.status(200).send('File report status toggled successfully');
+    } catch (err) {
+      await pgClient.query('ROLLBACK');
+      console.error(err.message);
+      res.status(500).send('Server Error');
+    }
+  });
+
 
 
 

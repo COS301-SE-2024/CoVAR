@@ -1,61 +1,81 @@
-import React from 'react';
-import { Page, Text, View, Document, StyleSheet, PDFViewer } from '@react-pdf/renderer';
-
-// Create styles
-const styles = StyleSheet.create({
-  page: {
-    flexDirection: 'column',
-    backgroundColor: '#E4E4E4',
-    padding: 10,
-  },
-  section: {
-    margin: 10,
-    padding: 10,
-    flexGrow: 1,
+import React, { useState } from 'react';
+import { Box, Typography, Paper, Grid, Container, Button, Collapse } from '@mui/material';
+import { mainContentStyles } from '../../../../styles/evaluateStyle';
+const styles = {
+  card: {
+    padding: 16,
+    marginBottom: 16,
   },
   header: {
     fontSize: 18,
     marginBottom: 10,
   },
-  tableHeader: {
-    margin: 5,
-    fontSize: 12,
-    fontWeight: 'bold',
+  item: {
+    marginBottom: 8,
   },
-  tableRow: {
-    margin: 5,
-    fontSize: 10,
+  description: {
+    marginTop: 8,
   },
-});
+};
 
-// Create Document Component
-const MyDocument = ({ reports }: { reports: any[][] }) => (
-  <Document>
-    {reports.map((report, index) => (
-      <Page size="A4" style={styles.page} key={index}>
-        <Text style={styles.header}>Report {index + 1}</Text>
-        <View style={styles.section}>
-          <Text style={styles.tableHeader}>Plugin ID | CVE | CVSS v2.0 Base Score | Risk | Host | Protocol | Port | Name | Synopsis | Description | Solution | Risk Factor</Text>
-          {report.map((item, idx) => (
-            <Text style={styles.tableRow} key={idx}>
-              {`${item.pluginID} | ${item.CVE} | ${item.cvssBaseScore} | ${item.Risk} | ${item.Host} | ${item.Protocol} | ${item.Port} | ${item.Name} | ${item.Synopsis} | ${item.Description} | ${item.Solution} | ${item.riskFactor}`}
-            </Text>
-          ))}
-        </View>
-      </Page>
-    ))}
-  </Document>
-);
+const ReportCard = ({ report, index }: { report: any[], index: number }) => {
+  return (
+    <Box sx={{  ...mainContentStyles }} key={index}>
+      <Typography variant="h6" style={styles.header}>
+        Report {index + 1}
+      </Typography>
+      {report.map((item, idx) => {
+        const [open, setOpen] = useState(false);
+
+        return (
+          <Paper key={idx} style={{marginTop: '10px'}} >
+            <Typography variant="body2"><strong>Plugin ID:</strong> {item.pluginID}</Typography>
+            <Typography variant="body2"><strong>CVE:</strong> {item.CVE}</Typography>
+            <Typography variant="body2"><strong>CVSS v2.0 Base Score:</strong> {item.cvssBaseScore}</Typography>
+            <Typography variant="body2"><strong>Risk:</strong> {item.Risk}</Typography>
+            <Typography variant="body2"><strong>Host:</strong> {item.Host}</Typography>
+            <Typography variant="body2"><strong>Protocol:</strong> {item.Protocol}</Typography>
+            <Typography variant="body2"><strong>Port:</strong> {item.Port}</Typography>
+            <Typography variant="body2"><strong>Name:</strong> {item.Name}</Typography>
+            <Typography variant="body2"><strong>Synopsis:</strong> {item.Synopsis}</Typography>
+            
+            <Button 
+              variant="outlined" 
+              color="primary" 
+              onClick={() => setOpen(!open)}
+              style={{ marginTop: 8 }}
+            >
+              {open ? 'Hide Description' : 'Show Description'}
+            </Button>
+            
+            <Collapse in={open}>
+              <Box style={styles.description}>
+                <Typography variant="body2"><strong>Description:</strong> {item.Description}</Typography>
+                <Typography variant="body2"><strong>Solution:</strong> {item.Solution}</Typography>
+              </Box>
+            </Collapse>
+          </Paper>
+        );
+      })}
+    </Box>
+  );
+};
 
 const ReportPreview = ({ reports }: { reports: any[][] }) => {
   if (!reports || reports.length === 0) {
-    return <div>No reports to display</div>;
+    return <Typography>No reports to display</Typography>;
   }
 
   return (
-    <PDFViewer width="100%" height="600px">
-      <MyDocument reports={reports} />
-    </PDFViewer>
+    <Box sx={{...mainContentStyles}}>
+      <Grid container spacing={2} sx={{...mainContentStyles}}>
+        {reports.map((report, index) => (
+          <Grid item xs={12} key={index}>
+            <ReportCard report={report} index={index} />
+          </Grid>
+        ))}
+      </Grid>
+    </Box>
   );
 };
 

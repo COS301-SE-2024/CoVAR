@@ -23,7 +23,7 @@ interface FileUpload {
 const OrganizationEvaluation: React.FC = () => {
   const pathname = usePathname();
   const organizationName = pathname.split('/').pop(); 
-
+  
   const [uploads, setUploads] = useState<FileUpload[]>([]);
   const [reportIds, setReportIds] = useState<number[]>([]);
   const [reports, setReports] = useState<any[][]>([]);
@@ -54,7 +54,7 @@ const OrganizationEvaluation: React.FC = () => {
         const token = localStorage.getItem('accessToken');
         const fetchedReports = await Promise.all(
           reportIds.map(async (id) => {
-            const response = await axios.get(`/api/uploads/generateReport/${id}`, {
+            const response = await axios.get(`/api/uploads/generateSingleReport/${id}`, {
               headers: {
                 Authorization: `Bearer ${token}`,
               },
@@ -179,7 +179,7 @@ const OrganizationEvaluation: React.FC = () => {
         </Grid>
         <Grid item xs={6}>
           <Paper sx={{ textAlign: 'center', overflowY: 'scroll', maxHeight: '80vh' }}>
-            <ReportPreview reports={reports} />
+            <ReportPreview reports={reports} reportIds={reportIds} client={organizationName ?? ''} />
           </Paper>
         </Grid>
       </Grid>

@@ -23,6 +23,7 @@ interface FileUpload {
 const UserEvaluation: React.FC = () => {
   const pathname = usePathname();
   const username = pathname.split('/').pop();
+  
 
   const [uploads, setUploads] = useState<FileUpload[]>([]);
   const [reportIds, setReportIds] = useState<number[]>([]); //ReporIds is a list of the ids of the reports that are in the report
@@ -57,7 +58,7 @@ const UserEvaluation: React.FC = () => {
         const token = localStorage.getItem('accessToken');
         const fetchedReports = await Promise.all(
           reportIds.map(async (id) => {
-            const response = await axios.get(`/api/uploads/generateReport/${id}`, {
+            const response = await axios.get(`/api/uploads/generateSingleReport/${id}`, {
               headers: {
                 Authorization: `Bearer ${token}`,
               },
@@ -66,6 +67,7 @@ const UserEvaluation: React.FC = () => {
           })
         );
         setReports(fetchedReports);
+        console.log(fetchedReports);
       } catch (error) {
         console.error('Error generating reports:', error);
       }
@@ -76,7 +78,7 @@ const UserEvaluation: React.FC = () => {
     } else {
       setReports([]);
     }
-
+    
   }, [reportIds]);
 
   const handleFileSubmit = async () => {
@@ -107,6 +109,7 @@ const UserEvaluation: React.FC = () => {
       // Remove the deleted upload from the state
       setUploads(uploads.filter(upload => upload.upload_id !== upload_id));
       setReportIds(reportIds.filter(id => id !== upload_id));
+      // setReports(reports.filter(report => report[0].upload_id !== upload_id));
 
     } catch (error) {
       console.error('Error removing upload:', error);
@@ -116,7 +119,7 @@ const UserEvaluation: React.FC = () => {
   const handleToggleReport = async (upload_id: number) => {
     try {
       const token = localStorage.getItem('accessToken');
-  
+      
       
       await axios.put(`/api/uploads/inReport/${upload_id}`, null, {
         headers: {
@@ -129,6 +132,7 @@ const UserEvaluation: React.FC = () => {
       } else {
         setReportIds([...reportIds, upload_id]);
       }
+      
     } catch (error) {
       console.error('Error updating report status:', error);
     }
@@ -187,7 +191,7 @@ const UserEvaluation: React.FC = () => {
         </Grid>
         <Grid item xs={6}>
           <Paper sx={{ textAlign: 'center', overflowY: 'scroll', maxHeight: '80vh' }}>
-            <ReportPreview reports={reports} />
+            <ReportPreview reports={reports} reportIds={reportIds} client={username ?? ''} />
           </Paper>
         </Grid>
       </Grid>

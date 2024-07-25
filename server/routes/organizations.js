@@ -189,38 +189,7 @@ router.post('/organizations/users',  authenticateToken ,async (req, res) => {
     }
 });
 
-// Get all uploads for a specific organization assigned to logged in VA
-router.get('/uploads/organization/:organizationName', authenticateToken, async (req, res) => {
-    const token = req.headers['authorization'].split(' ')[1];
-    const decodedToken = verifyToken(token);
-    const id = decodedToken.user_id;
-    const { organizationName } = req.params;
 
-    try {
-        // Get the UUID for the organizationName
-        const orgResult = await pgClient.query(
-            'SELECT organization_id FROM organizations WHERE name = $1',
-            [organizationName]
-        );
-
-        if (orgResult.rows.length === 0) {
-            return res.status(404).send('Organization not found');
-        }
-
-        const organizationId = orgResult.rows[0].organization_id;
-
-        // Fetch uploads for the organization UUID
-        const uploads = await pgClient.query(
-            'SELECT * FROM raw_uploads WHERE va = $1 AND organization = $2',
-            [id, organizationId]
-        );
-
-        res.send(uploads.rows);
-    } catch (err) {
-        console.error(err.message);
-        res.status(500).send('Server Error');
-    }
-});
 
 // Get all organizations assigned to logged in VA
 router.get('/users/assigned_organizations', authenticateToken, async (req, res) => {

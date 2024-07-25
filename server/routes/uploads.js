@@ -205,10 +205,77 @@ router.put('/uploads/inReport/:upload_id', authenticateToken, async (req, res) =
     }
 });
 
+// Get all uploads for a specific organization assigned to logged in VA
+router.get('/uploads/organization/:organizationName', authenticateToken, async (req, res) => {
+    const token = req.headers['authorization'].split(' ')[1];
+    const decodedToken = verifyToken(token);
+    const id = decodedToken.user_id;
+    const { organizationName } = req.params;
+
+    try {
+        // Get the UUID for the organizationName
+        const orgResult = await pgClient.query(
+            'SELECT organization_id FROM organizations WHERE name = $1',
+            [organizationName]
+        );
+
+        if (orgResult.rows.length === 0) {
+            return res.status(404).send('Organization not found');
+        }
+
+        const organizationId = orgResult.rows[0].organization_id;
+
+        // Fetch uploads for the organization UUID
+        const uploads = await pgClient.query(
+            'SELECT * FROM raw_uploads WHERE va = $1 AND organization = $2',
+            [id, organizationId]
+        );
+
+        res.send(uploads.rows);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
+});
+
+// Get all uploads for a specific client assigned to logged in VA
+router.get('/uploads/client/:clientName', authenticateToken, async (req, res) => {
+    const token = req.headers['authorization'].split(' ')[1];
+    const decodedToken = verifyToken(token);
+    const id = decodedToken.user_id;
+    const { clientName } = req.params;
+
+    try {
+        // Get the UUID for the clientName
+        const clientResult = await pgClient.query(
+            'SELECT user_id FROM users WHERE username = $1',
+            [clientName]
+        );
+
+        if (clientResult.rows.length === 0) {
+            return res.status(404).send('Client not found');
+        }
+
+        const clientId = clientResult.rows[0].user_id;
+
+        // Fetch uploads for the client UUID
+        const uploads = await pgClient.query(
+            'SELECT * FROM raw_uploads WHERE va = $1 AND client = $2',
+            [id, clientId]
+        );
+
+        res.send(uploads.rows);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
+});
+
+
 // Endpoint to generate report
 router.post('/uploads/generateReport', async (req, res) => {
     const { reports, reportIds, client } = req.body;
-    
+
     if (!reports || reports.length === 0 || !reportIds || reportIds.length === 0) {
         return res.status(400).json({ error: 'Reports or report IDs are missing' });
     }

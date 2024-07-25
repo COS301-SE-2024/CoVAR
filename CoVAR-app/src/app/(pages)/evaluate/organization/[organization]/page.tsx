@@ -1,12 +1,12 @@
-'use client'
+'use client';
 import React, { useState, useEffect } from 'react';
 import { Box, Typography, Paper, Container, List, ListItem, ListItemText, Button, Grid } from '@mui/material';
 import { usePathname } from 'next/navigation';
-import axios from 'axios';
 import { mainContentStyles } from '../../../../../styles/evaluateStyle';
 import FileUpload from '../../components/fileUpload';
 import { handleDownloadFile } from '../../../../../functions/requests';
 import ReportPreview from '../../components/reportPreview';
+import { fetchUploadsOrganization, fetchReports, handleRemoveFile, handleToggleReport } from '../../../../../functions/requests';
 
 interface FileUpload {
   upload_id: number;
@@ -22,85 +22,60 @@ interface FileUpload {
 
 const OrganizationEvaluation: React.FC = () => {
   const pathname = usePathname();
-  const organizationName = pathname.split('/').pop(); 
-  
+  const organizationName = pathname.split('/').pop();
+
   const [uploads, setUploads] = useState<FileUpload[]>([]);
   const [reportIds, setReportIds] = useState<number[]>([]);
   const [reports, setReports] = useState<any[][]>([]);
 
   useEffect(() => {
-    const fetchUploads = async () => {
+    const fetchInitialUploads = async () => {
       try {
-        const token = localStorage.getItem('accessToken');
-        const response = await axios.get(`/api/uploads/organization/${organizationName}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        setUploads(response.data);
-        const inReportIds = response.data.filter((upload: FileUpload) => upload.in_report).map((upload: FileUpload) => upload.upload_id);
-        setReportIds(inReportIds);
+        if (organizationName) {
+          const data = await fetchUploadsOrganization(organizationName);
+          setUploads(data);
+          const inReportIds = data.filter((upload: FileUpload) => upload.in_report).map((upload: FileUpload) => upload.upload_id);
+          setReportIds(inReportIds);
+        }
       } catch (error) {
         console.error('Error fetching uploads:', error);
       }
     };
-
-    fetchUploads();
+    fetchInitialUploads();
   }, [organizationName]);
 
   useEffect(() => {
-    const fetchReports = async () => {
+    const fetchInitialReports = async () => {
       try {
-        const token = localStorage.getItem('accessToken');
-        const fetchedReports = await Promise.all(
-          reportIds.map(async (id) => {
-            const response = await axios.get(`/api/uploads/generateSingleReport/${id}`, {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            });
-            return response.data;
-          })
-        );
-        setReports(fetchedReports);
+        if (reportIds.length > 0) {
+          const fetchedReports = await fetchReports(reportIds);
+          setReports(fetchedReports);
+        } else {
+          setReports([]);
+        }
       } catch (error) {
         console.error('Error generating reports:', error);
       }
     };
-
-    if (reportIds.length > 0) {
-      fetchReports();
-    } else {
-      setReports([]);
-    }
+    fetchInitialReports();
   }, [reportIds]);
 
   const handleFileSubmit = async () => {
-    // Refetch the uploads after a file is uploaded
     try {
-      const token = localStorage.getItem('accessToken');
-      const response = await axios.get(`/api/uploads/organization/${organizationName}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      setUploads(response.data);
-      const inReportIds = response.data.filter((upload: FileUpload) => upload.in_report).map((upload: FileUpload) => upload.upload_id);
-      setReportIds(inReportIds);
+      if (organizationName) {
+        const data = await fetchUploadsOrganization(organizationName);
+        setUploads(data);
+        const inReportIds = data.filter((upload: FileUpload) => upload.in_report).map((upload: FileUpload) => upload.upload_id);
+        setReportIds(inReportIds);
+      }
     } catch (error) {
       console.error('Error fetching uploads:', error);
     }
   };
 
-  const handleRemoveFile = async (upload_id: number) => {
+  const handleRemove = async (upload_id: number) => {
     try {
-      const token = localStorage.getItem('accessToken');
-      await axios.delete(`/api/uploads/${upload_id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      // Remove the deleted upload from the state
+      await handleRemoveFile(upload_id);
       setUploads(uploads.filter(upload => upload.upload_id !== upload_id));
       setReportIds(reportIds.filter(id => id !== upload_id));
     } catch (error) {
@@ -108,14 +83,9 @@ const OrganizationEvaluation: React.FC = () => {
     }
   };
 
-  const handleToggleReport = async (upload_id: number) => {
+  const handleToggle = async (upload_id: number) => {
     try {
-      const token = localStorage.getItem('accessToken');
-      await axios.put(`/api/uploads/inReport/${upload_id}`, null, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      await handleToggleReport(upload_id);
       if (reportIds.includes(upload_id)) {
         setReportIds(reportIds.filter(id => id !== upload_id));
       } else {
@@ -159,14 +129,14 @@ const OrganizationEvaluation: React.FC = () => {
                     <Button
                       variant="outlined"
                       color="secondary"
-                      onClick={() => handleRemoveFile(upload.upload_id)}
+                      onClick={() => handleRemove(upload.upload_id)}
                     >
                       Remove
                     </Button>
                     <Button
                       variant="outlined"
                       color="primary"
-                      onClick={() => handleToggleReport(upload.upload_id)}
+                      onClick={() => handleToggle(upload.upload_id)}
                       sx={{ marginLeft: 2 }}
                     >
                       {reportIds.includes(upload.upload_id) ? 'Remove from Report' : 'Add to Report'}

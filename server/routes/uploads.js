@@ -2,7 +2,7 @@ const express = require('express');
 const handleFileUpload = require('../lib/pipe');
 const { authenticateToken, verifyToken } = require('../lib/securityFunctions');
 
-const {parse} = require('csv-parse');
+const { parse } = require('csv-parse');
 
 const pgClient = require('../lib/postgres');
 
@@ -76,8 +76,8 @@ router.delete('/uploads/:upload_id', authenticateToken, async (req, res) => {
 });
 
 
-// Generate report from CSV file content in raw_uploads table and return as JSON
-router.get('/uploads/generateReport/:upload_id', authenticateToken, async (req, res) => {
+// Generate a report from a single CSV file content in raw_uploads table and return as JSON
+router.get('/uploads/generateSingleReport/:upload_id', authenticateToken, async (req, res) => {
     const { upload_id } = req.params;
 
     try {
@@ -149,7 +149,7 @@ router.get('/uploads/generateReport/:upload_id', authenticateToken, async (req, 
 
         // Send the records as JSON once parsing is done
         parser.on('end', function () {
-            
+
             res.json(records);
         });
 
@@ -169,43 +169,64 @@ router.get('/uploads/generateReport/:upload_id', authenticateToken, async (req, 
 // Toggle the value in_report to true/false for a specific file
 router.put('/uploads/inReport/:upload_id', authenticateToken, async (req, res) => {
     const { upload_id } = req.params;
-  
+
     try {
-      await pgClient.query('BEGIN');
-  
-      const currentResult = await pgClient.query(
-        'SELECT in_report FROM raw_uploads WHERE upload_id = $1',
-        [upload_id]
-      );
-  
-      if (currentResult.rows.length === 0) {
-        await pgClient.query('ROLLBACK');
-        return res.status(404).send('File not found');
-      }
-  
-      const currentValue = currentResult.rows[0].in_report;
-      const newValue = !currentValue;
-  
-      const updateResult = await pgClient.query(
-        'UPDATE raw_uploads SET in_report = $1 WHERE upload_id = $2 RETURNING *',
-        [newValue, upload_id]
-      );
-  
-      if (updateResult.rows.length === 0) {
-        await pgClient.query('ROLLBACK');
-        return res.status(404).send('File not found');
-      }
-  
-      await pgClient.query('COMMIT');
-      res.status(200).send('File report status toggled successfully');
+        await pgClient.query('BEGIN');
+
+        const currentResult = await pgClient.query(
+            'SELECT in_report FROM raw_uploads WHERE upload_id = $1',
+            [upload_id]
+        );
+
+        if (currentResult.rows.length === 0) {
+            await pgClient.query('ROLLBACK');
+            return res.status(404).send('File not found');
+        }
+
+        const currentValue = currentResult.rows[0].in_report;
+        const newValue = !currentValue;
+
+        const updateResult = await pgClient.query(
+            'UPDATE raw_uploads SET in_report = $1 WHERE upload_id = $2 RETURNING *',
+            [newValue, upload_id]
+        );
+
+        if (updateResult.rows.length === 0) {
+            await pgClient.query('ROLLBACK');
+            return res.status(404).send('File not found');
+        }
+
+        await pgClient.query('COMMIT');
+        res.status(200).send('File report status toggled successfully');
     } catch (err) {
-      await pgClient.query('ROLLBACK');
-      console.error(err.message);
-      res.status(500).send('Server Error');
+        await pgClient.query('ROLLBACK');
+        console.error(err.message);
+        res.status(500).send('Server Error');
     }
-  });
+});
 
+// Endpoint to generate report
+router.post('/uploads/generateReport', async (req, res) => {
+    const { reports, reportIds, client } = req.body;
+    
+    if (!reports || reports.length === 0 || !reportIds || reportIds.length === 0) {
+        return res.status(400).json({ error: 'Reports or report IDs are missing' });
+    }
 
+    try {
+        // Combine reports into a single JSON object
+        const combinedReport = { reports };
+
+        // Insert combined report into the reports table
+        const insertQuery = 'INSERT INTO reports (title, content) VALUES ($1, $2) RETURNING *';
+        const result = await pgClient.query(insertQuery, [client, combinedReport]);
+
+        res.status(200).json(result.rows[0]);
+    } catch (error) {
+        console.error('Error generating report:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
 
 
 module.exports = router;

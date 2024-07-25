@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Box, Typography, Paper, Grid, Container, Button, Collapse } from '@mui/material';
 import { mainContentStyles } from '../../../../styles/evaluateStyle';
 import axios from 'axios';
+
 const styles = {
   card: {
     padding: 16,
@@ -19,45 +20,44 @@ const styles = {
   },
 };
 
+// Moved `useState` to the top level of the `ReportCard` component
 const ReportCard = ({ report, index }: { report: any[], index: number }) => {
+  const [openItemIndex, setOpenItemIndex] = useState<number | null>(null);
+
   return (
     <Box sx={{ ...mainContentStyles }} key={index}>
       <Typography variant="h6" style={styles.header}>
         Report {index + 1}
       </Typography>
-      {report.map((item, idx) => {
-        const [open, setOpen] = useState(false);
+      {report.map((item, idx) => (
+        <Paper key={idx} style={{ marginTop: '10px' }}>
+          <Typography variant="body2"><strong>Plugin ID:</strong> {item.pluginID}</Typography>
+          <Typography variant="body2"><strong>CVE:</strong> {item.CVE}</Typography>
+          <Typography variant="body2"><strong>CVSS v2.0 Base Score:</strong> {item.cvssBaseScore}</Typography>
+          <Typography variant="body2"><strong>Risk:</strong> {item.Risk}</Typography>
+          <Typography variant="body2"><strong>Host:</strong> {item.Host}</Typography>
+          <Typography variant="body2"><strong>Protocol:</strong> {item.Protocol}</Typography>
+          <Typography variant="body2"><strong>Port:</strong> {item.Port}</Typography>
+          <Typography variant="body2"><strong>Name:</strong> {item.Name}</Typography>
+          <Typography variant="body2"><strong>Synopsis:</strong> {item.Synopsis}</Typography>
 
-        return (
-          <Paper key={idx} style={{ marginTop: '10px' }} >
-            <Typography variant="body2"><strong>Plugin ID:</strong> {item.pluginID}</Typography>
-            <Typography variant="body2"><strong>CVE:</strong> {item.CVE}</Typography>
-            <Typography variant="body2"><strong>CVSS v2.0 Base Score:</strong> {item.cvssBaseScore}</Typography>
-            <Typography variant="body2"><strong>Risk:</strong> {item.Risk}</Typography>
-            <Typography variant="body2"><strong>Host:</strong> {item.Host}</Typography>
-            <Typography variant="body2"><strong>Protocol:</strong> {item.Protocol}</Typography>
-            <Typography variant="body2"><strong>Port:</strong> {item.Port}</Typography>
-            <Typography variant="body2"><strong>Name:</strong> {item.Name}</Typography>
-            <Typography variant="body2"><strong>Synopsis:</strong> {item.Synopsis}</Typography>
+          <Button
+            variant="outlined"
+            color="primary"
+            onClick={() => setOpenItemIndex(openItemIndex === idx ? null : idx)}
+            style={{ marginTop: 8 }}
+          >
+            {openItemIndex === idx ? 'Hide Description' : 'Show Description'}
+          </Button>
 
-            <Button
-              variant="outlined"
-              color="primary"
-              onClick={() => setOpen(!open)}
-              style={{ marginTop: 8 }}
-            >
-              {open ? 'Hide Description' : 'Show Description'}
-            </Button>
-
-            <Collapse in={open}>
-              <Box style={styles.description}>
-                <Typography variant="body2"><strong>Description:</strong> {item.Description}</Typography>
-                <Typography variant="body2"><strong>Solution:</strong> {item.Solution}</Typography>
-              </Box>
-            </Collapse>
-          </Paper>
-        );
-      })}
+          <Collapse in={openItemIndex === idx}>
+            <Box style={styles.description}>
+              <Typography variant="body2"><strong>Description:</strong> {item.Description}</Typography>
+              <Typography variant="body2"><strong>Solution:</strong> {item.Solution}</Typography>
+            </Box>
+          </Collapse>
+        </Paper>
+      ))}
     </Box>
   );
 };
@@ -69,7 +69,6 @@ const ReportPreview = ({ reports, reportIds, client }: { reports: any[][], repor
   
   const generateReport = async () => {
     try {
-      
       const token = localStorage.getItem('accessToken');
       const response = await axios.post(
         '/api/uploads/generateReport',

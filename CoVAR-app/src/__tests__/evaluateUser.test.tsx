@@ -5,13 +5,17 @@ import axios from 'axios';
 import MockAdapter from 'axios-mock-adapter';
 import UserEvaluation from '../app/(pages)/evaluate/user/[username]/page';
 import { usePathname } from 'next/navigation';
+import { fetchUploadsClient, handleRemoveFile } from '../functions/requests';
 
 jest.mock('next/navigation', () => ({
   usePathname: jest.fn(() => '/user/testuser'),
 }));
 
 jest.mock('../functions/requests', () => ({
-  handleDownloadFile: jest.fn(),
+  fetchUploadsClient: jest.fn(),
+  fetchReports: jest.fn(),
+  handleRemoveFile: jest.fn(),
+  handleToggleReport: jest.fn(),
 }));
 
 jest.mock('../app/(pages)/evaluate/components/fileUpload', () => {
@@ -21,7 +25,6 @@ jest.mock('../app/(pages)/evaluate/components/fileUpload', () => {
   MockFileUpload.displayName = 'MockFileUpload';
   return MockFileUpload;
 });
-
 
 describe('UserEvaluation', () => {
   let mockAxios: MockAdapter;
@@ -36,14 +39,16 @@ describe('UserEvaluation', () => {
     localStorage.removeItem('accessToken');
   });
 
-
   test('handles file removal', async () => {
     const mockUploads = [
-      { upload_id: 1, va: 1, client: 'testuser', organization: null, type: 'pdf', created_at: '2023-07-12T12:34:56Z', loid: 1, filename: 'file1.pdf' },
+      { upload_id: 1, va: 1, client: 'testuser', organization: null, type: 'pdf', created_at: '2023-07-12T12:34:56Z', loid: 1, filename: 'file1.pdf', in_report: false },
     ];
 
-    mockAxios.onGet('/api/uploads/client/testuser').reply(200, mockUploads);
-    mockAxios.onDelete('/api/uploads/1').reply(200);
+    const mockFetchUploadsClient = jest.fn().mockResolvedValue(mockUploads);
+    const mockHandleRemoveFile = jest.fn().mockResolvedValue({});
+
+    (fetchUploadsClient as jest.Mock).mockImplementation(mockFetchUploadsClient);
+    (handleRemoveFile as jest.Mock).mockImplementation(mockHandleRemoveFile);
 
     render(<UserEvaluation />);
 
@@ -53,8 +58,8 @@ describe('UserEvaluation', () => {
 
     fireEvent.click(screen.getByText('Remove'));
 
-    await waitFor(() =>
-      expect(screen.queryByText(/File Name: file1.pdf, Uploaded At:/)).not.toBeInTheDocument()
-    );
+    await waitFor(() => {
+      expect(screen.queryByText(/File Name: file1.pdf, Uploaded At:/)).not.toBeInTheDocument();
+    });
   });
 });

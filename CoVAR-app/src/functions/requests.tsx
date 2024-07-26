@@ -76,25 +76,31 @@ const retryRequestWithNewToken = async (originalRequest: AxiosRequestConfig) => 
 
 const handleRequest = async (request: AxiosRequestConfig) => {
     try {
-        //console.log('Sending request...');
-        //console.log('Request:', request);
         const response = await axios(request);
-        //console.log('Response:', response);
+
+        // Check if the URL ends with 'change_name', 'delete', or 'remove_user'
+        const url = request.url?.toLowerCase();
+        if (url?.endsWith('change_name') || url?.endsWith('delete') || url?.endsWith('remove_user')) {
+            return response.status;
+        }
+
         return response.data;
     } catch (error: any) {
-        //console.error('Error in handle request:', error);
         if (error.response && error.response.status === 403) {
             try {
-                //console.log('Error config:', error.config);
                 const response = await retryRequestWithNewToken(error.config);
-                //console.log('Returning after retry');
+                
+                // Check again after retrying with new token
+                const url = error.config.url?.toLowerCase();
+                if (url?.endsWith('change_name') || url?.endsWith('delete') || url?.endsWith('remove_user')) {
+                    return response.status;
+                }
+
                 return response.data;
             } catch (retryError) {
-                //console.error('Error after retrying request:', retryError);
                 throw retryError;
             }
         } else {
-            //console.error('Request error:', error);
             throw error;
         }
     }
@@ -246,7 +252,7 @@ export const changeOrganisationName = async (ownerId: string, organisationName: 
         headers: { Authorization: `Bearer ${accessToken}` },
     };
     const response = await handleRequest(request);
-    return response.status;
+    return response;
 };
 
 export const createOrganisation = async (organisationName: string, username: string, accessToken: string) => {

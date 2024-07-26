@@ -2,6 +2,7 @@
   "compilerOptions": {
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
+    "types": ["@testing-library/jest-dom", "jest", "node"],
     "skipLibCheck": true,
     "strict": true,
     "noEmit": true,
@@ -22,5 +23,5 @@
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules", "cypress"]
 }

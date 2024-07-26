@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { CircularProgress, Button, Typography, Menu, TextField, Autocomplete, Alert } from '@mui/material';
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
+import { authorizeUser } from '../../../../functions/requests';
 import CheckIcon from '@mui/icons-material/Check';
 import { 
     fetchUsers, 
@@ -172,6 +173,28 @@ const UserList = () => {
         }
     };
 
+    const handleAuthorizeUser = async (username: string) => {
+        try {
+            const accessToken = localStorage.getItem('accessToken');
+            if (!accessToken) {
+                throw new Error('Access token not found');
+            }
+            await authorizeUser(username, accessToken);
+            setAlert({
+                visible: true,
+                message: `User ${username} authorised successfully!`,
+            });
+            const updatedUsers = await fetchUsers(accessToken);
+            setUsers(updatedUsers);
+        } catch (error) {
+            console.error('Error authorising user:', error);
+            setAlert({
+                visible: true,
+                message: 'Error authorising user',
+            });
+        }
+    };
+
     const filteredUsers = users.filter(user =>
         user.username.toLowerCase().includes(searchTerm.toLowerCase()) && user.role !== 'va'
     );
@@ -266,6 +289,31 @@ const UserList = () => {
                                 Un-Assign Client
                             </Button>
                         </>
+                    );
+                } else if (params.row.role === 'unauthorised') {
+                    return (
+                    <Button
+                            variant="contained"
+                            sx={{
+                                marginTop: '8px',
+                                backgroundColor: '#5C4B8A',
+                                color: '#CAD2C5', 
+                                '&:hover': {
+                                    backgroundColor: '#47356B',
+                                },
+                                
+                                borderRadius: '4px',
+                                textAlign: 'center',
+                                width: '110px',
+                                height: '36.5px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                            }}
+                            onClick={() => handleAuthorizeUser(params.row.username)}
+                        >
+                            Authorise
+                        </Button>
                     );
                 } else {
                     return (

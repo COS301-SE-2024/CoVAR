@@ -119,7 +119,6 @@ router.get('/uploads/generateSingleReport/:upload_id', authenticateToken, async 
                     Synopsis,
                     Description,
                     Solution,
-                    'Risk Factor': riskFactor
                 } = record;
 
                 if (Risk && Risk !== 'None') {
@@ -135,7 +134,6 @@ router.get('/uploads/generateSingleReport/:upload_id', authenticateToken, async 
                         Synopsis,
                         Description,
                         Solution,
-                        riskFactor
                     });
                 }
             }

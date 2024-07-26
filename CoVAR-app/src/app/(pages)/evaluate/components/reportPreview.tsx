@@ -27,7 +27,7 @@ const ReportCard = ({ report, index }: { report: any[], index: number }) => {
   return (
     <Box sx={{ ...mainContentStyles }} key={index}>
       <Typography variant="h6" style={styles.header}>
-        Report {index + 1}
+        Upload {index + 1}
       </Typography>
       {report.map((item, idx) => (
         <Paper key={idx} style={{ marginTop: '10px' }}>

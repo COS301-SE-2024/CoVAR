@@ -62,16 +62,18 @@ const Login: React.FC<LoginProps> = ({ toggleForm }) => {
         console.log(currentUser);
         if (currentUser) {
           const firebaseToken = await currentUser.user.getIdToken();
-          console.log("firebaseToken");
-          console.log(firebaseToken);
+          // console.log("firebaseToken");
+          // console.log(firebaseToken);
   
           const response = await axios.post('/api/users/login', {
             firebaseToken,
             username: email
           });
-          console.log(response);
+          //console.log(response);
           localStorage.setItem('accessToken', response.data.accessToken);
           localStorage.setItem('refreshToken', response.data.refreshToken);
+          console.log("accessToken", response.data.accessToken);
+          console.log("refreshToken", response.data.refreshToken);
           axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.accessToken}`;
           axios.defaults.headers.post['Content-Type'] = 'application/json';
   
@@ -124,7 +126,7 @@ const Login: React.FC<LoginProps> = ({ toggleForm }) => {
         console.log("Create user response:", response);
   
         const firebaseToken = await result.user.getIdToken();
-        console.log("Firebase Token:", firebaseToken);
+        //console.log("Firebase Token:", firebaseToken);
   
         const LoginResponse = await axios.post('/api/users/login', {
           firebaseToken,

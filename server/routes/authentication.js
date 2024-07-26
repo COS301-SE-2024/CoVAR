@@ -38,7 +38,7 @@ router.post('/users/login',verifyIdToken ,async (req, res) => {
 });
 
 const refreshPublicKey = fs.readFileSync('refreshPublic.pem', 'utf8');
-router.post('/users/token', (req, res) => {
+router.post('/users/refresh', (req, res) => {
     const refreshToken = req.body.token;
     if (refreshToken == null) return res.sendStatus(401);
 
@@ -62,8 +62,9 @@ router.post('/users/token', (req, res) => {
                 role: rows[0].role,
                 organization_id: rows[0].organization_id,
             };
-
+            
             const accessToken = generateToken(user);
+            console.log("successful refresh");
             res.json({ accessToken });
         } catch (error) {
             console.error('Error fetching user:', error);

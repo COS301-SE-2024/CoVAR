@@ -1,5 +1,5 @@
 'use client'
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { CircularProgress, Button, Typography, Menu, TextField, Autocomplete, Alert } from '@mui/material';
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import CheckIcon from '@mui/icons-material/Check';
@@ -12,6 +12,8 @@ import {
     assignClient, 
     unassignClient 
 } from '../../../../functions/requests';
+import { useRouter } from 'next/navigation';
+
 type User = {
     user_id: string;
     username: string;
@@ -37,14 +39,19 @@ const UserList = () => {
     const [organizations, setOrganizations] = useState<Organization[]>([]);
     const [alert, setAlert] = useState<{visible: boolean, message: string}>({visible: false, message: ''});
     const [accessToken, setAccessToken] = useState(localStorage.getItem('accessToken'));
+    const router = useRouter();
+
+    const redirectToLogin = useCallback(() => {
+        router.replace('/login');
+    }, [router]);
 
     useEffect(() => {
         const getToken = () => {
             setAccessToken(localStorage.getItem('accessToken'));
         };
         getToken();
-    }
-    , [accessToken]);
+    }, []);
+
     useEffect(() => {
         const loadUsers = async () => {
             try {
@@ -52,16 +59,20 @@ const UserList = () => {
                     throw new Error('Access token not found');
                 }
                 const users = await fetchUsers(accessToken);
-                console.log('Users:', users);
+                //console.log('Users:', users);
                 setUsers(users);
                 setLoading(false);
-            } catch (error) {
+            } catch (error:any) {
                 setLoading(false);
+                //console.error('Error fetching users:', error);
+                if(error.response?.status === 403) {
+                    redirectToLogin();
+                }
             }
         };
 
         loadUsers();
-    }, [accessToken]);
+    }, [accessToken, redirectToLogin]);
 
     useEffect(() => {
         const loadOrganizations = async () => {
@@ -70,15 +81,18 @@ const UserList = () => {
                     throw new Error('Access token not found');
                 }
                 const organizations = await fetchOrganisations(accessToken);
-                console.log('Organizations:', organizations);
+                //console.log('Organizations:', organizations);
                 setOrganizations(organizations);
-            } catch (error) {
-                console.error('Error fetching organizations:', error);
+            } catch (error:any) {
+                //console.error('Error fetching organizations:', error);
+                if(error.response?.status === 403) {
+                    redirectToLogin();
+                }
             }
         };
 
         loadOrganizations();
-    }, [accessToken]);
+    }, [accessToken,redirectToLogin]);
 
     const handleRoleToggle = async (user: User) => {
         if (!user) {
@@ -87,7 +101,7 @@ const UserList = () => {
         }
 
         const newRole = user.role === 'va' ? 'client' : 'va';
-        console.log('Updating user role:', user.user_id, user.role, '->', newRole);
+        //console.log('Updating user role:', user.user_id, user.role, '->', newRole);
 
         try {
             if(!accessToken){
@@ -95,8 +109,11 @@ const UserList = () => {
             }
             await updateUserRole(user.user_id, newRole,accessToken);
             setUsers(users.map(u => (u.user_id === user.user_id ? { ...u, role: newRole } : u)));
-        } catch (error) {
-            console.error('Error updating user role:', error);
+        } catch (error:any) {
+            //console.error('Error updating user role:', error);
+            if(error.response?.status === 403) {
+                redirectToLogin();
+            }
         }
     };
 
@@ -116,8 +133,11 @@ const UserList = () => {
             setAssignedClients(assignedClients);
             const assignedOrganizations = await fetchAssignedOrganisations(user.user_id,accessToken);
             setAssignedOrganizations(assignedOrganizations);
-        } catch (error) {
-            console.error('Error fetching assigned clients:', error);
+        } catch (error:any) {
+            //console.error('Error fetching assigned clients:', error);
+            if(error.response?.status === 403) {
+                redirectToLogin();
+            }
         }
     };
 
@@ -145,8 +165,11 @@ const UserList = () => {
                     visible: true,
                     message: `Successfully assigned ${clientUsername} to ${selectedUser.username}.`
                 });
-            } catch (error) {
-                console.error('Error assigning client:', error);
+            } catch (error:any) {
+                //console.error('Error assigning client:', error);
+                if(error.response?.status === 403) {
+                    redirectToLogin();
+                }
             }
         }
     };
@@ -166,8 +189,11 @@ const UserList = () => {
                     visible: true,
                     message: `Successfully unassigned ${clientUsername} from ${selectedUser.username}.`
                 });
-            } catch (error) {
-                console.error('Error unassigning client:', error);
+            } catch (error:any) {
+                //console.error('Error unassigning client:', error);
+                if(error.response?.status === 403) {
+                    redirectToLogin();
+                }
             }
         }
     };

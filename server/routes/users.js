@@ -21,11 +21,13 @@ router.get('/users/all', authenticateToken, async (req, res) => {
 });
 
 router.post('/getUser', authenticateToken, async (req, res) => {
+    console.log('Getting user');
     const token = req.body.accessToken;
     if(!token){
         return res.status(400).send('Token is required');
     }
     try {
+        console.log('Token:', token);
         const decodedToken = verifyToken(token);
         //console.log('Decoded token in getUSer:', decodedToken);
         const userId = decodedToken.user_id;

@@ -5,7 +5,7 @@ import { Box } from '@mui/system';
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import { getUserRole, fetchUsersByOrg, removeUser, addUser, deleteOrganisation, createOrganisation, changeOrganisationName } from '../../../functions/requests';
 import { buttonStyles, cardStyles, headingBoxStyles, mainContentStyles, textFieldStyles } from '../../../styles/organisationStyle';
-
+import { useRouter } from 'next/navigation';
 type User = {
     id: string;
     email: string;
@@ -25,7 +25,11 @@ const Organisation = () => {
     const [isInOrg, setIsInOrg] = useState<string | null>(null);
     const [username, setUsername] = useState<string | null>(null);
     const [ownerId, setOwnerId] = useState<string | null>(null);
-
+    const router = useRouter();
+    
+    const redirectToLogin = useCallback(() => {
+        router.replace('/login');
+    }, [router]);
     const fetchUsersList = useCallback(async () => {
         if (isInOrg) {
             try {
@@ -37,45 +41,52 @@ const Organisation = () => {
                         id: user.id || index.toString(),
                     }));
                     setUsers(usersWithId);
-                    console.log("Users list:", usersWithId);
+                    //console.log("Users list:", usersWithId);
                 }
-            } catch (error) {
-                console.error('Error fetching users:', error);
+            } catch (error:any) {
+                //console.error('Error fetching users:', error);
+                if (error.response?.status === 403) {
+                    redirectToLogin();
+                }
             } finally {
                 setLoading(false);
             }
         } else {
             setLoading(false);
         }
-    }, [isInOrg]);
+    }, [isInOrg, redirectToLogin]);
 
-    const fetchUserRole = async () => {
+    const fetchUserRole = useCallback(async () => {
         try {
             const accessToken = localStorage.getItem('accessToken');
             if (accessToken) {
                 const userData = await getUserRole(accessToken);
-                console.log('User data:', userData);
+                //console.log('User data:', userData);
                 setIsOwner(userData.owner); // Assuming 'owner' is the correct key in userData
                 setIsInOrg(userData.organization_id);
                 setUsername(userData.username);
                 setOwnerId(userData.user_id);
-                console.log("User role:", userData.role);
-                console.log("Is owner:", userData.owner);
-                console.log("Is in org:", userData.organization_id);
+                //console.log("User role:", userData.role);
+                //console.log("Is owner:", userData.owner);
+                //console.log("Is in org:", userData.organization_id);
                 // Set the organisation name if user is in an organisation
                 if (userData.orgName) {
                     setOrganisationName(userData.orgName);
                 }
             }
-        } catch (error) {
-            console.error('Error fetching user role:', error);
+        } catch (error:any) {
+            //console.error('Error fetching user role:', error);
+            if (error.response?.status === 403) {
+                redirectToLogin();
+            } 
         }
-    };
+    }
+    , [redirectToLogin]);
 
     useEffect(() => {
         fetchUserRole();
         fetchUsersList();
-    }, [isInOrg, fetchUsersList]);
+    }, [isInOrg, fetchUsersList, fetchUserRole]);
 
     const handleRemoveUser = async (user: User) => {
         try {
@@ -86,8 +97,11 @@ const Organisation = () => {
                     setUsers(users.filter((u) => u.id !== user.id));
                 }
             }
-        } catch (error) {
-            console.error('Error removing user:', error);
+        } catch (error:any) {
+            //console.error('Error removing user:', error);
+            if(error.response?.status === 403) {
+                redirectToLogin();
+            }
         }
     };
 
@@ -99,8 +113,11 @@ const Organisation = () => {
                 setNewMemberEmail('');
                 fetchUsersList();
             }
-        } catch (error) {
-            console.error('Error adding member:', error);
+        } catch (error:any) {
+            //console.error('Error adding member:', error);
+            if(error.response?.status === 403) {
+                redirectToLogin();
+            }
         }
     };    
 
@@ -111,7 +128,7 @@ const Organisation = () => {
                 const status = await deleteOrganisation(
                     isInOrg,
                     confirmDisbandOrganisationName,
-                    accessToken
+                    accessToken,
                 );
                 if (status === 200) {
                     setIsInOrg(null);
@@ -120,8 +137,11 @@ const Organisation = () => {
                     setDeleteConfirmed(true);
                 }
             }
-        } catch (error) {
-            console.error('Error deleting organisation:', error);
+        } catch (error:any) {
+            //console.error('Error deleting organisation:', error);
+            if(error.response?.status === 403) {
+                redirectToLogin();
+            }
         }
     };
 
@@ -133,15 +153,18 @@ const Organisation = () => {
                     (ownerId !== null ? ownerId : ''),
                     organisationName,
                     confirmChangeOrganisationName,
-                    accessToken
+                    accessToken,
                 );
                 if (status === 200) {
                     setOrganisationName(confirmChangeOrganisationName);
                     setConfirmChangeOrganisationName('');
                 }
             }
-        } catch (error) {
-            console.error('Error changing organisation name:', error);
+        } catch (error:any) {
+            //console.error('Error changing organisation name:', error);
+            if(error.response?.status === 403) {
+                redirectToLogin();
+            }
         }
     };
 
@@ -155,9 +178,11 @@ const Organisation = () => {
                 setOrganisationName(orgData.name); // Set the organisation name
 
             }
-            setLoading(false);
-        } catch (error) {
-            console.error('Error creating organisation:', error);
+        } catch (error:any) {
+            //console.error('Error creating organisation:', error);
+            if(error.response?.status === 403) {
+                redirectToLogin();
+            }
         }
     };
 

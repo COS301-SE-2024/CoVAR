@@ -193,7 +193,19 @@ export const fetchUsersByOrg = async (orgId: string, accessToken: string) => {
         data: { org_id: orgId },
         headers: { Authorization: `Bearer ${accessToken}` },
     };
-    return await handleRequest(request);
+
+    try {
+        const response = await handleRequest(request);
+        return response.map((user: any) => ({
+            id: user.user_id,
+            email: user.username,
+            role: user.role,
+            createdAt: user.createdAt,
+        }));
+    } catch (error) {
+        console.error('Error fetching users:', error);
+        throw error;
+    }
 };
 
 export const removeUser = async (orgId: string, ownerId: string, email: string, accessToken: string) => {

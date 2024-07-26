@@ -245,7 +245,8 @@ export const changeOrganisationName = async (ownerId: string, organisationName: 
         data: { OrgName: organisationName, newName: newName },
         headers: { Authorization: `Bearer ${accessToken}` },
     };
-    return await handleRequest(request);
+    const response = await handleRequest(request);
+    return response.status;
 };
 
 export const createOrganisation = async (organisationName: string, username: string, accessToken: string) => {

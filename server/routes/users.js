@@ -12,7 +12,7 @@ router.get('/users/all', authenticateToken, async (req, res) => {
         if(!adminResult.isAdmin){
             return res.status(403).send('Not authorized as admin');
         }
-        const users = await pgClient.query('SELECT * FROM users');
+        const users = await pgClient.query("SELECT u.user_id, u.username, u.role, o.name AS organization FROM users u LEFT JOIN organizations o ON u.organization_id = o.organization_id;");
         res.send(users.rows);
     } catch (err) {
         console.error('Error fetching users:', err);
@@ -21,11 +21,13 @@ router.get('/users/all', authenticateToken, async (req, res) => {
 });
 
 router.post('/getUser', authenticateToken, async (req, res) => {
+    console.log('Getting user');
     const token = req.body.accessToken;
     if(!token){
         return res.status(400).send('Token is required');
     }
     try {
+        console.log('Token:', token);
         const decodedToken = verifyToken(token);
         //console.log('Decoded token in getUSer:', decodedToken);
         const userId = decodedToken.user_id;

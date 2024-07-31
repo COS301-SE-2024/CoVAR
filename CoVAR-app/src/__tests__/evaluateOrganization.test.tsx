@@ -8,6 +8,9 @@ import { usePathname } from 'next/navigation';
 
 jest.mock('next/navigation', () => ({
   usePathname: jest.fn(() => '/organization/testorg'),
+  useRouter: () => ({
+    replace: jest.fn(),
+  }),
 }));
 
 jest.mock('../functions/requests', () => ({

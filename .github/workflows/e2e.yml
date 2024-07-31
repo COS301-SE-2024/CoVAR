@@ -8,7 +8,7 @@ on:
 jobs:
   e2e-tests:
     runs-on: ubuntu-latest
-
+    timeout-minutes: 15
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -50,6 +50,10 @@ jobs:
           echo ${{ secrets.PRIVATE }} > server/private.pem
           echo ${{ secrets.REFRESH_PUBLIC }} > server/refreshPublic.pem
           echo ${{ secrets.REFRESH_PRIVATE }} > server/refreshPrivate.pem
+      
+      - name: Create cypress env file
+        run: |
+          echo ${{ secrets.CYPRESS_ENV }} > CoVAR-app/cypress.env.json
           
       - name: Clean up any existing Docker containers and networks
         run: |
@@ -63,7 +67,7 @@ jobs:
       - name: Wait for services to be ready
         run: |
           echo "Waiting for services to be ready..."
-          sleep 50
+          sleep 20
 
       - name: Run Cypress tests
         run: docker run --network host -v $PWD/CoVAR-app:/CoVAR-app -w /CoVAR-app cypress/included:13.11.0 --config-file cypress.config.js

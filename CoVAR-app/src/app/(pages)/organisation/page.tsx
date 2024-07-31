@@ -5,7 +5,7 @@ import { Box } from '@mui/system';
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import { getUserRole, fetchUsersByOrg, removeUser, addUser, deleteOrganisation, createOrganisation, changeOrganisationName, leaveOrganisation } from '../../../functions/requests';
 import { buttonStyles, cardStyles, headingBoxStyles, mainContentStyles, textFieldStyles } from '../../../styles/organisationStyle';
-
+import { useRouter } from 'next/navigation';
 type User = {
     id: string;
     email: string;
@@ -31,6 +31,13 @@ const Organisation = () => {
     const [changeNameMessage, setChangeNameMessage] = useState<string | null>(null);
     const [disbandOrgMessage, setDisbandOrgMessage] = useState<string | null>(null);
 
+
+    const router = useRouter();
+    
+    const redirectToLogin = useCallback(() => {
+        router.replace('/login');
+    }, [router]);
+
     const fetchUsersList = useCallback(async () => {
         if (isInOrg) {
             try {
@@ -42,48 +49,52 @@ const Organisation = () => {
                         id: user.id || index.toString(),
                     }));
                     setUsers(usersWithId);
-                    console.log("Users list:", usersWithId);
+                    //console.log("Users list:", usersWithId);
                 }
-            } catch (error) {
-                console.error('Error fetching users:', error);
+            } catch (error:any) {
+                //console.error('Error fetching users:', error);
+                if (error.response?.status === 403) {
+                    redirectToLogin();
+                }
             } finally {
                 setLoading(false);
             }
         } else {
             setLoading(false);
         }
-    }, [isInOrg]);
+    }, [isInOrg, redirectToLogin]);
 
-    useEffect(() => {
-        const fetchUserRole = async () => {
-            try {
-                const accessToken = localStorage.getItem('accessToken');
-                if (accessToken) {
-                    const userData = await getUserRole(accessToken);
-                    console.log('User data:', userData);
-                    setIsOwner(userData.owner); // Assuming 'owner' is the correct key in userData
-                    setIsInOrg(userData.organization_id);
-                    setUsername(userData.username);
-                    setOwnerId(userData.user_id);
-                    console.log("User role:", userData.role);
-                    console.log("Is owner:", userData.owner);
-                    console.log("Is in org:", userData.organization_id);
-                    // Set the organisation name if user is in an organisation
-                    if (userData.orgName) {
-                        setOrganisationName(userData.orgName);
-                    }
+    const fetchUserRole = useCallback(async () => {
+        try {
+            const accessToken = localStorage.getItem('accessToken');
+            if (accessToken) {
+                const userData = await getUserRole(accessToken);
+                //console.log('User data:', userData);
+                setIsOwner(userData.owner); // Assuming 'owner' is the correct key in userData
+                setIsInOrg(userData.organization_id);
+                setUsername(userData.username);
+                setOwnerId(userData.user_id);
+                //console.log("User role:", userData.role);
+                //console.log("Is owner:", userData.owner);
+                //console.log("Is in org:", userData.organization_id);
+                // Set the organisation name if user is in an organisation
+                if (userData.orgName) {
+                    setOrganisationName(userData.orgName);
                 }
-            } catch (error) {
-                console.error('Error fetching user role:', error);
             }
-        };
-
-        fetchUserRole();
-    }, []);
+        } catch (error:any) {
+            //console.error('Error fetching user role:', error);
+            if (error.response?.status === 403) {
+                redirectToLogin();
+            } 
+        }
+    }
+    , [redirectToLogin]);
 
     useEffect(() => {
+        fetchUserRole();
         fetchUsersList();
-    }, [fetchUsersList]);
+    }, [isInOrg, fetchUsersList, fetchUserRole]);
 
     const handleRemoveUser = async (user: User) => {
         try {
@@ -94,8 +105,11 @@ const Organisation = () => {
                     setUsers(users.filter((u) => u.id !== user.id));
                 }
             }
-        } catch (error) {
-            console.error('Error removing user:', error);
+        } catch (error:any) {
+            //console.error('Error removing user:', error);
+            if(error.response?.status === 403) {
+                redirectToLogin();
+            }
         }
     };
 
@@ -126,10 +140,14 @@ const Organisation = () => {
                 setAddMemberMessage('Member added successfully.');
                 setTimeout(() => setAddMemberMessage(null), 10000);
             }
-        } catch (error) {
+        } catch (error:any) {
             console.error('Error adding member:', error);
             setAddMemberMessage('Error adding member.');
             setTimeout(() => setAddMemberMessage(null), 10000);
+              
+                          if(error.response?.status === 403) {
+                redirectToLogin();
+            }
         }
     };
 
@@ -137,6 +155,7 @@ const Organisation = () => {
         try {
             const accessToken = localStorage.getItem('accessToken');
             if (accessToken && isInOrg) {
+
                 const status = await changeOrganisationName(
                     (ownerId !== null ? ownerId : ''),
                     organisationName,
@@ -150,10 +169,13 @@ const Organisation = () => {
                     setTimeout(() => setChangeNameMessage(null), 10000);
                 }
             }
-        } catch (error) {
-            console.error('Error changing organisation name:', error);
+        } catch (error:any) {
             setChangeNameMessage('Error changing organisation name');
             setTimeout(() => setChangeNameMessage(null), 10000);
+            //console.error('Error deleting organisation:', error);
+            if(error.response?.status === 403) {
+                redirectToLogin();
+            }
         }
     };
 
@@ -175,23 +197,32 @@ const Organisation = () => {
                     setTimeout(() => setDisbandOrgMessage(null), 10000);
                 }
             }
-        } catch (error) {
-            console.error('Error deleting organisation:', error);
+
+        } catch (error:any) {
             setDisbandOrgMessage('Error disbanding organisation.');
             setTimeout(() => setDisbandOrgMessage(null), 10000);
+            //console.error('Error changing organisation name:', error);
+            if(error.response?.status === 403) {
+                redirectToLogin();
+            }
         }
     };
 
     const handleCreateNewOrganisation = async () => {
         try {
+            setLoading(true);
             const accessToken = localStorage.getItem('accessToken');
             if (accessToken && username) {
                 const orgData = await createOrganisation(organisationName, username, accessToken);
                 setIsInOrg(orgData.id);
-                setOrganisationName(orgData.name); 
+                setOrganisationName(orgData.name); // Set the organisation name
+
             }
-        } catch (error) {
-            console.error('Error creating organisation:', error);
+        } catch (error:any) {
+            //console.error('Error creating organisation:', error);
+            if(error.response?.status === 403) {
+                redirectToLogin();
+            }
         }
     };
 

@@ -1,7 +1,7 @@
 'use client'
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Box, Typography, Paper, Container, List, ListItem, ListItemText, Button } from '@mui/material';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation'; 
 import axios from 'axios';
 import { mainContentStyles } from '../../../../../styles/evaluateStyle';
 import FileUpload from '../../components/fileUpload';
@@ -19,6 +19,10 @@ interface FileUpload {
 }
 
 const OrganizationEvaluation: React.FC = () => {
+  const router = useRouter();
+  const redirectToLogin = useCallback(() => {
+    router.replace('/login');
+  }, [router]);
   const pathname = usePathname();
   const organizationName = pathname.split('/').pop(); 
   const [uploads, setUploads] = useState<FileUpload[]>([]);
@@ -33,13 +37,16 @@ const OrganizationEvaluation: React.FC = () => {
           },
         });
         setUploads(response.data);
-      } catch (error) {
-        console.error('Error fetching uploads:', error);
+      } catch (error:any) {
+        //console.error('Error fetching uploads:', error);
+        if(error.response?.status === 403) {
+          redirectToLogin();
+        }
       }
     };
 
     fetchUploads();
-  }, [organizationName]);
+  }, [organizationName, redirectToLogin]);
 
   const handleFileSubmit = async () => {
     // Refetch the uploads after a file is uploaded
@@ -51,8 +58,11 @@ const OrganizationEvaluation: React.FC = () => {
         },
       });
       setUploads(response.data);
-    } catch (error) {
-      console.error('Error fetching uploads:', error);
+    } catch (error:any) {
+      //console.error('Error fetching uploads:', error);
+      if(error.response?.status === 403) {
+        redirectToLogin();
+      }
     }
   };
 
@@ -66,8 +76,11 @@ const OrganizationEvaluation: React.FC = () => {
       });
       // Remove the deleted upload from the state
       setUploads(uploads.filter(upload => upload.upload_id !== upload_id));
-    } catch (error) {
-      console.error('Error removing upload:', error);
+    } catch (error:any) {
+      //console.error('Error removing upload:', error);
+      if(error.response?.status === 403) {
+        redirectToLogin();
+      }
     }
   };
 

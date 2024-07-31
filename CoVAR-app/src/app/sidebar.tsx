@@ -8,7 +8,7 @@ import GroupsIcon from '@mui/icons-material/Groups';
 import LockIcon from '@mui/icons-material/Lock';
 import SettingsIcon from '@mui/icons-material/Settings';
 import { Box, Button, List, ListItem, ListItemIcon, ListItemText, Typography, useTheme } from '@mui/material';
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useState } from 'react';
 
 import { ThemeContext } from '../styles/customThemeProvider';
 import { iconStyles, logoStyles, logoutButtonStyles, sidebarItemStyles, sidebarStyles } from '../styles/sidebarStyle';
@@ -23,38 +23,44 @@ const Sidebar: React.FC = () => {
   const router = useRouter();
   const location = usePathname();
   const theme = useTheme();
-
   const [role, setRole] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
-  const fetchUserRole = async () => {
+  const redirectToLogin = useCallback(() => {
+    router.replace('/login');
+  }, [router]);
+
+  const fetchUserRole = useCallback(async () => {
     try {
       const accessToken = localStorage.getItem('accessToken');
       if (accessToken) {
         const data = await getUserRole(accessToken);
         setRole(data.role);
       }
-    } catch (error) {
+    } catch (error:any) {
       console.error("Error fetching user role:", error);
+      if (error.response?.status === 403) {
+        redirectToLogin();
+      }
     } finally {
       setLoading(false);
     }
-  };
+  }, [redirectToLogin]); 
 
   useEffect(() => {
     fetchUserRole();
-  }, [location]);
+  }, [location, fetchUserRole]);
 
   if (location === '/login' || location === '/' || location === '/lounge'){
     return null;
-  } 
+  }
 
   const signOut = async () => {
     try {
       await doSignOut();
       router.replace('/login');
     } catch (error) {
-      console.error('signout error',error);
+      console.error('signout error', error);
     }
   };
 
@@ -97,6 +103,7 @@ const Sidebar: React.FC = () => {
         {(role === "va" || role === "admin") && (
           <Link href='/evaluate'>
             <ListItem
+              test-id="evaluateLink"
               sx={{
                 ...sidebarItemStyles,
                 backgroundColor: isActive('/evaluate') ? theme.palette.primary.main : 'inherit',
@@ -136,6 +143,7 @@ const Sidebar: React.FC = () => {
         </Link>
         <Link href='/organisation'>
           <ListItem
+            test-id="organisationLink"
             sx={{
               ...sidebarItemStyles,
               backgroundColor: isActive('/organisation') ? theme.palette.primary.main : 'inherit',
@@ -175,6 +183,7 @@ const Sidebar: React.FC = () => {
         {role === "admin" && (
           <Link href='/adminTools'>
             <ListItem
+              test-id="adminToolsLink"
               sx={{
                 ...sidebarItemStyles,
                 backgroundColor: isActive('/adminTools') ? theme.palette.primary.main : 'inherit',
@@ -215,6 +224,7 @@ const Sidebar: React.FC = () => {
         </Link>
       </List>
       <Button
+        test-id="logoutButton"
         variant="contained"
         color="primary"
         startIcon={<ExitToAppIcon />}

@@ -10,7 +10,12 @@ class MockResizeObserver {
 }
 
 global.ResizeObserver = MockResizeObserver;
-
+jest.mock('next/navigation', () => ({
+    usePathname: jest.fn(() => '/user/testuser'),
+    useRouter: () => ({
+      replace: jest.fn(),
+    }),
+  }));
 describe('Dashboard Component', () => {
     test('renders example charts and list', () => {
         render(<div style={{ minWidth: '300px', minHeight: '300px' }}>

@@ -3,7 +3,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { Button, Card, CardContent, CircularProgress, TextField, Typography } from '@mui/material';
 import { Box } from '@mui/system';
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
-import { getUserRole, fetchUsersByOrg, removeUser, addUser, deleteOrganisation, createOrganisation, changeOrganisationName } from '../../../functions/requests';
+import { getUserRole, fetchUsersByOrg, removeUser, addUser, deleteOrganisation, createOrganisation, changeOrganisationName, leaveOrganisation } from '../../../functions/requests';
 import { buttonStyles, cardStyles, headingBoxStyles, mainContentStyles, textFieldStyles } from '../../../styles/organisationStyle';
 
 type User = {
@@ -20,7 +20,9 @@ const Organisation = () => {
     const [organisationName, setOrganisationName] = useState('');
     const [confirmChangeOrganisationName, setConfirmChangeOrganisationName] = useState('');
     const [confirmDisbandOrganisationName, setConfirmDisbandOrganisationName] = useState('');
+    const [confirmLeaveOrganisationName, setConfirmLeaveOrganisationName] = useState('');
     const [deleteConfirmed, setDeleteConfirmed] = useState(false);
+    const [leaveConfirmed, setLeaveConfirmed] = useState(false);
     const [isOwner, setIsOwner] = useState(false);
     const [isInOrg, setIsInOrg] = useState<string | null>(null);
     const [username, setUsername] = useState<string | null>(null);
@@ -96,6 +98,23 @@ const Organisation = () => {
             console.error('Error removing user:', error);
         }
     };
+
+    const handleLeaveOrganisation = async () => {
+        try {
+            const accessToken = localStorage.getItem('accessToken');
+            if (accessToken && isInOrg && username) {
+                const status = await leaveOrganisation(isInOrg, username, accessToken);
+                if (status === 200) {
+                    setIsInOrg(null);
+                    setOrganisationName('');
+                    setLeaveConfirmed(true);
+                }
+            }
+        } catch (error) {
+            console.error('Error leaving organisation:', error);
+        }
+    };
+
 
     const handleAddMember = async () => {
         try {
@@ -320,7 +339,7 @@ const Organisation = () => {
                     }}
                 />
             </Box>
-            {isOwner && (
+            {isOwner ? (
                 <Box sx={{ display: 'flex', justifyContent: 'center', gap: 10, marginTop: 6 }}>
                     <Card sx={cardStyles}>
                         <CardContent>
@@ -459,9 +478,54 @@ const Organisation = () => {
                         </CardContent>
                     </Card>
                 </Box>
+            ) : (
+                <Box sx={{ display: 'flex', justifyContent: 'center', gap: 10, marginTop: 6 }}>
+                <Card sx={cardStyles} >
+                    <CardContent>
+                        <Typography variant="h6" color="text.primary">
+                            Leave Organisation
+                        </Typography>
+                        <TextField
+                                required
+                                margin="normal"
+                                fullWidth
+                                id="confirm-leave-organisation-name"
+                                label="Confirm Organisation Name"
+                                name="confirm-leave-organisation-name"
+                                autoComplete="organisation-name"
+                                InputLabelProps={{ sx: { color: 'text.primary' } }}
+                                InputProps={{ sx: { color: 'text.primary' } }}
+                                value={confirmLeaveOrganisationName}
+                                onChange={(e) => setConfirmLeaveOrganisationName(e.target.value)}
+                                sx={textFieldStyles}
+                            />
+                            <Button
+                                variant="contained"
+                                sx={{
+                                    mt: 3,
+                                    mb: 2,
+                                    backgroundColor: '#D11C45',
+                                    color: '#FFFFFF',
+                                    width: '100%',
+                                    '&:hover': {
+                                        backgroundColor: '#B2163B',
+                                    },
+                                }}
+                                onClick={handleLeaveOrganisation}
+                                disabled={
+                                    confirmLeaveOrganisationName === '' ||
+                                    confirmLeaveOrganisationName !== organisationName ||
+                                    leaveConfirmed
+                                }
+                            >
+                                Leave Organisation
+                            </Button>
+                    </CardContent>
+                </Card>
+                </Box>
             )}
-        </Box>
-    );
+            </Box>
+            );
 };
 
 export default Organisation;

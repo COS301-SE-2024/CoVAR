@@ -59,7 +59,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileSubmit, client, organizat
       </Typography>
       <input
         type="file"
-        accept=".pdf,.csv"
+        accept=".pdf,.csv,.xml,.nessus" 
         onChange={handleFileChange}
         style={{ display: 'none' }}
         id="file-upload"

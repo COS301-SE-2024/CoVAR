@@ -20,45 +20,85 @@ const styles = {
   },
 };
 
-// Moved `useState` to the top level of the `ReportCard` component
+
 const ReportCard = ({ report, index }: { report: any[], index: number }) => {
   const [openItemIndex, setOpenItemIndex] = useState<number | null>(null);
 
   return (
-    <Box sx={{ ...mainContentStyles }} key={index}>
-      <Typography variant="h6" style={styles.header}>
-        Upload {index + 1}
-      </Typography>
+    //for greenbone
+
+    <Box sx={{ ...mainContentStyles }}>
       {report.map((item, idx) => (
-        <Paper key={idx} style={{ marginTop: '10px' }}>
-          <Typography variant="body2"><strong>Plugin ID:</strong> {item.pluginID}</Typography>
-          <Typography variant="body2"><strong>CVE:</strong> {item.CVE}</Typography>
-          <Typography variant="body2"><strong>CVSS v2.0 Base Score:</strong> {item.cvssBaseScore}</Typography>
-          <Typography variant="body2"><strong>Risk:</strong> {item.Risk}</Typography>
-          <Typography variant="body2"><strong>Host:</strong> {item.Host}</Typography>
-          <Typography variant="body2"><strong>Protocol:</strong> {item.Protocol}</Typography>
-          <Typography variant="body2"><strong>Port:</strong> {item.Port}</Typography>
-          <Typography variant="body2"><strong>Name:</strong> {item.Name}</Typography>
-          <Typography variant="body2"><strong>Synopsis:</strong> {item.Synopsis}</Typography>
-
-          <Button
-            variant="outlined"
-            color="primary"
-            onClick={() => setOpenItemIndex(openItemIndex === idx ? null : idx)}
-            style={{ marginTop: 8 }}
-          >
-            {openItemIndex === idx ? 'Hide Description' : 'Show Description'}
-          </Button>
-
-          <Collapse in={openItemIndex === idx}>
-            <Box style={styles.description}>
-              <Typography variant="body2"><strong>Description:</strong> {item.Description}</Typography>
-              <Typography variant="body2"><strong>Solution:</strong> {item.Solution}</Typography>
-            </Box>
-          </Collapse>
-        </Paper>
+        <Box key={idx} sx={{ marginTop: '10px' }}>
+          <Typography variant="h6" sx={{ ...styles.header }}>
+            Upload {idx + 1}
+          </Typography>
+          <Paper sx={{ padding: '16px' }}>
+            <Typography variant="body2"><strong>IP:</strong> {item.IP}</Typography>
+            <Typography variant="body2"><strong>Hostname:</strong> {item.Hostname}</Typography>
+            <Typography variant="body2"><strong>Port:</strong> {item.Port}</Typography>
+            <Typography variant="body2"><strong>Port Protocol:</strong> {item.portProtocol}</Typography>
+            <Typography variant="body2"><strong>CVSS:</strong> {item.CVSS}</Typography>
+            <Typography variant="body2"><strong>Severity:</strong> {item.Severity}</Typography>
+            <Typography variant="body2"><strong>Solution Type:</strong> {item.solutionType}</Typography>
+            <Typography variant="body2"><strong>NVT Name:</strong> {item.nvtName}</Typography>
+            <Typography variant="body2"><strong>Summary:</strong> {item.Summary}</Typography>
+            <Typography variant="body2"><strong>Specific Result:</strong> {item.specificResult}</Typography>
+            <Typography variant="body2"><strong>NVT OID:</strong> {item.nvtOid}</Typography>
+            <Typography variant="body2"><strong>CVEs:</strong> {item.CVEs}</Typography>
+            <Typography variant="body2"><strong>Task ID:</strong> {item.taskId}</Typography>
+            <Typography variant="body2"><strong>Task Name:</strong> {item.taskName}</Typography>
+            <Typography variant="body2"><strong>Timestamp:</strong> {item.Timestamp}</Typography>
+            <Typography variant="body2"><strong>Result ID:</strong> {item.resultId}</Typography>
+            <Typography variant="body2"><strong>Impact:</strong> {item.Impact}</Typography>
+            <Typography variant="body2"><strong>Solution:</strong> {item.Solution}</Typography>
+            <Typography variant="body2"><strong>Affected Software/OS:</strong> {item.affectedSoftwareOs}</Typography>
+            <Typography variant="body2"><strong>Vulnerability Insight:</strong> {item.vulnerabilityInsight}</Typography>
+            <Typography variant="body2"><strong>Vulnerability Detection Method:</strong> {item.vulnerabilityDetectionMethod}</Typography>
+            <Typography variant="body2"><strong>Product Detection Result:</strong> {item.productDetectionResult}</Typography>
+            <Typography variant="body2"><strong>BIDs:</strong> {item.BIDs}</Typography>
+            <Typography variant="body2"><strong>CERTs:</strong> {item.CERTs}</Typography>
+            <Typography variant="body2"><strong>Other References:</strong> {item.otherReferences}</Typography>
+          </Paper>
+        </Box>
       ))}
     </Box>
+
+    //for nessus
+    // <Box sx={{ ...mainContentStyles }} key={index}>
+    //   <Typography variant="h6" style={styles.header}>
+    //     Upload {index + 1}
+    //   </Typography>
+    //   {report.map((item, idx) => (
+    //     <Paper key={idx} style={{ marginTop: '10px' }}>
+    //       <Typography variant="body2"><strong>Plugin ID:</strong> {item.pluginID}</Typography>
+    //       <Typography variant="body2"><strong>CVE:</strong> {item.CVE}</Typography>
+    //       <Typography variant="body2"><strong>CVSS v2.0 Base Score:</strong> {item.cvssBaseScore}</Typography>
+    //       <Typography variant="body2"><strong>Risk:</strong> {item.Risk}</Typography>
+    //       <Typography variant="body2"><strong>Host:</strong> {item.Host}</Typography>
+    //       <Typography variant="body2"><strong>Protocol:</strong> {item.Protocol}</Typography>
+    //       <Typography variant="body2"><strong>Port:</strong> {item.Port}</Typography>
+    //       <Typography variant="body2"><strong>Name:</strong> {item.Name}</Typography>
+    //       <Typography variant="body2"><strong>Synopsis:</strong> {item.Synopsis}</Typography>
+
+    //       <Button
+    //         variant="outlined"
+    //         color="primary"
+    //         onClick={() => setOpenItemIndex(openItemIndex === idx ? null : idx)}
+    //         style={{ marginTop: 8 }}
+    //       >
+    //         {openItemIndex === idx ? 'Hide Description' : 'Show Description'}
+    //       </Button>
+
+    //       <Collapse in={openItemIndex === idx}>
+    //         <Box style={styles.description}>
+    //           <Typography variant="body2"><strong>Description:</strong> {item.Description}</Typography>
+    //           <Typography variant="body2"><strong>Solution:</strong> {item.Solution}</Typography>
+    //         </Box>
+    //       </Collapse>
+    //     </Paper>
+    //   ))}
+    // </Box>
   );
 };
 

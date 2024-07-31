@@ -18,7 +18,7 @@ describe('Login E2E Tests', () => {
       cy.get('button[type="submit"]').click() 
   
       cy.wait(2500)
-      cy.url().should('include', '/lounge') 
+      cy.url().should('include', '/dashboard') 
     })
   
   })

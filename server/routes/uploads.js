@@ -102,7 +102,8 @@ router.get('/uploads/generateSingleReport/:upload_id', authenticateToken, async 
         const records = [];
         const parser = parse({
             columns: true,
-            trim: true
+            trim: true,
+            skipEmptyLines: true,
         });
 
         const bufferStream = new stream.PassThrough();
@@ -117,33 +118,34 @@ router.get('/uploads/generateSingleReport/:upload_id', authenticateToken, async 
                     console.log("Nessus file processing");
                     const {
                         'Plugin ID': pluginID,
-                        CVE,
-                        'CVSS v2.0 Base Score': cvssBaseScore,
-                        Risk,
-                        Host,
-                        Protocol,
+                        'CVE': CVEs,
+                        'CVSS v2.0 Base Score': CVSS,
+                        'Risk': Severity,
+                        'Host': IP,
+                        'Protocol': portProtocol,
                         Port,
-                        Name,
+                        'Name': Summary,
                         Synopsis,
-                        Description,
+                        'Description': specificResult,
                         Solution,
                     } = record;
 
-                    if (Risk && Risk !== 'None') {
+                    if (Severity && Severity !== 'None') {
                         records.push({
                             pluginID,
-                            CVE,
-                            cvssBaseScore,
-                            Risk,
-                            Host,
-                            Protocol,
+                            CVEs,
+                            CVSS,
+                            Severity,
+                            IP,
+                            portProtocol,
                             Port,
-                            Name,
+                            Summary,
                             Synopsis,
-                            Description,
+                            specificResult,
                             Solution,
                         });
                     }
+                    // console.log(records);
                 } else {
                     // Other file type processing
                     const {

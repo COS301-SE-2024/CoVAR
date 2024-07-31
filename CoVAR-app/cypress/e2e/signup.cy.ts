@@ -23,7 +23,7 @@ describe('Sign Up E2E Tests', () => {
       cy.get('button[type="submit"]').click() 
   
       cy.wait(3500)
-      cy.url().should('include', '/dashboard') 
+      cy.url().should('include', '/lounge') 
     })
   
   })

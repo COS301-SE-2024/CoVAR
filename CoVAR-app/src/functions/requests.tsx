@@ -219,6 +219,20 @@ export const authorizeUser = async (username: string, accessToken: string) => {
     }
 };
 
+export const leaveOrganisation = async (orgId: string, username: string, accessToken: string) => {
+    try {
+        const response = await axios.post(
+            `/api/organizations/leave`,
+            { organizationId: orgId, username: username },
+            { headers: { Authorization: `Bearer ${accessToken}` } }
+        );
+        return response.status;
+    } catch (error) {
+        console.error('Error leaving organization:', error);
+        throw error;
+    }
+};
+
 export const handleDownloadFile = async (loid: number, fileName: string) => {
     try {
         const token = localStorage.getItem('accessToken');
@@ -238,3 +252,5 @@ export const handleDownloadFile = async (loid: number, fileName: string) => {
         console.error('Error downloading file:', error);
     }
 };
+
+

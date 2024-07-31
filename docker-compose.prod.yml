@@ -20,11 +20,11 @@ services:
       dockerfile: Dockerfile.dev
       context: './nginx'
     ports:
-      - '3050:80'
+      - '80:80'
 
   api:
     build:
-      dockerfile: Dockerfile.dev
+      dockerfile: Dockerfile
       context: './server'
     volumes:
       - /app/node_modules
@@ -43,7 +43,7 @@ services:
   client:
     stdin_open: true
     build:
-      dockerfile: Dockerfile.dev
+      dockerfile: Dockerfile
       context: './CoVAR-app'
     environment:
       - NEXT_PUBLIC_API_KEY=${NEXT_PUBLIC_API_KEY}

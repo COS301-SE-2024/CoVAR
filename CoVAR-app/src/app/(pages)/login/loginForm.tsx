@@ -41,7 +41,7 @@ const Login: React.FC<LoginProps> = ({ toggleForm }) => {
           email: user.email,
           name: user.displayName || "",
           createdAt: new Date(),
-          role: "client"
+          role: "unauthorised"
         };
         await setDoc(userRef, userData);
         console.log("User added to Firestore: ", user.uid);
@@ -92,8 +92,13 @@ const Login: React.FC<LoginProps> = ({ toggleForm }) => {
           console.log("Username:", username);
           console.log("Role:", role);
           console.log("Organization ID:", organization_id);
-  
-          router.replace('/dashboard'); // Navigate to dashboard after successful login
+
+          if (role === "unauthorised") {
+            router.replace('/lounge'); // Navigate to lounge if unauthorised
+          } else {
+            router.replace('/dashboard'); // Navigate to dashboard after successful login
+          }
+
         } else {
           throw new Error('User not found in Firebase Auth');
         }
@@ -160,7 +165,12 @@ const Login: React.FC<LoginProps> = ({ toggleForm }) => {
         console.log("Organization ID:", organization_id);
   
         if (response.status === 201 && LoginResponse.status === 201) {
-          router.replace('/dashboard');
+          if (role === "unauthorised") {
+            router.replace('/lounge'); // Navigate to lounge if unauthorised
+          } else {
+            router.replace('/dashboard'); // Navigate to dashboard after successful login
+          }
+
         } else {
           throw new Error('Failed to create user in PostgreSQL');
         }

@@ -265,6 +265,47 @@ export const createOrganisation = async (organisationName: string, username: str
     return await handleRequest(request);
 };
 
+export const fetchUnauthorizedUsers = async (search: string) => {
+    try {
+        const accessToken = localStorage.getItem('accessToken');
+        if (!accessToken) {
+            throw new Error('Access token not found');
+        }
+        const response = await axios.get('/api/users/unauthorized', {
+            headers: { Authorization: `Bearer ${accessToken}` },
+            params: { search },
+        });
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+};
+
+export const authorizeUser = async (username: string, accessToken: string) => {
+    try {
+        await axios.patch(`/api/users/authorize`, { username }, {
+            headers: { Authorization: `Bearer ${accessToken}` },
+        });
+    } catch (error) {
+        console.error('Error updating user role:', error);
+        throw error;
+    }
+};
+
+export const leaveOrganisation = async (orgId: string, username: string, accessToken: string) => {
+    try {
+        const response = await axios.post(
+            `/api/organizations/leave`,
+            { organizationId: orgId, username: username },
+            { headers: { Authorization: `Bearer ${accessToken}` } }
+        );
+        return response.status;
+    } catch (error) {
+        console.error('Error leaving organization:', error);
+        throw error;
+    }
+};
+
 export const handleDownloadFile = async (loid: number, fileName: string) => {
     try {
         const token = localStorage.getItem('accessToken');
@@ -288,3 +329,5 @@ export const handleDownloadFile = async (loid: number, fileName: string) => {
         console.error('Error downloading file:', error);
     }
 };
+
+

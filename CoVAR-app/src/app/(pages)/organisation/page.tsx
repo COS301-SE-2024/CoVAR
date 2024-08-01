@@ -3,7 +3,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { Button, Card, CardContent, CircularProgress, TextField, Typography } from '@mui/material';
 import { Box } from '@mui/system';
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
-import { getUserRole, fetchUsersByOrg, removeUser, addUser, deleteOrganisation, createOrganisation, changeOrganisationName } from '../../../functions/requests';
+import { getUserRole, fetchUsersByOrg, removeUser, addUser, deleteOrganisation, createOrganisation, changeOrganisationName, leaveOrganisation } from '../../../functions/requests';
 import { buttonStyles, cardStyles, headingBoxStyles, mainContentStyles, textFieldStyles } from '../../../styles/organisationStyle';
 import { useRouter } from 'next/navigation';
 type User = {
@@ -20,16 +20,24 @@ const Organisation = () => {
     const [organisationName, setOrganisationName] = useState('');
     const [confirmChangeOrganisationName, setConfirmChangeOrganisationName] = useState('');
     const [confirmDisbandOrganisationName, setConfirmDisbandOrganisationName] = useState('');
+    const [confirmLeaveOrganisationName, setConfirmLeaveOrganisationName] = useState('');
     const [deleteConfirmed, setDeleteConfirmed] = useState(false);
+    const [leaveConfirmed, setLeaveConfirmed] = useState(false);
     const [isOwner, setIsOwner] = useState(false);
     const [isInOrg, setIsInOrg] = useState<string | null>(null);
     const [username, setUsername] = useState<string | null>(null);
     const [ownerId, setOwnerId] = useState<string | null>(null);
+    const [addMemberMessage, setAddMemberMessage] = useState<string | null>(null);
+    const [changeNameMessage, setChangeNameMessage] = useState<string | null>(null);
+    const [disbandOrgMessage, setDisbandOrgMessage] = useState<string | null>(null);
+
+
     const router = useRouter();
     
     const redirectToLogin = useCallback(() => {
         router.replace('/login');
     }, [router]);
+
     const fetchUsersList = useCallback(async () => {
         if (isInOrg) {
             try {
@@ -105,6 +113,23 @@ const Organisation = () => {
         }
     };
 
+    const handleLeaveOrganisation = async () => {
+        try {
+            const accessToken = localStorage.getItem('accessToken');
+            if (accessToken && isInOrg && username) {
+                const status = await leaveOrganisation(isInOrg, username, accessToken);
+                if (status === 200) {
+                    setIsInOrg(null);
+                    setOrganisationName('');
+                    setLeaveConfirmed(true);
+                }
+            }
+        } catch (error) {
+            console.error('Error leaving organisation:', error);
+        }
+    };
+
+
     const handleAddMember = async () => {
         try {
             const accessToken = localStorage.getItem('accessToken');
@@ -112,34 +137,15 @@ const Organisation = () => {
                 await addUser(isInOrg, ownerId, newMemberEmail, accessToken);
                 setNewMemberEmail('');
                 fetchUsersList();
+                setAddMemberMessage('Member added successfully.');
+                setTimeout(() => setAddMemberMessage(null), 10000);
             }
         } catch (error:any) {
-            //console.error('Error adding member:', error);
-            if(error.response?.status === 403) {
-                redirectToLogin();
-            }
-        }
-    };    
-
-    const handleDeleteOrganisation = async () => {
-        try {
-            const accessToken = localStorage.getItem('accessToken');
-            if (accessToken && isInOrg) {
-                const status = await deleteOrganisation(
-                    isInOrg,
-                    confirmDisbandOrganisationName,
-                    accessToken,
-                );
-                if (status === 200) {
-                    setIsInOrg(null);
-                    setOrganisationName('');
-                    setConfirmDisbandOrganisationName('');
-                    setDeleteConfirmed(true);
-                }
-            }
-        } catch (error:any) {
-            //console.error('Error deleting organisation:', error);
-            if(error.response?.status === 403) {
+            console.error('Error adding member:', error);
+            setAddMemberMessage('Error adding member.');
+            setTimeout(() => setAddMemberMessage(null), 10000);
+              
+                          if(error.response?.status === 403) {
                 redirectToLogin();
             }
         }
@@ -149,18 +155,52 @@ const Organisation = () => {
         try {
             const accessToken = localStorage.getItem('accessToken');
             if (accessToken && isInOrg) {
+
                 const status = await changeOrganisationName(
                     (ownerId !== null ? ownerId : ''),
                     organisationName,
                     confirmChangeOrganisationName,
-                    accessToken,
+                    accessToken
                 );
                 if (status === 200) {
                     setOrganisationName(confirmChangeOrganisationName);
                     setConfirmChangeOrganisationName('');
+                    setChangeNameMessage('Organisation name changed successfully');
+                    setTimeout(() => setChangeNameMessage(null), 10000);
                 }
             }
         } catch (error:any) {
+            setChangeNameMessage('Error changing organisation name');
+            setTimeout(() => setChangeNameMessage(null), 10000);
+            //console.error('Error deleting organisation:', error);
+            if(error.response?.status === 403) {
+                redirectToLogin();
+            }
+        }
+    };
+
+    const handleDeleteOrganisation = async () => {
+        try {
+            const accessToken = localStorage.getItem('accessToken');
+            if (accessToken && isInOrg) {
+                const status = await deleteOrganisation(
+                    isInOrg,
+                    confirmDisbandOrganisationName,
+                    accessToken
+                );
+                if (status === 200) {
+                    setIsInOrg(null);
+                    setOrganisationName('');
+                    setConfirmDisbandOrganisationName('');
+                    setDeleteConfirmed(true);
+                    setDisbandOrgMessage('Organisation disbanded successfully');
+                    setTimeout(() => setDisbandOrgMessage(null), 10000);
+                }
+            }
+
+        } catch (error:any) {
+            setDisbandOrgMessage('Error disbanding organisation.');
+            setTimeout(() => setDisbandOrgMessage(null), 10000);
             //console.error('Error changing organisation name:', error);
             if(error.response?.status === 403) {
                 redirectToLogin();
@@ -330,8 +370,8 @@ const Organisation = () => {
                     }}
                 />
             </Box>
-            {isOwner && (
-                <Box sx={{ display: 'flex', gap: 10, marginTop: 6 }}>
+            {isOwner ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', gap: 10, marginTop: 6 }}>
                     <Card sx={cardStyles}>
                         <CardContent>
                             <Typography variant="h6" color="text.primary">
@@ -354,6 +394,21 @@ const Organisation = () => {
                             <Button variant="contained" sx={buttonStyles} onClick={handleAddMember}>
                                 Add Member
                             </Button>
+                            <Box sx={{ mt: 1, textAlign: 'center' }}>
+                            {addMemberMessage && (
+                                <Typography
+                                    variant="body2"
+                                    color={addMemberMessage.startsWith('Error') ? 'error.main' : 'success.main'}
+                                    sx={{ 
+                                        display: 'inline-block',
+                                        whiteSpace: 'nowrap',
+                                        mb: 4  
+                                    }}
+                                >
+                                    {addMemberMessage}
+                                </Typography>
+                            )}
+                            </Box>
                         </CardContent>
                     </Card>
                     <Card sx={cardStyles}>
@@ -378,6 +433,22 @@ const Organisation = () => {
                             <Button variant="contained" sx={buttonStyles} onClick={handleChangeOrganisationName}>
                                 Change Name
                             </Button>
+                            <Box sx={{ mt: 1, textAlign: 'center' }}>
+                            {changeNameMessage && (
+                                <Typography
+                                    variant="body2"
+                                    color={changeNameMessage.startsWith('Error') ? 'error.main' : 'success.main'}
+                                    sx={{ 
+                                        display: 'inline-block',
+                                        whiteSpace: 'nowrap',
+                                        mb: 4  
+                                    }}
+                                >
+                                    {changeNameMessage}
+                                </Typography>
+                                
+                            )}
+                            </Box>
                         </CardContent>
                     </Card>
                     <Card sx={cardStyles}>
@@ -399,11 +470,11 @@ const Organisation = () => {
                                 onChange={(e) => setConfirmDisbandOrganisationName(e.target.value)}
                                 sx={textFieldStyles}
                             />
-                            <br />
-                            <br />
                             <Button
                                 variant="contained"
                                 sx={{
+                                    mt: 3,
+                                    mb: 2,
                                     backgroundColor: '#D11C45',
                                     color: '#FFFFFF',
                                     width: '100%',
@@ -420,12 +491,72 @@ const Organisation = () => {
                             >
                                 Delete Organisation
                             </Button>
+                            <Box sx={{ mt: 1, textAlign: 'center' }}>
+                            {disbandOrgMessage && (
+                                <Typography
+                                    variant="body2"
+                                    color={disbandOrgMessage.startsWith('Error') ? 'error.main' : 'success.main'}
+                                    sx={{ 
+                                        display: 'inline-block',
+                                        whiteSpace: 'nowrap',
+                                        mb: 4  
+                                    }}
+                                >
+                                    {disbandOrgMessage}
+                                </Typography>    
+                            )}
+                            </Box>
                         </CardContent>
                     </Card>
                 </Box>
+            ) : (
+                <Box sx={{ display: 'flex', justifyContent: 'center', gap: 10, marginTop: 6 }}>
+                <Card sx={cardStyles} >
+                    <CardContent>
+                        <Typography variant="h6" color="text.primary">
+                            Leave Organisation
+                        </Typography>
+                        <TextField
+                                required
+                                margin="normal"
+                                fullWidth
+                                id="confirm-leave-organisation-name"
+                                label="Confirm Organisation Name"
+                                name="confirm-leave-organisation-name"
+                                autoComplete="organisation-name"
+                                InputLabelProps={{ sx: { color: 'text.primary' } }}
+                                InputProps={{ sx: { color: 'text.primary' } }}
+                                value={confirmLeaveOrganisationName}
+                                onChange={(e) => setConfirmLeaveOrganisationName(e.target.value)}
+                                sx={textFieldStyles}
+                            />
+                            <Button
+                                variant="contained"
+                                sx={{
+                                    mt: 3,
+                                    mb: 2,
+                                    backgroundColor: '#D11C45',
+                                    color: '#FFFFFF',
+                                    width: '100%',
+                                    '&:hover': {
+                                        backgroundColor: '#B2163B',
+                                    },
+                                }}
+                                onClick={handleLeaveOrganisation}
+                                disabled={
+                                    confirmLeaveOrganisationName === '' ||
+                                    confirmLeaveOrganisationName !== organisationName ||
+                                    leaveConfirmed
+                                }
+                            >
+                                Leave Organisation
+                            </Button>
+                    </CardContent>
+                </Card>
+                </Box>
             )}
-        </Box>
-    );
+            </Box>
+            );
 };
 
 export default Organisation;

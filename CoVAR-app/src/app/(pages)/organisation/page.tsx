@@ -3,9 +3,9 @@ import { useEffect, useState, useCallback } from 'react';
 import { Button, Card, CardContent, CircularProgress, TextField, Typography } from '@mui/material';
 import { Box } from '@mui/system';
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
-import { getUserRole, fetchUsersByOrg, removeUser, addUser, deleteOrganisation, createOrganisation, changeOrganisationName } from '../../../functions/requests';
+import { getUserRole, fetchUsersByOrg, removeUser, addUser, deleteOrganisation, createOrganisation, changeOrganisationName, leaveOrganisation } from '../../../functions/requests';
 import { buttonStyles, cardStyles, headingBoxStyles, mainContentStyles, textFieldStyles } from '../../../styles/organisationStyle';
-
+import { useRouter } from 'next/navigation';
 type User = {
     id: string;
     email: string;
@@ -20,11 +20,23 @@ const Organisation = () => {
     const [organisationName, setOrganisationName] = useState('');
     const [confirmChangeOrganisationName, setConfirmChangeOrganisationName] = useState('');
     const [confirmDisbandOrganisationName, setConfirmDisbandOrganisationName] = useState('');
+    const [confirmLeaveOrganisationName, setConfirmLeaveOrganisationName] = useState('');
     const [deleteConfirmed, setDeleteConfirmed] = useState(false);
+    const [leaveConfirmed, setLeaveConfirmed] = useState(false);
     const [isOwner, setIsOwner] = useState(false);
     const [isInOrg, setIsInOrg] = useState<string | null>(null);
     const [username, setUsername] = useState<string | null>(null);
     const [ownerId, setOwnerId] = useState<string | null>(null);
+    const [addMemberMessage, setAddMemberMessage] = useState<string | null>(null);
+    const [changeNameMessage, setChangeNameMessage] = useState<string | null>(null);
+    const [disbandOrgMessage, setDisbandOrgMessage] = useState<string | null>(null);
+
+
+    const router = useRouter();
+    
+    const redirectToLogin = useCallback(() => {
+        router.replace('/login');
+    }, [router]);
 
     const fetchUsersList = useCallback(async () => {
         if (isInOrg) {
@@ -37,45 +49,52 @@ const Organisation = () => {
                         id: user.id || index.toString(),
                     }));
                     setUsers(usersWithId);
-                    console.log("Users list:", usersWithId);
+                    //console.log("Users list:", usersWithId);
                 }
-            } catch (error) {
-                console.error('Error fetching users:', error);
+            } catch (error:any) {
+                //console.error('Error fetching users:', error);
+                if (error.response?.status === 403) {
+                    redirectToLogin();
+                }
             } finally {
                 setLoading(false);
             }
         } else {
             setLoading(false);
         }
-    }, [isInOrg]);
+    }, [isInOrg, redirectToLogin]);
 
-    const fetchUserRole = async () => {
+    const fetchUserRole = useCallback(async () => {
         try {
             const accessToken = localStorage.getItem('accessToken');
             if (accessToken) {
                 const userData = await getUserRole(accessToken);
-                console.log('User data:', userData);
+                //console.log('User data:', userData);
                 setIsOwner(userData.owner); // Assuming 'owner' is the correct key in userData
                 setIsInOrg(userData.organization_id);
                 setUsername(userData.username);
                 setOwnerId(userData.user_id);
-                console.log("User role:", userData.role);
-                console.log("Is owner:", userData.owner);
-                console.log("Is in org:", userData.organization_id);
+                //console.log("User role:", userData.role);
+                //console.log("Is owner:", userData.owner);
+                //console.log("Is in org:", userData.organization_id);
                 // Set the organisation name if user is in an organisation
                 if (userData.orgName) {
                     setOrganisationName(userData.orgName);
                 }
             }
-        } catch (error) {
-            console.error('Error fetching user role:', error);
+        } catch (error:any) {
+            //console.error('Error fetching user role:', error);
+            if (error.response?.status === 403) {
+                redirectToLogin();
+            } 
         }
-    };
+    }
+    , [redirectToLogin]);
 
     useEffect(() => {
         fetchUserRole();
         fetchUsersList();
-    }, [isInOrg, fetchUsersList]);
+    }, [isInOrg, fetchUsersList, fetchUserRole]);
 
     const handleRemoveUser = async (user: User) => {
         try {
@@ -86,10 +105,30 @@ const Organisation = () => {
                     setUsers(users.filter((u) => u.id !== user.id));
                 }
             }
-        } catch (error) {
-            console.error('Error removing user:', error);
+        } catch (error:any) {
+            //console.error('Error removing user:', error);
+            if(error.response?.status === 403) {
+                redirectToLogin();
+            }
         }
     };
+
+    const handleLeaveOrganisation = async () => {
+        try {
+            const accessToken = localStorage.getItem('accessToken');
+            if (accessToken && isInOrg && username) {
+                const status = await leaveOrganisation(isInOrg, username, accessToken);
+                if (status === 200) {
+                    setIsInOrg(null);
+                    setOrganisationName('');
+                    setLeaveConfirmed(true);
+                }
+            }
+        } catch (error) {
+            console.error('Error leaving organisation:', error);
+        }
+    };
+
 
     const handleAddMember = async () => {
         try {
@@ -98,11 +137,47 @@ const Organisation = () => {
                 await addUser(isInOrg, ownerId, newMemberEmail, accessToken);
                 setNewMemberEmail('');
                 fetchUsersList();
+                setAddMemberMessage('Member added successfully.');
+                setTimeout(() => setAddMemberMessage(null), 10000);
             }
-        } catch (error) {
+        } catch (error:any) {
             console.error('Error adding member:', error);
+            setAddMemberMessage('Error adding member.');
+            setTimeout(() => setAddMemberMessage(null), 10000);
+              
+                          if(error.response?.status === 403) {
+                redirectToLogin();
+            }
         }
-    };    
+    };
+
+    const handleChangeOrganisationName = async () => {
+        try {
+            const accessToken = localStorage.getItem('accessToken');
+            if (accessToken && isInOrg) {
+
+                const status = await changeOrganisationName(
+                    (ownerId !== null ? ownerId : ''),
+                    organisationName,
+                    confirmChangeOrganisationName,
+                    accessToken
+                );
+                if (status === 200) {
+                    setOrganisationName(confirmChangeOrganisationName);
+                    setConfirmChangeOrganisationName('');
+                    setChangeNameMessage('Organisation name changed successfully');
+                    setTimeout(() => setChangeNameMessage(null), 10000);
+                }
+            }
+        } catch (error:any) {
+            setChangeNameMessage('Error changing organisation name');
+            setTimeout(() => setChangeNameMessage(null), 10000);
+            //console.error('Error deleting organisation:', error);
+            if(error.response?.status === 403) {
+                redirectToLogin();
+            }
+        }
+    };
 
     const handleDeleteOrganisation = async () => {
         try {
@@ -118,30 +193,18 @@ const Organisation = () => {
                     setOrganisationName('');
                     setConfirmDisbandOrganisationName('');
                     setDeleteConfirmed(true);
+                    setDisbandOrgMessage('Organisation disbanded successfully');
+                    setTimeout(() => setDisbandOrgMessage(null), 10000);
                 }
             }
-        } catch (error) {
-            console.error('Error deleting organisation:', error);
-        }
-    };
 
-    const handleChangeOrganisationName = async () => {
-        try {
-            const accessToken = localStorage.getItem('accessToken');
-            if (accessToken && isInOrg) {
-                const status = await changeOrganisationName(
-                    (ownerId !== null ? ownerId : ''),
-                    organisationName,
-                    confirmChangeOrganisationName,
-                    accessToken
-                );
-                if (status === 200) {
-                    setOrganisationName(confirmChangeOrganisationName);
-                    setConfirmChangeOrganisationName('');
-                }
+        } catch (error:any) {
+            setDisbandOrgMessage('Error disbanding organisation.');
+            setTimeout(() => setDisbandOrgMessage(null), 10000);
+            //console.error('Error changing organisation name:', error);
+            if(error.response?.status === 403) {
+                redirectToLogin();
             }
-        } catch (error) {
-            console.error('Error changing organisation name:', error);
         }
     };
 
@@ -155,9 +218,11 @@ const Organisation = () => {
                 setOrganisationName(orgData.name); // Set the organisation name
 
             }
-            setLoading(false);
-        } catch (error) {
-            console.error('Error creating organisation:', error);
+        } catch (error:any) {
+            //console.error('Error creating organisation:', error);
+            if(error.response?.status === 403) {
+                redirectToLogin();
+            }
         }
     };
 
@@ -305,8 +370,8 @@ const Organisation = () => {
                     }}
                 />
             </Box>
-            {isOwner && (
-                <Box sx={{ display: 'flex', gap: 10, marginTop: 6 }}>
+            {isOwner ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', gap: 10, marginTop: 6 }}>
                     <Card sx={cardStyles}>
                         <CardContent>
                             <Typography variant="h6" color="text.primary">
@@ -329,6 +394,21 @@ const Organisation = () => {
                             <Button variant="contained" sx={buttonStyles} onClick={handleAddMember}>
                                 Add Member
                             </Button>
+                            <Box sx={{ mt: 1, textAlign: 'center' }}>
+                            {addMemberMessage && (
+                                <Typography
+                                    variant="body2"
+                                    color={addMemberMessage.startsWith('Error') ? 'error.main' : 'success.main'}
+                                    sx={{ 
+                                        display: 'inline-block',
+                                        whiteSpace: 'nowrap',
+                                        mb: 4  
+                                    }}
+                                >
+                                    {addMemberMessage}
+                                </Typography>
+                            )}
+                            </Box>
                         </CardContent>
                     </Card>
                     <Card sx={cardStyles}>
@@ -353,6 +433,22 @@ const Organisation = () => {
                             <Button variant="contained" sx={buttonStyles} onClick={handleChangeOrganisationName}>
                                 Change Name
                             </Button>
+                            <Box sx={{ mt: 1, textAlign: 'center' }}>
+                            {changeNameMessage && (
+                                <Typography
+                                    variant="body2"
+                                    color={changeNameMessage.startsWith('Error') ? 'error.main' : 'success.main'}
+                                    sx={{ 
+                                        display: 'inline-block',
+                                        whiteSpace: 'nowrap',
+                                        mb: 4  
+                                    }}
+                                >
+                                    {changeNameMessage}
+                                </Typography>
+                                
+                            )}
+                            </Box>
                         </CardContent>
                     </Card>
                     <Card sx={cardStyles}>
@@ -374,11 +470,11 @@ const Organisation = () => {
                                 onChange={(e) => setConfirmDisbandOrganisationName(e.target.value)}
                                 sx={textFieldStyles}
                             />
-                            <br />
-                            <br />
                             <Button
                                 variant="contained"
                                 sx={{
+                                    mt: 3,
+                                    mb: 2,
                                     backgroundColor: '#D11C45',
                                     color: '#FFFFFF',
                                     width: '100%',
@@ -395,12 +491,72 @@ const Organisation = () => {
                             >
                                 Delete Organisation
                             </Button>
+                            <Box sx={{ mt: 1, textAlign: 'center' }}>
+                            {disbandOrgMessage && (
+                                <Typography
+                                    variant="body2"
+                                    color={disbandOrgMessage.startsWith('Error') ? 'error.main' : 'success.main'}
+                                    sx={{ 
+                                        display: 'inline-block',
+                                        whiteSpace: 'nowrap',
+                                        mb: 4  
+                                    }}
+                                >
+                                    {disbandOrgMessage}
+                                </Typography>    
+                            )}
+                            </Box>
                         </CardContent>
                     </Card>
                 </Box>
+            ) : (
+                <Box sx={{ display: 'flex', justifyContent: 'center', gap: 10, marginTop: 6 }}>
+                <Card sx={cardStyles} >
+                    <CardContent>
+                        <Typography variant="h6" color="text.primary">
+                            Leave Organisation
+                        </Typography>
+                        <TextField
+                                required
+                                margin="normal"
+                                fullWidth
+                                id="confirm-leave-organisation-name"
+                                label="Confirm Organisation Name"
+                                name="confirm-leave-organisation-name"
+                                autoComplete="organisation-name"
+                                InputLabelProps={{ sx: { color: 'text.primary' } }}
+                                InputProps={{ sx: { color: 'text.primary' } }}
+                                value={confirmLeaveOrganisationName}
+                                onChange={(e) => setConfirmLeaveOrganisationName(e.target.value)}
+                                sx={textFieldStyles}
+                            />
+                            <Button
+                                variant="contained"
+                                sx={{
+                                    mt: 3,
+                                    mb: 2,
+                                    backgroundColor: '#D11C45',
+                                    color: '#FFFFFF',
+                                    width: '100%',
+                                    '&:hover': {
+                                        backgroundColor: '#B2163B',
+                                    },
+                                }}
+                                onClick={handleLeaveOrganisation}
+                                disabled={
+                                    confirmLeaveOrganisationName === '' ||
+                                    confirmLeaveOrganisationName !== organisationName ||
+                                    leaveConfirmed
+                                }
+                            >
+                                Leave Organisation
+                            </Button>
+                    </CardContent>
+                </Card>
+                </Box>
             )}
-        </Box>
-    );
+            </Box>
+            );
 };
 
 export default Organisation;

@@ -28,7 +28,7 @@ const addUserToFirestore = async (user: User) => {
         email: user.email,
         name: user.displayName || "",
         createdAt: new Date(),
-        role: "client"
+        role: "unauthorised"
       };
       await setDoc(userRef, userData);
       console.log("User added to Firestore: ", user.uid);
@@ -78,8 +78,13 @@ const Signup: React.FC<SignupProps> = ({ toggleForm }) => {
         } catch (error) {
           throw error; // Re-throw the error to be caught by the outer catch block
         }
+        const { role } = getUserResponse.data;
         if (getUserResponse.status === 200) {
-          router.replace('/dashboard');
+          if (role === "unauthorised") {
+            router.replace('/lounge'); // Navigate to lounge if unauthorised
+          } else {
+            router.replace('/dashboard'); // Navigate to dashboard after successful login
+          }
         } else {
           throw new Error('Failed to create user in PostgreSQL');
         }
@@ -110,7 +115,7 @@ const Signup: React.FC<SignupProps> = ({ toggleForm }) => {
       localStorage.setItem('refreshToken', response.data.refreshToken);
       document.cookie = `accessToken=${response.data.accessToken}`;
       if (response.status === 201) {
-        router.replace('/dashboard');
+          router.replace('/lounge'); // Navigate to lounge since a new user is unauthorised
       } else {
         throw new Error('Failed to create user in PostgreSQL');
       }

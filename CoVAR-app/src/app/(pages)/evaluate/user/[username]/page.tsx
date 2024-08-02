@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Box, Typography, Paper, Container, List, ListItem, ListItemText, Button, Grid } from '@mui/material';
 import { usePathname } from 'next/navigation';
 import { mainContentStyles } from '../../../../../styles/evaluateStyle';
@@ -7,7 +7,7 @@ import FileUpload from '../../components/fileUpload';
 import { handleDownloadFile } from '../../../../../functions/requests';
 import ReportPreview from '../../components/reportPreview'; 
 import { fetchUploadsClient, fetchReports, handleRemoveFile, handleToggleReport } from '../../../../../functions/requests';
-
+import { useRouter } from 'next/navigation';
 interface FileUpload {
   upload_id: number;
   va: number;
@@ -21,6 +21,10 @@ interface FileUpload {
 }
 
 const UserEvaluation: React.FC = () => {
+  const router = useRouter();
+  const redirectToLogin = useCallback(() => {
+    router.replace('/login');
+  }, [router]);
   const pathname = usePathname(); 
   const username = pathname.split('/').pop();
 
@@ -37,12 +41,15 @@ const UserEvaluation: React.FC = () => {
           const inReportIds = data.filter((upload: FileUpload) => upload.in_report).map((upload: FileUpload) => upload.upload_id);
           setReportIds(inReportIds);
         }
-      } catch (error) {
-        console.error('Error fetching uploads:', error);
+      } catch (error:any) {
+        //console.error('Error fetching uploads:', error);
+        if(error.response?.status === 403) {
+          redirectToLogin();
+        }
       }
     };
     fetchInitialUploads();
-  }, [username]);
+  }, [username, redirectToLogin]);
 
   useEffect(() => {
     const fetchInitialReports = async () => {
@@ -68,8 +75,11 @@ const UserEvaluation: React.FC = () => {
         const inReportIds = data.filter((upload: FileUpload) => upload.in_report).map((upload: FileUpload) => upload.upload_id);
         setReportIds(inReportIds);
       }
-    } catch (error) {
-      console.error('Error fetching uploads:', error);
+    } catch (error:any) {
+      //console.error('Error fetching uploads:', error);
+      if(error.response?.status === 403) {
+        redirectToLogin();
+      }
     }
   };
 
@@ -78,8 +88,11 @@ const UserEvaluation: React.FC = () => {
       await handleRemoveFile(upload_id);
       setUploads(uploads.filter(upload => upload.upload_id !== upload_id));
       setReportIds(reportIds.filter(id => id !== upload_id));
-    } catch (error) {
-      console.error('Error removing upload:', error);
+    } catch (error:any) {
+      //console.error('Error removing upload:', error);
+      if(error.response?.status === 403) {
+        redirectToLogin();
+      }
     }
   };
 

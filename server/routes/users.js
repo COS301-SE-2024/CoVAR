@@ -21,11 +21,13 @@ router.get('/users/all', authenticateToken, async (req, res) => {
 });
 
 router.post('/getUser', authenticateToken, async (req, res) => {
+    console.log('Getting user');
     const token = req.body.accessToken;
     if(!token){
         return res.status(400).send('Token is required');
     }
     try {
+        console.log('Token:', token);
         const decodedToken = verifyToken(token);
         //console.log('Decoded token in getUSer:', decodedToken);
         const userId = decodedToken.user_id;
@@ -73,7 +75,7 @@ router.post('/getUser', authenticateToken, async (req, res) => {
 //postgres firebase synch
 router.post('/users/create', async (req, res) => {
     const { email } = req.body;
-    const role = 'client'; // Default role
+    const role = 'unauthorised'; // Default role
     if(!email){
         return res.status(400).send('Email is required');
     }
@@ -272,7 +274,48 @@ router.post('/users/:id/unassign', authenticateToken,async (req, res) => {
     }
 });
 
+// Endpoint to search for unauthorized users
+router.get('/users/unauthorized', authenticateToken, async (req, res) => {
+    const search = req.query.search || '';
+    try {
+        const unauthorizedUsers = await pgClient.query(
+            'SELECT * FROM users WHERE role = $1 AND username ILIKE $2', 
+            ['unauthorised', `%${search}%`]
+        );
+        res.send(unauthorizedUsers.rows);
+    } catch (err) {
+        console.error('Error fetching unauthorized users:', err);
+    }
+});
 
+
+
+// Endpoint to change role from unauthorized to client using username
+router.patch('/users/authorize', authenticateToken, async (req, res) => {
+    const { username } = req.body;
+    try {
+        // Check if the user exists and has the role 'unauthorised'
+        const userQuery = 'SELECT * FROM users WHERE username = $1';
+        const userResult = await pgClient.query(userQuery, [username]);
+        
+        if (userResult.rows.length === 0) {
+            return res.status(404).send('User not found');
+        }
+
+        const user = userResult.rows[0];
+        
+        if (user.role !== 'unauthorised') {
+            return res.status(400).send('User is not unauthorised');
+        }
+
+        // Update user role to 'client'
+        const updateUserRoleQuery = 'UPDATE users SET role = $1 WHERE username = $2 AND role = $3';
+        await pgClient.query(updateUserRoleQuery, ['client', username, 'unauthorised']);
+        res.send('User role updated to client successfully');
+    } catch (err) {
+        console.error('Error updating user role:', err);
+    }
+});
 
 // Get all clients assigned to logged in VA
 router.get('/users/assigned_clients', authenticateToken, async (req, res) => {

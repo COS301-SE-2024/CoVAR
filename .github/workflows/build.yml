@@ -18,10 +18,10 @@ jobs:
       - name: Checkout "${{ github.repository }}"
         uses: actions/checkout@v4
 
-      - name: Set up Node v21
+      - name: Set up Node v22
         uses: actions/setup-node@v4
         with:
-          node-version: '21.x'
+          node-version: '22.5.1'
 
       - name: Create .env file
         run: |

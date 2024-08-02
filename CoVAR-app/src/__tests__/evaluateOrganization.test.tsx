@@ -10,6 +10,9 @@ import { fetchUploadsOrganization, handleRemoveFile } from '../functions/request
 // Mock the next/navigation module
 jest.mock('next/navigation', () => ({
   usePathname: jest.fn(() => '/organization/testorg'),
+  useRouter: () => ({
+    replace: jest.fn(),
+  }),
 }));
 
 // Mock the functions from requests

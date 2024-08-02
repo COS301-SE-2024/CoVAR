@@ -9,6 +9,9 @@ import { fetchUploadsClient, handleRemoveFile } from '../functions/requests';
 
 jest.mock('next/navigation', () => ({
   usePathname: jest.fn(() => '/user/testuser'),
+  useRouter: () => ({
+    replace: jest.fn(),
+  }),
 }));
 
 jest.mock('../functions/requests', () => ({

@@ -64,41 +64,6 @@ const ReportCard = ({ report, index }: { report: any[], index: number }) => {
       ))}
     </Box>
 
-    //for nessus
-    // <Box sx={{ ...mainContentStyles }} key={index}>
-    //   <Typography variant="h6" style={styles.header}>
-    //     Upload {index + 1}
-    //   </Typography>
-    //   {report.map((item, idx) => (
-    //     <Paper key={idx} style={{ marginTop: '10px' }}>
-    //       <Typography variant="body2"><strong>Plugin ID:</strong> {item.pluginID}</Typography>
-    //       <Typography variant="body2"><strong>CVE:</strong> {item.CVE}</Typography>
-    //       <Typography variant="body2"><strong>CVSS v2.0 Base Score:</strong> {item.cvssBaseScore}</Typography>
-    //       <Typography variant="body2"><strong>Risk:</strong> {item.Risk}</Typography>
-    //       <Typography variant="body2"><strong>Host:</strong> {item.Host}</Typography>
-    //       <Typography variant="body2"><strong>Protocol:</strong> {item.Protocol}</Typography>
-    //       <Typography variant="body2"><strong>Port:</strong> {item.Port}</Typography>
-    //       <Typography variant="body2"><strong>Name:</strong> {item.Name}</Typography>
-    //       <Typography variant="body2"><strong>Synopsis:</strong> {item.Synopsis}</Typography>
-
-    //       <Button
-    //         variant="outlined"
-    //         color="primary"
-    //         onClick={() => setOpenItemIndex(openItemIndex === idx ? null : idx)}
-    //         style={{ marginTop: 8 }}
-    //       >
-    //         {openItemIndex === idx ? 'Hide Description' : 'Show Description'}
-    //       </Button>
-
-    //       <Collapse in={openItemIndex === idx}>
-    //         <Box style={styles.description}>
-    //           <Typography variant="body2"><strong>Description:</strong> {item.Description}</Typography>
-    //           <Typography variant="body2"><strong>Solution:</strong> {item.Solution}</Typography>
-    //         </Box>
-    //       </Collapse>
-    //     </Paper>
-    //   ))}
-    // </Box>
   );
 };
 

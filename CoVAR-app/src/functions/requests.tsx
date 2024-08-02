@@ -288,3 +288,13 @@ export const handleDownloadFile = async (loid: number, fileName: string) => {
         console.error('Error downloading file:', error);
     }
 };
+
+export const getAllReports = async () => {
+    const accessToken = localStorage.getItem('accessToken');
+    const request = {
+        method: 'get',
+        url: '/api/reports/all',
+        headers: { Authorization: `Bearer ${accessToken}` },
+    };
+    return await handleRequest(request);
+};

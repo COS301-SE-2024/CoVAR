@@ -31,13 +31,17 @@ async function getOrganizationId(pgClient, UserId) {
 
 async function getAllReportIds(pgClient, UserId) {
     const organizationIdResult = await getOrganizationId(pgClient, UserId);
+    let reportIds;
+
     if (organizationIdResult.organizationId === null) {
-        const reportIds = await pgClient.query('SELECT report_id FROM user_reports WHERE user_id = $1', [UserId]);
+        reportIds = await pgClient.query('SELECT report_id FROM user_reports WHERE user_id = $1', [UserId]);
     } else {
-        const reportIds = await pgClient.query('SELECT report_id FROM organization_reports WHERE organization_id = $1', [organizationIdResult.organizationId]);
+        reportIds = await pgClient.query('SELECT report_id FROM organization_reports WHERE organization_id = $1', [organizationIdResult.organizationId]);
     }
-    return reports.rows.map(row => row.report_id);
+
+    return reportIds.rows.map(row => row.report_id);
 }
+
 
 module.exports = {
     isOwner,

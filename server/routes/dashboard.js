@@ -4,7 +4,7 @@ const pgClient = require('../lib/postgres');
 const router = express.Router();
 const { getAllReportIds } = require('../lib/serverHelperFunctions'); 
 
-//return all reports for the user / organization if they are in one
+// Return all reports for the user / organization if they are in one
 router.get('/reports/all', authenticateToken, async (req, res) => {
     const userId = req.user.user_id;
 
@@ -17,3 +17,5 @@ router.get('/reports/all', authenticateToken, async (req, res) => {
         res.status(500).send('Server Error');
     }
 });
+
+module.exports = router;

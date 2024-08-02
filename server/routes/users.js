@@ -288,38 +288,7 @@ router.get('/users/unauthorized', authenticateToken, async (req, res) => {
     }
 });
 
-// Get all uploads for a specific client assigned to logged in VA
-router.get('/uploads/client/:clientName', authenticateToken, async (req, res) => {
-    const token = req.headers['authorization'].split(' ')[1];
-    const decodedToken = verifyToken(token);
-    const id = decodedToken.user_id;
-    const { clientName } = req.params;
 
-    try {
-        // Get the UUID for the clientName
-        const clientResult = await pgClient.query(
-            'SELECT user_id FROM users WHERE username = $1',
-            [clientName]
-        );
-
-        if (clientResult.rows.length === 0) {
-            return res.status(404).send('Client not found');
-        }
-
-        const clientId = clientResult.rows[0].user_id;
-
-        // Fetch uploads for the client UUID
-        const uploads = await pgClient.query(
-            'SELECT * FROM raw_uploads WHERE va = $1 AND client = $2',
-            [id, clientId]
-        );
-
-        res.send(uploads.rows);
-    } catch (err) {
-        console.error(err.message);
-        res.status(500).send('Server Error');
-    }
-});
 
 // Endpoint to change role from unauthorized to client using username
 router.patch('/users/authorize', authenticateToken, async (req, res) => {

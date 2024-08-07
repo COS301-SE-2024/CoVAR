@@ -1,12 +1,11 @@
 'use client'
-import React, { useEffect, useState, useRef, ChangeEvent } from 'react';
-import { Box, Grid, Paper, Typography, SelectChangeEvent } from '@mui/material';
+import React, { useEffect, useState, useRef } from 'react';
+import { Box, Grid, Paper, Typography } from '@mui/material';
 import { mainContentStyles } from '../../../styles/sidebarStyle';
 import { chartContainerStyles } from '../../../styles/dashboardStyle';
 import SeverityDistribution from './components/severityDistribution';
 import VulnerabilitiesOverTime from './components/lineChart';
 import ReportsList from './components/reportsList';
-import Filters from './components/filters';
 import TopVulnerabilities from './components/topVulnerabilities';
 import { getAllReports } from '@/functions/requests';
 
@@ -82,15 +81,16 @@ const Dashboard: React.FC = () => {
         setSeverityDistribution(pieData);
     };
 
-    const handleSeverityChange = (event: SelectChangeEvent<string>) => {
+    const handleSeverityChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         setSelectedSeverity(event.target.value);
+        applyFilters(event.target.value);
     };
 
-    const applyFilters = () => {
+    const applyFilters = (severity: string) => {
         let filtered = allReports;
 
-        if (selectedSeverity) {
-            filtered = filtered.filter(vulnerability => vulnerability.Severity === selectedSeverity);
+        if (severity) {
+            filtered = filtered.filter(vulnerability => vulnerability.Severity === severity);
         }
 
         setFilteredReports(filtered);
@@ -119,13 +119,10 @@ const Dashboard: React.FC = () => {
                     </Paper>
                 </Grid>
                 <Grid item xs={12}>
-                    <ReportsList reports={filteredReports} />
-                </Grid>
-                <Grid item xs={12} md={6}>
-                    <Filters
+                    <ReportsList
+                        reports={filteredReports}
                         selectedSeverity={selectedSeverity}
                         handleSeverityChange={handleSeverityChange}
-                        applyFilters={applyFilters}
                     />
                 </Grid>
                 <Grid item xs={12} md={6}>

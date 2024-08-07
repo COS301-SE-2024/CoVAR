@@ -189,38 +189,7 @@ router.post('/organizations/users',  authenticateToken ,async (req, res) => {
     }
 });
 
-// Get all uploads for a specific organization assigned to logged in VA
-router.get('/uploads/organization/:organizationName', authenticateToken, async (req, res) => {
-    const token = req.headers['authorization'].split(' ')[1];
-    const decodedToken = verifyToken(token);
-    const id = decodedToken.user_id;
-    const { organizationName } = req.params;
 
-    try {
-        // Get the UUID for the organizationName
-        const orgResult = await pgClient.query(
-            'SELECT organization_id FROM organizations WHERE name = $1',
-            [organizationName]
-        );
-
-        if (orgResult.rows.length === 0) {
-            return res.status(404).send('Organization not found');
-        }
-
-        const organizationId = orgResult.rows[0].organization_id;
-
-        // Fetch uploads for the organization UUID
-        const uploads = await pgClient.query(
-            'SELECT * FROM raw_uploads WHERE va = $1 AND organization = $2',
-            [id, organizationId]
-        );
-
-        res.send(uploads.rows);
-    } catch (err) {
-        console.error(err.message);
-        res.status(500).send('Server Error');
-    }
-});
 
 // Get all organizations assigned to logged in VA
 router.get('/users/assigned_organizations', authenticateToken, async (req, res) => {
@@ -236,6 +205,47 @@ router.get('/users/assigned_organizations', authenticateToken, async (req, res) 
         res.status(500).send('Server Error');
     }
 });
+
+
+// Leave organization
+router.post('/organizations/leave', authenticateToken, async (req, res) => {
+    const { organizationId, username } = req.body;
+
+    try {
+        const userQuery = 'SELECT user_id, organization_id FROM users WHERE username = $1';
+        const userResult = await pgClient.query(userQuery, [username]);
+
+        if (userResult.rows.length === 0) {
+            return res.status(404).send('User not found');
+        }
+
+        const userId = userResult.rows[0].user_id;
+
+        if (userResult.rows[0].organization_id !== organizationId) {
+            return res.status(400).send('User is not part of the specified organisation');
+        }
+
+        // Ensure user is not the owner
+        const orgQuery = 'SELECT owner FROM organizations WHERE organization_id = $1';
+        const orgResult = await pgClient.query(orgQuery, [organizationId]);
+
+        if (orgResult.rows.length === 0) {
+            return res.status(404).send('Organisation not found');
+        }
+
+        if (orgResult.rows[0].owner === userId) {
+            return res.status(400).send('Owner cannot leave the organisation');
+        }
+
+        await pgClient.query('UPDATE users SET organization_id = NULL WHERE user_id = $1', [userId]);
+
+        res.send('User left the organisation successfully');
+    } catch (err) {
+        console.error('Error leaving organization:', err);
+        res.status(500).send('Server Error');
+    }
+});
+
 
 
 module.exports = router;

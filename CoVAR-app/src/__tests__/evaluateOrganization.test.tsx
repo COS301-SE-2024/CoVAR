@@ -5,7 +5,9 @@ import axios from 'axios';
 import MockAdapter from 'axios-mock-adapter';
 import OrganizationEvaluation from '../app/(pages)/evaluate/organization/[organization]/page';
 import { usePathname } from 'next/navigation';
+import { fetchUploadsOrganization, handleRemoveFile } from '../functions/requests';
 
+// Mock the next/navigation module
 jest.mock('next/navigation', () => ({
   usePathname: jest.fn(() => '/organization/testorg'),
   useRouter: () => ({
@@ -13,10 +15,13 @@ jest.mock('next/navigation', () => ({
   }),
 }));
 
+// Mock the functions from requests
 jest.mock('../functions/requests', () => ({
-  handleDownloadFile: jest.fn(),
+  fetchUploadsOrganization: jest.fn(),
+  handleRemoveFile: jest.fn(),
 }));
 
+// Mock the FileUpload component
 jest.mock('../app/(pages)/evaluate/components/fileUpload', () => {
   const MockFileUpload = ({ onFileSubmit }: { onFileSubmit: any }) => (
     <button onClick={onFileSubmit}>Mock FileUpload Component</button>
@@ -36,28 +41,28 @@ describe('OrganizationEvaluation', () => {
   afterEach(() => {
     mockAxios.reset();
     localStorage.removeItem('accessToken');
+    jest.clearAllMocks(); // Clear all mocks after each test
   });
-
-
 
   test('handles file removal', async () => {
     const mockUploads = [
-      { upload_id: 1, va: 1, client: null, organization: 'testorg', type: 'pdf', created_at: '2023-07-12T12:34:56Z', loid: 1, filename: 'file1.pdf' },
+      { upload_id: 1, va: 1, client: null, organization: 'testorg', type: 'pdf', created_at: '2023-07-12T12:34:56Z', loid: 1, filename: 'file1.pdf', in_report: false },
     ];
 
-    mockAxios.onGet('/api/uploads/organization/testorg').reply(200, mockUploads);
-    mockAxios.onDelete('/api/uploads/1').reply(200);
+    // Setup mock implementations
+    (fetchUploadsOrganization as jest.Mock).mockResolvedValue(mockUploads);
+    (handleRemoveFile as jest.Mock).mockResolvedValue({});
 
     render(<OrganizationEvaluation />);
 
     await waitFor(() => {
-        expect(screen.getByText(/File Name: file1.pdf, Uploaded At:/)).toBeInTheDocument();
-      });
-  
-      fireEvent.click(screen.getByText('Remove'));
-  
-      await waitFor(() =>
-        expect(screen.queryByText(/File Name: file1.pdf, Uploaded At:/)).not.toBeInTheDocument()
-      );
+      expect(screen.getByText(/File Name: file1.pdf, Uploaded At:/)).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText('Remove'));
+
+    await waitFor(() => {
+      expect(screen.queryByText(/File Name: file1.pdf, Uploaded At:/)).not.toBeInTheDocument();
+    });
   });
 });

@@ -40,6 +40,7 @@ services:
       - REFRESH_SECRET=${REFRESH_SECRET}
     depends_on:
       - postgres
+      - langchain
 
   client:
     stdin_open: true
@@ -57,6 +58,25 @@ services:
     volumes:
       - /app/node_modules
       - ./CoVAR-app:/app
+
+  langchain:
+    build:
+      dockerfile: Dockerfile.dev
+      context: './langchain'
+    environment:
+      - PG_USER=${PG_USER}
+      - PG_HOST=${PG_HOST}
+      - PG_DATABASE=${PG_DATABASE}
+      - PG_PASSWORD=${PG_PASSWORD}
+      - PG_PORT=${PG_PORT}
+      - FLASK_ENV=development
+    ports:
+      - "6000:6000"
+    volumes:
+      - /app/node_modules
+      - ./langchain:/app
+    depends_on:
+      - postgres
 
 volumes:
   postgres_data:

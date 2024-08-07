@@ -1,6 +1,6 @@
-'use client'
+'use client';
 import React, { useCallback, useEffect, useState } from 'react';
-import { CircularProgress, Button, Typography, Menu, TextField, Autocomplete, Alert } from '@mui/material';
+import { CircularProgress, Button, Typography, Menu, TextField, Autocomplete, Alert, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import { authorizeUser } from '../../../../functions/requests';
 import CheckIcon from '@mui/icons-material/Check';
@@ -14,8 +14,14 @@ import {
     unassignClient 
 } from '../../../../functions/requests';
 import { useRouter } from 'next/navigation';
+import { buttonStyles, dataGridStyles, dialogStyles } from '@/styles/adminToolsStyle';
+import ConfirmAuthorizeDialog from './dialogs/confirmAuthorizeDialog';
+import AssignVADialog from './dialogs/assignVADialog';
+import UnassignVADialog from './dialogs/unassignVADialog';
+import AssignClientDialog from './dialogs/assignClientDialog';
+import UnassignClientDialog from './dialogs/unassignClientDialog';
 
-type User = {
+export type User = {
     user_id: string;
     username: string;
     role: string;
@@ -31,173 +37,230 @@ type Organization = {
 const UserList = () => {
     const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
-    const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-    const [selectedUser, setSelectedUser] = useState<User | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [assignedClients, setAssignedClients] = useState<User[]>([]);
     const [assignedOrganizations, setAssignedOrganizations] = useState<Organization[]>([]);
-    const [unassignAnchorEl, setUnassignAnchorEl] = useState<null | HTMLElement>(null);
     const [organizations, setOrganizations] = useState<Organization[]>([]);
     const [alert, setAlert] = useState<{visible: boolean, message: string}>({visible: false, message: ''});
     const [accessToken, setAccessToken] = useState(localStorage.getItem('accessToken'));
-    const router = useRouter();
+    
+// New states for confirmation dialog
+const [openDialog, setOpenDialog] = useState(false);
+const [username, setUsername] = useState<string | null>(null);
+const [user_id, setUserID] = useState<string | null>(null);
 
-    const redirectToLogin = useCallback(() => {
-        router.replace('/login');
-    }, [router]);
+// New states for assign/unassign dialogs
+const [assignDialogOpen, setAssignDialogOpen] = useState(false);
+const [unassignDialogOpen, setUnassignDialogOpen] = useState(false);
+const [clientToAssign, setClientToAssign] = useState<string>('');
+const [clientToUnassign, setClientToUnassign] = useState<string>('');
 
-    useEffect(() => {
-        const getToken = () => {
-            setAccessToken(localStorage.getItem('accessToken'));
-        };
-        getToken();
-    }, []);
+// New states for Assign VA and Unassign VA confirmation
+const [assignVAOpen, setAssignVAOpen] = useState(false);
+const [unassignVAOpen, setUnassignVAOpen] = useState(false);
+const [userToAssignVA, setUserToAssignVA] = useState<User | null>(null);
+const [userToUnassignVA, setUserToUnassignVA] = useState<User | null>(null);
 
-    useEffect(() => {
-        const loadUsers = async () => {
-            try {
-                if(!accessToken) {
-                    throw new Error('Access token not found');
-                }
-                const users = await fetchUsers(accessToken);
-                //console.log('Users:', users);
-                setUsers(users);
-                setLoading(false);
-            } catch (error:any) {
-                setLoading(false);
-                //console.error('Error fetching users:', error);
-                if(error.response?.status === 403) {
-                    redirectToLogin();
-                }
-            }
-        };
+const router = useRouter();
 
-        loadUsers();
-    }, [accessToken, redirectToLogin]);
+const redirectToLogin = useCallback(() => {
+    router.replace('/login');
+}, [router]);
 
-    useEffect(() => {
-        const loadOrganizations = async () => {
-            try {
-                if(!accessToken){
-                    throw new Error('Access token not found');
-                }
-                const organizations = await fetchOrganisations(accessToken);
-                //console.log('Organizations:', organizations);
-                setOrganizations(organizations);
-            } catch (error:any) {
-                //console.error('Error fetching organizations:', error);
-                if(error.response?.status === 403) {
-                    redirectToLogin();
-                }
-            }
-        };
+useEffect(() => {
+    const getToken = () => {
+        setAccessToken(localStorage.getItem('accessToken'));
+    };
+    getToken();
+}, []);
 
-        loadOrganizations();
-    }, [accessToken,redirectToLogin]);
-
-    const handleRoleToggle = async (user: User) => {
-        if (!user) {
-            console.error('User is null');
-            return;
-        }
-
-        const newRole = user.role === 'va' ? 'client' : 'va';
-        //console.log('Updating user role:', user.user_id, user.role, '->', newRole);
-
+useEffect(() => {
+    const loadUsers = async () => {
         try {
-            if(!accessToken){
+            if (!accessToken) {
                 throw new Error('Access token not found');
             }
-            await updateUserRole(user.user_id, newRole,accessToken);
-            setUsers(users.map(u => (u.user_id === user.user_id ? { ...u, role: newRole } : u)));
-        } catch (error:any) {
-            //console.error('Error updating user role:', error);
-            if(error.response?.status === 403) {
+            const users = await fetchUsers(accessToken);
+            setUsers(users);
+            setLoading(false);
+        } catch (error: any) {
+            setLoading(false);
+            if (error.response?.status === 403) {
                 redirectToLogin();
             }
         }
     };
 
-    const handleMenuOpen = (event: React.MouseEvent<HTMLButtonElement>, user: User) => {
-        setAnchorEl(event.currentTarget);
-        setSelectedUser(user);
-    };
+    loadUsers();
+}, [accessToken, redirectToLogin]);
 
-    const handleUnassignMenuOpen = async (event: React.MouseEvent<HTMLButtonElement>, user: User) => {
-        setUnassignAnchorEl(event.currentTarget);
-        setSelectedUser(user);
+useEffect(() => {
+    const loadOrganizations = async () => {
         try {
-            if(!accessToken){
+            if (!accessToken) {
                 throw new Error('Access token not found');
             }
-            const assignedClients = await fetchAssignedClients(user.user_id,accessToken);
-            setAssignedClients(assignedClients);
-            const assignedOrganizations = await fetchAssignedOrganisations(user.user_id,accessToken);
-            setAssignedOrganizations(assignedOrganizations);
-        } catch (error:any) {
-            //console.error('Error fetching assigned clients:', error);
-            if(error.response?.status === 403) {
+            const organizations = await fetchOrganisations(accessToken);
+            setOrganizations(organizations);
+        } catch (error: any) {
+            if (error.response?.status === 403) {
                 redirectToLogin();
             }
         }
     };
 
-    const handleMenuClose = () => {
-        setAnchorEl(null);
-        setSelectedUser(null);
-        setSearchTerm('');
-    };
+    loadOrganizations();
+}, [accessToken, redirectToLogin]);
 
-    const handleUnassignMenuClose = () => {
-        setUnassignAnchorEl(null);
-        setSelectedUser(null);
-    };
 
-    const handleAssignClient = async (clientUsername: string) => {
-        if (selectedUser) {
-            try {
-                if(!accessToken){
-                    throw new Error('Access token not found');
-                }
-                await assignClient(selectedUser.user_id, clientUsername,accessToken);
-                handleMenuClose();
 
-                setAlert({
-                    visible: true,
-                    message: `Successfully assigned ${clientUsername} to ${selectedUser.username}.`
-                });
-            } catch (error:any) {
-                //console.error('Error assigning client:', error);
-                if(error.response?.status === 403) {
-                    redirectToLogin();
-                }
+const handleUnassignDialogOpen = async (user_id: string) => {
+    setUnassignDialogOpen(true);
+    setUserID(user_id);
+    try {
+        if (!accessToken) {
+            throw new Error('Access token not found');
+        }
+        const assignedClients = await fetchAssignedClients(user_id, accessToken);
+        setAssignedClients(assignedClients);
+        const assignedOrganizations = await fetchAssignedOrganisations(user_id, accessToken);
+        setAssignedOrganizations(assignedOrganizations);
+    } catch (error: any) {
+        if (error.response?.status === 403) {
+            redirectToLogin();
+        }
+    }
+};
+
+const handleAssignDialogOpen = async (user_id: string) => {
+    setAssignDialogOpen(true);
+    setUserID(user_id);
+    setClientToAssign('');
+};
+
+const handleAssignDialogClose = () => {
+    setAssignDialogOpen(false);
+    setClientToAssign('');
+};
+
+const handleUnassignDialogClose = () => {
+    setUnassignDialogOpen(false);
+    setClientToUnassign(''); 
+};
+
+const handleAssignClient = async () => {
+    if (user_id) {
+        try {
+            if (!accessToken) {
+                throw new Error('Access token not found');
+            }
+            await assignClient(user_id, clientToAssign, accessToken);
+            setAlert({
+                visible: true,
+                message: `Successfully assigned ${clientToAssign} to ${user_id}.`
+            });
+            setClientToAssign(''); // Reset input
+            setAssignDialogOpen(false); // Close dialog
+        } catch (error: any) {
+            if (error.response?.status === 403) {
+                redirectToLogin();
             }
         }
-    };
+    }
+};
 
-    const handleUnassignClient = async (clientUsername: string) => {
-        if (selectedUser) {
-            try {
-                if(!accessToken){
-                    throw new Error('Access token not found');
-                }
-                await unassignClient(selectedUser.user_id, clientUsername,accessToken);
-                setAssignedClients(assignedClients.filter(client => client.username !== clientUsername));
-                setAssignedOrganizations(assignedOrganizations.filter(org => org.name !== clientUsername));
-                handleUnassignMenuClose();
-
-                setAlert({
-                    visible: true,
-                    message: `Successfully unassigned ${clientUsername} from ${selectedUser.username}.`
-                });
-            } catch (error:any) {
-                //console.error('Error unassigning client:', error);
-                if(error.response?.status === 403) {
-                    redirectToLogin();
-                }
+const handleUnassignClient = async () => {
+    if (user_id) {
+        try {
+            if (!accessToken) {
+                throw new Error('Access token not found');
+            }
+            await unassignClient(user_id, clientToUnassign, accessToken);
+            setAssignedClients(assignedClients.filter(client => client.username !== clientToUnassign));
+            setAssignedOrganizations(assignedOrganizations.filter(org => org.name !== clientToUnassign));
+            setAlert({
+                visible: true,
+                message: `Successfully unassigned ${clientToUnassign} from ${user_id}.`
+            });
+            setClientToUnassign(''); // Reset input
+            setUnassignDialogOpen(false); // Close dialog
+        } catch (error: any) {
+            if (error.response?.status === 403) {
+                redirectToLogin();
             }
         }
-    };
+    }
+};
+
+const handleRoleToggle = async (user: User) => {
+    if (!user) {
+        console.error('User is null');
+        return;
+    }
+
+    const newRole = user.role === 'va' ? 'client' : 'va';
+
+    try {
+        if (!accessToken) {
+            throw new Error('Access token not found');
+        }
+        await updateUserRole(user.user_id, newRole, accessToken);
+        setUsers(users.map(u => (u.user_id === user.user_id ? { ...u, role: newRole } : u)));
+    } catch (error: any) {
+        if (error.response?.status === 403) {
+            redirectToLogin();
+        }
+    }
+};
+
+const handleAuthorizeDialogOpen = (username: string) => {
+    setUsername(username);
+    setOpenDialog(true);
+};
+
+const handleAuthorizeDialogClose = () => {
+    setOpenDialog(false);
+};
+
+const handleConfirmAuthorize = async () => {
+    if (username) {
+        await handleAuthorizeUser(username);
+        handleAuthorizeDialogClose();
+    }
+};
+
+const handleAssignVADialogOpen = (user: User) => {
+    setUserToAssignVA(user);
+    setAssignVAOpen(true);
+};
+
+const handleAssignVADialogClose = () => {
+    setAssignVAOpen(false);
+};
+
+const handleConfirmAssignVA = async () => {
+    if (userToAssignVA) {
+        await handleRoleToggle(userToAssignVA);
+        handleAssignVADialogClose();
+    }
+};
+
+const handleUnassignVADialogOpen = (user: User) => {
+    setUserToUnassignVA(user);
+    setUnassignVAOpen(true);
+};
+
+
+const handleUnassignVADialogClose = () => {
+    setUnassignVAOpen(false);
+};
+
+const handleConfirmUnassignVA = async () => {
+    if (userToUnassignVA) {
+        await handleRoleToggle(userToUnassignVA);
+        handleUnassignVADialogClose();
+    }
+};
 
     const handleAuthorizeUser = async (username: string) => {
         try {
@@ -231,8 +294,6 @@ const UserList = () => {
 
     const assignOptions = [...filteredUsers.map(user => user.username), ...filteredOrganizations.map(org => org.name)];
     const unAssignOptions = [...assignedClients.map(client => client.username), ...assignedOrganizations.map(org => org.name)];
-
-
 
     const columns: GridColDef[] = [
         { field: 'username', headerName: 'Username', flex: 1, headerAlign: 'left', resizable: false },
@@ -279,7 +340,7 @@ const UserList = () => {
                                         backgroundColor: '#D11C45',
                                     },
                                 }}
-                                onClick={() => handleRoleToggle(params.row)}
+                                onClick={() => handleUnassignVADialogOpen(params.row)}
                                 style={{ marginRight: '8px' }}
                             >
                                 Unassign
@@ -295,7 +356,12 @@ const UserList = () => {
                                     },
                                     marginLeft: '0px',
                                 }}
-                                onClick={(event) => handleMenuOpen(event, params.row)}
+                                onClick={() => {
+                                    setClientToAssign('');
+                                    setUserID(null);
+                                    setUsername(null);
+                                    handleAssignDialogOpen(params.row.user_id)
+                                }}
                             >
                                 Assign Client
                             </Button>
@@ -310,7 +376,12 @@ const UserList = () => {
                                     },
                                     marginLeft: '8px',
                                 }}
-                                onClick={(event) => handleUnassignMenuOpen(event, params.row)}
+                                onClick={() => {
+                                    setClientToUnassign('');
+                                    setUserID(null);
+                                    setUsername(null);
+                                    handleUnassignDialogOpen(params.row.user_id)
+                                }}
                             >
                                 Remove Client
                             </Button>
@@ -327,7 +398,6 @@ const UserList = () => {
                                 '&:hover': {
                                     backgroundColor: '#47356B',
                                 },
-                                
                                 borderRadius: '4px',
                                 textAlign: 'center',
                                 width: '110px',
@@ -336,7 +406,7 @@ const UserList = () => {
                                 alignItems: 'center',
                                 justifyContent: 'center',
                             }}
-                            onClick={() => handleAuthorizeUser(params.row.username)}
+                            onClick={() => handleAuthorizeDialogOpen(params.row.username)}
                         >
                             Authorise
                         </Button>
@@ -353,7 +423,7 @@ const UserList = () => {
                                     backgroundColor: '#749F82',
                                 },
                             }}
-                            onClick={() => handleRoleToggle(params.row)}
+                            onClick={() => handleAssignVADialogOpen(params.row)}
                         >
                             Assign VA
                         </Button>
@@ -372,7 +442,6 @@ const UserList = () => {
     }
 
     return (
-        
         <div style={{ height: 600, width: '100%' }}>
             {alert.visible && (
             <Alert
@@ -382,111 +451,49 @@ const UserList = () => {
             >
                 {alert.message}
             </Alert>
-
-        )}
+            )}
             <DataGrid
                 rows={users}
                 columns={columns}
                 getRowId={(row) => row.user_id}
-                sx={{
-                    height: 600,
-                    flex: '1 auto',
-                    fontWeight: 500,
-                    borderColor: 'text.primary', 
-                    '& .MuiDataGrid-columnHeaderTitle': {
-                        color: 'text.primary',
-                    },
-                    '& .MuiDataGrid-columnSeparator': {
-                        color: 'text.primary',
-                    },
-                    '& .MuiDataGrid-cell': {
-                        color: 'text.primary',
-                        borderColor: 'text.primary', 
-                    },
-                    '& .MuiDataGrid-footerContainer': {
-                        backgroundColor: 'background.paper',
-                        color: 'text.primary',
-                    },
-                    '& .MuiTablePagination-root': {
-                        color: 'text.primary',
-                    },
-                    '& .MuiSvgIcon-root': {
-                        color: 'text.primary',
-                    },
-                    '& .MuiDataGrid-toolbarContainer button': {
-                        color: 'text.primary',
-                    },
-                    '& .MuiDataGrid-topContainer, & .MuiDataGrid-container--top': {
-                        backgroundColor: 'primary.main',
-                    },
-                    '& .MuiDataGrid-overlay': {
-                        backgroundColor: 'background.default',
-                        color: 'text.primary',
-                    },
-                    '& .MuiDataGrid-filler': {
-                        backgroundColor: 'background.paper',
-                        color: 'text.primary',
-                    },
-                    '& .MuiDataGrid-scrollbarFiller': {
-                        backgroundColor: 'background.paper',
-                    },
-                    '& .MuiDataGrid-scrollbarFiller--header': {
-                        backgroundColor: 'background.paper', 
-                    },
-                    '& .MuiDataGrid-columnHeader': {
-                        backgroundColor: 'background.paper',
-                        color: 'text.primary',
-                    },
-            }}
+                sx={dataGridStyles}
             />
-            <Menu
-                anchorEl={anchorEl}
-                open={Boolean(anchorEl)}
-                onClose={handleMenuClose}
-            >
-                <Autocomplete
-                    freeSolo
-                    disableClearable
-                    options={assignOptions}
-                    renderInput={(params) => (
-                        <TextField
-                            {...params}
-                            label="Search name/organization"
-                            InputProps={{
-                                ...params.InputProps,
-                                type: 'search',
-                            }}
-                            sx={{ margin: '4px', width: '200px' }}
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
-                    )}
-                    onChange={(event, value) => handleAssignClient(value as string)}
-                />
-            </Menu>
-            <Menu
-                anchorEl={unassignAnchorEl}
-                open={Boolean(unassignAnchorEl)}
-                onClose={handleUnassignMenuClose}
-            >
-                <Autocomplete
-                    freeSolo
-                    disableClearable
-                    options={unAssignOptions}
-                    renderInput={(params) => (
-                        <TextField
-                            {...params}
-                            label="Assigned Clients"
-                            InputProps={{
-                                ...params.InputProps,
-                                type: 'search',
-                            }}
-                            sx={{ margin: '4px', width: '200px' }}
-                        />
-                    )}
-                    onChange={(event, value) => handleUnassignClient(value as string)}
-                />
-            </Menu>
+
+            <ConfirmAuthorizeDialog
+                open={openDialog}
+                username={username}
+                onClose={handleAuthorizeDialogClose}
+                onConfirm={handleConfirmAuthorize}
+            />
+            <AssignVADialog
+                open={assignVAOpen}
+                user={userToAssignVA}
+                onClose={handleAssignVADialogClose}
+                onConfirm={handleConfirmAssignVA}
+            />
+            <UnassignVADialog
+                open={unassignVAOpen}
+                user={userToUnassignVA}
+                onClose={handleUnassignVADialogClose}
+                onConfirm={handleConfirmUnassignVA}
+            />
+            <AssignClientDialog
+                open={assignDialogOpen}
+                clientToAssign={clientToAssign}
+                assignOptions={assignOptions}
+                onClose={handleAssignDialogClose}
+                onAssign={handleAssignClient}
+                onClientChange={setClientToAssign}
+            />
+            <UnassignClientDialog
+                open={unassignDialogOpen}
+                clientToUnassign={clientToUnassign}
+                unAssignOptions={unAssignOptions}
+                onClose={handleUnassignDialogClose}
+                onUnassign={handleUnassignClient}
+                onClientChange={setClientToUnassign}
+            />
+
         </div>
     );
 };

@@ -9,10 +9,16 @@ interface AssignClientDialogProps {
     onClose: () => void;
     onAssign: (client: string) => void;
     onClientChange: (client: string) => void;
-    onAssignClient: (client: string) => void;
 }
 
-const AssignClientDialog: React.FC<AssignClientDialogProps> = ({ open, clientToAssign, assignOptions, onClose, onAssign, onClientChange, onAssignClient }) => {
+const AssignClientDialog: React.FC<AssignClientDialogProps> = ({
+    open,
+    clientToAssign,
+    assignOptions,
+    onClose,
+    onAssign,
+    onClientChange,
+}) => {
     return (
         <Dialog open={open} onClose={onClose} sx={dialogStyles}>
             <DialogTitle>Assign Client</DialogTitle>
@@ -27,19 +33,21 @@ const AssignClientDialog: React.FC<AssignClientDialogProps> = ({ open, clientToA
                             required
                             margin="normal"
                             fullWidth
-                            value={clientToAssign}
                             label="Search name/organisation"
                             InputLabelProps={{ sx: { color: 'text.primary' } }}
                             InputProps={{
                                 ...params.InputProps,
                                 type: 'search',
-                                 sx: { color: 'text.primary' } }}
+                                sx: { color: 'text.primary' },
+                            }}
+                            value={clientToAssign}
                             onChange={(e) => onClientChange(e.target.value)}
                         />
                     )}
                     onChange={(event, value) => {
+                        console.log('Selected value:', value);
                         if (value) {
-                            onAssignClient(value as string);
+                            onClientChange(value as string); 
                         }
                     }}
                 />

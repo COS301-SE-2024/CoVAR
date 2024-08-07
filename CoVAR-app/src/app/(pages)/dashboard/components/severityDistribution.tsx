@@ -1,6 +1,6 @@
 'use client'
 import React from 'react';
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
 const COLOURS = ['#ff0000', '#ffa500', '#82ca9d', '#8884d8'];
 
@@ -18,6 +18,7 @@ const SeverityDistribution: React.FC<SeverityDistributionProps> = ({ data }) => 
           ))}
         </Pie>
         <Tooltip />
+        <Legend />
       </PieChart>
     </ResponsiveContainer>
   );

@@ -4,7 +4,7 @@ import { Box, Grid, Paper, Typography } from '@mui/material';
 import { mainContentStyles } from '../../../styles/sidebarStyle';
 import { chartContainerStyles } from '../../../styles/dashboardStyle';
 import SeverityDistribution from './components/severityDistribution';
-import VulnerabilitiesOverTime from './components/lineChart';
+import VulnerabilityLineChart from './components/lineChart';
 import ReportsList from './components/reportsList';
 import TopVulnerabilities from './components/topVulnerabilities';
 import { getAllReports } from '@/functions/requests';
@@ -43,11 +43,15 @@ const Dashboard: React.FC = () => {
     const [allReports, setAllReports] = useState<VulnerabilityReport[]>([]);
     const [filteredReports, setFilteredReports] = useState<VulnerabilityReport[]>([]);
     const [selectedSeverity, setSelectedSeverity] = useState<string>('');
+    const [responseData, setResponseData] = useState<any[]>([]);
     const initialMount = useRef(true);
 
     const fetchReports = async () => {
         try {
             const responseData = await getAllReports();
+            console.log(responseData);
+            setResponseData(responseData);
+
             const reports = responseData[0].content.reports.flat();
             calculateSeverityDistribution(reports);
             setTopVulnerabilities(reports.sort((a: VulnerabilityReport, b: VulnerabilityReport) => parseFloat(b.CVSS) - parseFloat(a.CVSS)).slice(0, 5));
@@ -103,34 +107,76 @@ const Dashboard: React.FC = () => {
         }
     }, []);
 
+    // return (
+    //     <Box sx={mainContentStyles}>
+    //         {allReports.length === 0 ? (
+    //                 <Paper sx={chartContainerStyles}>
+    //                      <Typography variant="h6">No available reports</Typography>
+    //                 </Paper>
+    //         ) : (
+    //             <Grid container spacing={2}>
+    //                 <Grid item xs={12} md={6}>
+    //                     <Paper sx={chartContainerStyles}>
+    //                         <Typography variant="h6">Severity Distribution</Typography>
+    //                         <SeverityDistribution data={severityDistribution} />
+    //                     </Paper>
+    //                 </Grid>
+    //                 <Grid item xs={12} md={6}>
+    //                     <Paper sx={chartContainerStyles}>
+    //                         <Typography variant="h6">Vulnerabilities Over Time</Typography>
+    //                         <VulnerabilityLineChart responseData={responseData} />
+    //                     </Paper>
+    //                 </Grid>
+    //                 <Grid item xs={12}>
+    //                     <ReportsList
+    //                         reports={filteredReports}
+    //                         selectedSeverity={selectedSeverity}
+    //                         handleSeverityChange={handleSeverityChange}
+    //                     />
+    //                 </Grid>
+    //                 <Grid item xs={12} md={6}>
+    //                     <TopVulnerabilities vulnerabilities={topVulnerabilities} />
+    //                 </Grid>
+    //             </Grid>
+    //         )}
+    //     </Box>
+    // );
+
     return (
         <Box sx={mainContentStyles}>
-            <Grid container spacing={2}>
-                <Grid item xs={12} md={6}>
-                    <Paper sx={chartContainerStyles}>
-                        <Typography variant="h6">Severity Distribution</Typography>
-                        <SeverityDistribution data={severityDistribution} />
-                    </Paper>
+            {allReports.length === 0 ? (
+                <Paper sx={chartContainerStyles}>
+                    <Typography variant="h6">No available reports</Typography>
+                </Paper>
+            ) : (
+                <Grid container spacing={2}>
+                    <Grid item xs={12} md={6}>
+                        <Paper sx={chartContainerStyles}>
+                            <Typography variant="h6">Severity Distribution</Typography>
+                            <SeverityDistribution data={severityDistribution} />
+                        </Paper>
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                        <Paper sx={chartContainerStyles}>
+                            <Typography variant="h6">Vulnerabilities Over Time</Typography>
+                            <VulnerabilityLineChart responseData={responseData} />
+                        </Paper>
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                            <TopVulnerabilities vulnerabilities={topVulnerabilities} />
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                            <ReportsList
+                                reports={filteredReports}
+                                selectedSeverity={selectedSeverity}
+                                handleSeverityChange={handleSeverityChange}
+                            />
+                    </Grid>
                 </Grid>
-                <Grid item xs={12} md={6}>
-                    <Paper sx={chartContainerStyles}>
-                        <Typography variant="h6">Vulnerabilities Over Time</Typography>
-                        <VulnerabilitiesOverTime />
-                    </Paper>
-                </Grid>
-                <Grid item xs={12}>
-                    <ReportsList
-                        reports={filteredReports}
-                        selectedSeverity={selectedSeverity}
-                        handleSeverityChange={handleSeverityChange}
-                    />
-                </Grid>
-                <Grid item xs={12} md={6}>
-                    <TopVulnerabilities vulnerabilities={topVulnerabilities} />
-                </Grid>
-            </Grid>
+            )}
         </Box>
     );
+
 };
 
 export default Dashboard;

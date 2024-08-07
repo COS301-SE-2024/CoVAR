@@ -10,7 +10,7 @@ router.get('/reports/all', authenticateToken, async (req, res) => {
 
     try {
         const reportIds = await getAllReportIds(pgClient, userId);
-        const reports = await pgClient.query('SELECT * FROM reports WHERE report_id = ANY($1)', [reportIds]);
+        const reports = await pgClient.query('SELECT * FROM reports WHERE report_id = ANY($1) ORDER BY created_at DESC', [reportIds]);
         res.send(reports.rows);
     } catch (err) {
         console.error('Error fetching reports:', err);

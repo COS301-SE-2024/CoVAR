@@ -107,41 +107,6 @@ const Dashboard: React.FC = () => {
         }
     }, []);
 
-    // return (
-    //     <Box sx={mainContentStyles}>
-    //         {allReports.length === 0 ? (
-    //                 <Paper sx={chartContainerStyles}>
-    //                      <Typography variant="h6">No available reports</Typography>
-    //                 </Paper>
-    //         ) : (
-    //             <Grid container spacing={2}>
-    //                 <Grid item xs={12} md={6}>
-    //                     <Paper sx={chartContainerStyles}>
-    //                         <Typography variant="h6">Severity Distribution</Typography>
-    //                         <SeverityDistribution data={severityDistribution} />
-    //                     </Paper>
-    //                 </Grid>
-    //                 <Grid item xs={12} md={6}>
-    //                     <Paper sx={chartContainerStyles}>
-    //                         <Typography variant="h6">Vulnerabilities Over Time</Typography>
-    //                         <VulnerabilityLineChart responseData={responseData} />
-    //                     </Paper>
-    //                 </Grid>
-    //                 <Grid item xs={12}>
-    //                     <ReportsList
-    //                         reports={filteredReports}
-    //                         selectedSeverity={selectedSeverity}
-    //                         handleSeverityChange={handleSeverityChange}
-    //                     />
-    //                 </Grid>
-    //                 <Grid item xs={12} md={6}>
-    //                     <TopVulnerabilities vulnerabilities={topVulnerabilities} />
-    //                 </Grid>
-    //             </Grid>
-    //         )}
-    //     </Box>
-    // );
-
     return (
         <Box sx={mainContentStyles}>
             {allReports.length === 0 ? (

@@ -71,6 +71,8 @@ services:
       - PG_PORT=${PG_PORT}
       - FLASK_ENV=development
       - MODEL_TYPE=${MODEL_TYPE}
+      - OPENAI_MODEL_NAME=${OPENAI_MODEL_NAME}
+      - API_KEY=${API_KEY}
     ports:
       - "6000:6000"
     volumes:

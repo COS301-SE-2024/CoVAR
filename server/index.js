@@ -25,7 +25,9 @@ const organizations = require('./routes/organizations');
 const users = require('./routes/users');
 const authentication = require('./routes/authentication');
 const uploads = require('./routes/uploads');
+const chain = require('./routes/chain');
 
+app.use(chain);
 app.use(authentication);
 app.use(users);
 app.use(organizations);

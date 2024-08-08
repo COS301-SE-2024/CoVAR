@@ -70,6 +70,7 @@ services:
       - PG_PASSWORD=${PG_PASSWORD}
       - PG_PORT=${PG_PORT}
       - FLASK_ENV=development
+      - MODEL_TYPE=${MODEL_TYPE}
     ports:
       - "6000:6000"
     volumes:

@@ -332,34 +332,36 @@ export const handleDownloadFile = async (loid: number, fileName: string) => {
 
 export const fetchUploadsClient = async (username: string) => {
     const token = localStorage.getItem('accessToken');
-    const response = await axios.get(`/api/uploads/client/${username}`, {
-        headers: {
-            Authorization: `Bearer ${token}`,
-        },
-    });
-    return response.data;
+    const request: AxiosRequestConfig = {
+        method: 'get',
+        url: `/api/uploads/client/${username}`,
+        headers: { Authorization: `Bearer ${token}` },
+    };
+    return await handleRequest(request);
 };
 
 export const fetchUploadsOrganization = async (organizationName: string) => {
     const token = localStorage.getItem('accessToken');
-    const response = await axios.get(`/api/uploads/organization/${organizationName}`, {
-        headers: {
-            Authorization: `Bearer ${token}`,
-        },
-    });
-    return response.data;
+
+    const request: AxiosRequestConfig = {
+        method: 'get',
+        url: `/api/uploads/organization/${organizationName}`,
+        headers: { Authorization: `Bearer ${token}` },
+    };
+    return await handleRequest(request);
 };
 
 export const fetchReports = async (reportIds: number[]) => {
     const token = localStorage.getItem('accessToken');
     const fetchedReports = await Promise.all(
         reportIds.map(async (id) => {
-            const response = await axios.get(`/api/uploads/generateSingleReport/${id}`, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            });
-            return response.data;
+
+            const request: AxiosRequestConfig = {
+                method: 'get',
+                url: `/api/uploads/generateSingleReport/${id}`,
+                headers: { Authorization: `Bearer ${token}` },
+            };
+            return await handleRequest(request);
         })
     );
     return fetchedReports;
@@ -367,20 +369,40 @@ export const fetchReports = async (reportIds: number[]) => {
 
 export const handleRemoveFile = async (upload_id: number) => {
     const token = localStorage.getItem('accessToken');
-    await axios.delete(`/api/uploads/${upload_id}`, {
-        headers: {
-            Authorization: `Bearer ${token}`,
-        },
-    });
+
+    const request: AxiosRequestConfig = {
+        method: 'delete',
+        url: `/api/uploads/${upload_id}`,
+        headers: { Authorization: `Bearer ${token}` },
+    };
+    return await handleRequest(request);
+
 };
 
 export const handleToggleReport = async (upload_id: number) => {
     const token = localStorage.getItem('accessToken');
-    await axios.put(`/api/uploads/inReport/${upload_id}`, null, {
-        headers: {
-            Authorization: `Bearer ${token}`,
-        },
-    });
+    const request: AxiosRequestConfig = {
+        method: 'put',
+        url: `/api/uploads/inReport/${upload_id}`,
+        headers: { Authorization: `Bearer ${token}` },
+    };
+    return await handleRequest(request);
+  
 };
+
+export const fetchConflicts = async (fetchedReports: any[][]) => {
+    const token = localStorage.getItem('accessToken');
+
+    const request: AxiosRequestConfig = {
+        method: 'post',
+        url: '/api/conflicts/match',
+        data: { listUploads: fetchedReports },
+        headers: { Authorization: `Bearer ${token}` },
+    };
+    return await handleRequest(request);
+
+};
+
+
 
 

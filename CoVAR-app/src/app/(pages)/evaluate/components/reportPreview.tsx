@@ -22,10 +22,8 @@ const styles = {
 
 
 const ReportCard = ({ report, index }: { report: any[], index: number }) => {
-  const [openItemIndex, setOpenItemIndex] = useState<number | null>(null);
-
+ 
   return (
-    //for greenbone
 
     <Box sx={{ ...mainContentStyles }}>
       {report.map((item, idx) => (
@@ -41,7 +39,7 @@ const ReportCard = ({ report, index }: { report: any[], index: number }) => {
             <Typography variant="body2"><strong>CVSS:</strong> {item.CVSS}</Typography>
             <Typography variant="body2"><strong>Severity:</strong> {item.Severity}</Typography>
             <Typography variant="body2"><strong>Solution Type:</strong> {item.solutionType}</Typography>
-            <Typography variant="body2"><strong>NVT Name:</strong> {item.nvtName}</Typography>
+            <Typography variant="body2"><strong>Name:</strong> {item.nvtName}</Typography>
             <Typography variant="body2"><strong>Summary:</strong> {item.Summary}</Typography>
             <Typography variant="body2"><strong>Specific Result:</strong> {item.specificResult}</Typography>
             <Typography variant="body2"><strong>NVT OID:</strong> {item.nvtOid}</Typography>

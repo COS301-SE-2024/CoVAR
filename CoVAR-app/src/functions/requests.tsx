@@ -383,7 +383,6 @@ export const handleToggleReport = async (upload_id: number) => {
     });
 };
 
-
 export const populateReportsTable = async () => {
     const token = localStorage.getItem('accessToken');
     //define req
@@ -394,3 +393,20 @@ export const populateReportsTable = async () => {
     };
    return await handleRequest(request);
 };
+
+export const fetchExecReport = async (reportId) => {
+    const token = localStorage.getItem('accessToken');
+    const response = await fetch(`/api/reports/executive/${reportId}`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/pdf',
+            Authorization: `Bearer ${token}`
+        },
+    });
+
+    if (!response.ok) {
+        throw new Error('Failed to fetch executive report');
+    }
+
+    return response.blob(); // Return the PDF as a blob
+}

@@ -1,7 +1,7 @@
 name: Deploy Codebase
 on:
   push:
-    branches: [ main ]
+    branches: [ main, hotfix/deployment ]
 
 jobs:
   publish-containers:
@@ -22,9 +22,61 @@ jobs:
       id: login-ecr
       uses: aws-actions/amazon-ecr-login@v1
 
+    - name: Create .env file
+      run: |
+        echo PG_USER=${{ secrets.PG_USER }} >> .env
+        echo PG_HOST=${{ secrets.PG_HOST }} >> .env
+        echo PG_DATABASE=${{ secrets.PG_DATABASE }} >> .env
+        echo PG_PASSWORD=${{ secrets.PG_PASSWORD }} >> .env
+        echo PG_PORT=${{ secrets.PG_PORT }} >> .env
+        echo JSON_SECRET=${{ secrets.JSON_SECRET }} >> .env
+        echo REFRESH_SECRET=${{ secrets.REFRESH_SECRET }} >> .env
+        echo NEXT_PUBLIC_API_KEY=${{ secrets.NEXT_PUBLIC_API_KEY }} >> .env
+        echo NEXT_PUBLIC_AUTH_DOMAIN=${{ secrets.NEXT_PUBLIC_AUTH_DOMAIN }} >> .env
+        echo NEXT_PUBLIC_PROJECT_ID=${{ secrets.NEXT_PUBLIC_PROJECT_ID }} >> .env
+        echo NEXT_PUBLIC_STORAGE_BUCKET=${{ secrets.NEXT_PUBLIC_STORAGE_BUCKET }} >> .env
+        echo NEXT_PUBLIC_MESSAGING_SENDER_ID=${{ secrets.NEXT_PUBLIC_MESSAGING_SENDER_ID }} >> .env
+        echo NEXT_PUBLIC_APP_ID=${{ secrets.NEXT_PUBLIC_APP_ID }} >> .env
+        echo NEXT_PUBLIC_MEASUREMENT_ID=${{ secrets.NEXT_PUBLIC_MEASUREMENT_ID }} >> .env
+
+    - name: Create .env file
+      run: |
+        echo PG_USER=${{ secrets.PG_USER }} >> CoVAR-app/.env
+        echo PG_HOST=${{ secrets.PG_HOST }} >> CoVAR-app/.env
+        echo PG_DATABASE=${{ secrets.PG_DATABASE }} >> CoVAR-app/.env
+        echo PG_PASSWORD=${{ secrets.PG_PASSWORD }} >> CoVAR-app/.env
+        echo PG_PORT=${{ secrets.PG_PORT }} >> CoVAR-app/.env
+        echo JSON_SECRET=${{ secrets.JSON_SECRET }} >> CoVAR-app/.env
+        echo REFRESH_SECRET=${{ secrets.REFRESH_SECRET }} >> CoVAR-app/.env
+        echo NEXT_PUBLIC_API_KEY=${{ secrets.NEXT_PUBLIC_API_KEY }} >> CoVAR-app/.env
+        echo NEXT_PUBLIC_AUTH_DOMAIN=${{ secrets.NEXT_PUBLIC_AUTH_DOMAIN }} >> CoVAR-app/.env
+        echo NEXT_PUBLIC_PROJECT_ID=${{ secrets.NEXT_PUBLIC_PROJECT_ID }} >> CoVAR-app/.env
+        echo NEXT_PUBLIC_STORAGE_BUCKET=${{ secrets.NEXT_PUBLIC_STORAGE_BUCKET }} >> CoVAR-app/.env
+        echo NEXT_PUBLIC_MESSAGING_SENDER_ID=${{ secrets.NEXT_PUBLIC_MESSAGING_SENDER_ID }} >> CoVAR-app/.env
+        echo NEXT_PUBLIC_APP_ID=${{ secrets.NEXT_PUBLIC_APP_ID }} >> CoVAR-app/.env
+        echo NEXT_PUBLIC_MEASUREMENT_ID=${{ secrets.NEXT_PUBLIC_MEASUREMENT_ID }} >> CoVAR-app/.env
+
+    - name: create-json
+      id: create-json
+      uses: jsdaniell/create-json@1.1.2
+      with:
+        name: "server/covar-7c8b5-firebase-adminsdk-85918-b6654147c1.json"
+        json: ${{ secrets.FIREBASE_SDK }}
+
+    - name: Create DB Schema
+      run: |
+        echo ${{ secrets.SCHEMA }} > schema.sql
+
+    - name: Create Pem Files
+      run: |
+        echo ${{ secrets.PUBLIC }} > server/public.pem
+        echo ${{ secrets.PRIVATE }} > server/private.pem
+        echo ${{ secrets.REFRESH_PUBLIC }} > server/refreshPublic.pem
+        echo ${{ secrets.REFRESH_PRIVATE }} > server/refreshPrivate.pem
+        
     - name: Build and push Docker images
       run: |
-        cd CoVAR-app && npm i && npm run build && cd ..
+        # cd CoVAR-app && npm i && npm run build && cd ..
         docker build -t 211125691345.dkr.ecr.eu-west-2.amazonaws.com/covar_api:latest ./server
         docker build -t 211125691345.dkr.ecr.eu-west-2.amazonaws.com/covar_client:latest ./CoVAR-app
         docker build -t 211125691345.dkr.ecr.eu-west-2.amazonaws.com/covar_nginx:latest ./nginx

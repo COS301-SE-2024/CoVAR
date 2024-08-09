@@ -384,3 +384,13 @@ export const handleToggleReport = async (upload_id: number) => {
 };
 
 
+export const populateReportsTable = async () => {
+    const token = localStorage.getItem('accessToken');
+    //define req
+    const request = {
+        method: 'get',
+        url: '/api/uploads/reports',
+        headers: { Authorization: `Bearer ${token}` },
+    };
+   return await handleRequest(request);
+};

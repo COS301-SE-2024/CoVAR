@@ -1,5 +1,6 @@
 import axios, { AxiosRequestConfig, ResponseType } from 'axios';
 import { doSignOut } from './firebase/auth';
+import { blob } from 'stream/consumers';
 
 const signOut = async () => {
     try {
@@ -396,17 +397,24 @@ export const populateReportsTable = async () => {
 
 export const fetchExecReport = async (reportId) => {
     const token = localStorage.getItem('accessToken');
-    const response = await fetch(`/api/reports/executive/${reportId}`, {
-        method: 'GET',
+    // const response = await fetch(`/api/reports/executive/${reportId}`, {
+    //     method: 'GET',
+    //     headers: {
+    //         'Content-Type': 'application/pdf',
+    //         Authorization: `Bearer ${token}`
+    //     },
+    // });
+
+    // if (!response.ok) {
+    //     throw new Error('Failed to fetch executive report');
+    // }
+    const request: AxiosRequestConfig = {
+        method: 'get',
+        url: `/api/reports/executive/${reportId}`,
         headers: {
-            'Content-Type': 'application/pdf',
-            Authorization: `Bearer ${token}`
+            Authorization: `Bearer ${token}`,
         },
-    });
-
-    if (!response.ok) {
-        throw new Error('Failed to fetch executive report');
-    }
-
-    return response.blob(); // Return the PDF as a blob
+    };
+    const response = await handleRequest(request);
+    return response.blob();
 }

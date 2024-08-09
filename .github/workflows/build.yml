@@ -1,4 +1,3 @@
-
 name: Build Codebase
 on:
   push:
@@ -11,27 +10,35 @@ permissions:
   contents: read
 
 jobs:
-  start:
-    name: Initial Setup
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - name: Starting Job
-        run: |
-          echo "Beginning to Build ${{ github.repository }}"
-
   run_tests:
     name: Build Codebase
-    needs: start
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - name: Checkout "${{ github.repository }}"
         uses: actions/checkout@v4
 
-      - name: Set up Node v21
+      - name: Set up Node v22
         uses: actions/setup-node@v4
         with:
-          node-version: '21.x'
+          node-version: '22.5.1'
+
+      - name: Create .env file
+        run: |
+          echo PG_USER=${{ secrets.PG_USER }} >> CoVAR-app/.env
+          echo PG_HOST=${{ secrets.PG_HOST }} >> CoVAR-app/.env
+          echo PG_DATABASE=${{ secrets.PG_DATABASE }} >> CoVAR-app/.env
+          echo PG_PASSWORD=${{ secrets.PG_PASSWORD }} >> CoVAR-app/.env
+          echo PG_PORT=${{ secrets.PG_PORT }} >> CoVAR-app/.env
+          echo JSON_SECRET=${{ secrets.JSON_SECRET }} >> CoVAR-app/.env
+          echo REFRESH_SECRET=${{ secrets.REFRESH_SECRET }} >> CoVAR-app/.env
+          echo NEXT_PUBLIC_API_KEY=${{ secrets.NEXT_PUBLIC_API_KEY }} >> CoVAR-app/.env
+          echo NEXT_PUBLIC_AUTH_DOMAIN=${{ secrets.NEXT_PUBLIC_AUTH_DOMAIN }} >> CoVAR-app/.env
+          echo NEXT_PUBLIC_PROJECT_ID=${{ secrets.NEXT_PUBLIC_PROJECT_ID }} >> CoVAR-app/.env
+          echo NEXT_PUBLIC_STORAGE_BUCKET=${{ secrets.NEXT_PUBLIC_STORAGE_BUCKET }} >> CoVAR-app/.env
+          echo NEXT_PUBLIC_MESSAGING_SENDER_ID=${{ secrets.NEXT_PUBLIC_MESSAGING_SENDER_ID }} >> CoVAR-app/.env
+          echo NEXT_PUBLIC_APP_ID=${{ secrets.NEXT_PUBLIC_APP_ID }} >> CoVAR-app/.env
+          echo NEXT_PUBLIC_MEASUREMENT_ID=${{ secrets.NEXT_PUBLIC_MEASUREMENT_ID }} >> CoVAR-app/.env
 
       - name: Install dependencies
         run:  |
@@ -40,13 +47,3 @@ jobs:
       - name: Build Codebase
         run:  |
           cd CoVAR-app && npm run build
-
-  end:
-    name: The end
-    runs-on: ubuntu-latest
-    needs: [start, run_tests]
-    steps:
-      - name: Ending
-        id: init
-        run: |
-          echo "${{ github.repository }} has been successfully built"

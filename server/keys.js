@@ -1,5 +1,3 @@
-const { json } = require("body-parser");
-
 module.exports = {
     pgUser: process.env.PG_USER,
     pgHost: process.env.PG_HOST,

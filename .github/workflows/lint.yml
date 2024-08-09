@@ -2,34 +2,25 @@ name: Lint Codebase
 on:
   push:
     branches: [ main, develop ]
+
   pull_request:
     branches: [ main, develop ]
-    #types: [opened, synchronize, reopened, ready_for_review]
+    
 permissions:
   contents: read
 
 jobs:
-  start:
-    name: Initial Setup
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-
-    steps:
-      - name: Starting Job
-        run: |
-          echo "Beginning to lint ${{ github.repository }}"
-
   lint_frontend:
     name: Lint Frontend
     runs-on: ubuntu-latest
-    needs: start
+    timeout-minutes: 5
     steps:
       - name: Checkout "${{ github.repository }}"
         uses: actions/checkout@v3
-      - name: Set up Node v21
-        uses: actions/setup-node@v3
+      - name: Set up Node v22
+        uses: actions/setup-node@v4
         with:
-          node-version: '21.x'
+          node-version: '22.5.1'
 
       - name: Install dependencies
         run:  |
@@ -38,12 +29,23 @@ jobs:
       - name: Lint Codebase
         run:  |
           cd CoVAR-app && npm run lint
-  end:
-    name: The end
+  
+  lint_backend:
+    name: Lint Backend
     runs-on: ubuntu-latest
-    needs: [lint_frontend]
+    timeout-minutes: 5
     steps:
-      - name: Ending
-        id: init
-        run: |
-          echo "${{ github.repository }} has been successfully linted"
+      - name: Checkout "${{ github.repository }}"
+        uses: actions/checkout@v3
+      - name: Set up Node v22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.5.1'
+
+      - name: Install dependencies
+        run:  |
+          cd server && npm ci
+
+      - name: Lint Codebase
+        run:  |
+          cd server && npm run lint

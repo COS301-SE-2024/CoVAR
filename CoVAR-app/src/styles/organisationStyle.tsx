@@ -1,3 +1,4 @@
+'use client'
 import { SxProps, Theme } from '@mui/system';
 
 export const mainContentStyles: SxProps<Theme> = {
@@ -13,7 +14,7 @@ export const mainContentStyles: SxProps<Theme> = {
 
 export const cardStyles: SxProps<Theme> = {
     width: 450,
-    height: 220,
+    height: 250,
     backgroundColor: (theme) => theme.palette.background.paper,
     color: (theme) => theme.palette.text.secondary,
     padding: (theme) => theme.spacing(2),

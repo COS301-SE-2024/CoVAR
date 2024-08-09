@@ -1,0 +1,53 @@
+name: Deploy Codebase
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  publish-containers:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: eu-west-2
+
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v1
+
+    - name: Build and push Docker images
+      run: |
+        docker build -t 211125691345.dkr.ecr.eu-west-2.amazonaws.com/covar_api:latest ./server
+        docker build -t 211125691345.dkr.ecr.eu-west-2.amazonaws.com/covar_client:latest ./CoVAR-app
+        docker build -t 211125691345.dkr.ecr.eu-west-2.amazonaws.com/covar_nginx:latest ./nginx
+        docker push 211125691345.dkr.ecr.eu-west-2.amazonaws.com/covar_api:latest
+        docker push 211125691345.dkr.ecr.eu-west-2.amazonaws.com/covar_client:latest
+        docker push 211125691345.dkr.ecr.eu-west-2.amazonaws.com/covar_nginx:latest
+  
+  deploy-containers:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: publish-containers
+    steps:
+     - name: Deploy using ssh
+       uses: appleboy/ssh-action@master
+       with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /home/CoVAR
+            git pull
+            aws ecr get-login-password --region eu-west-2 | docker login --username AWS --password-stdin 211125691345.dkr.ecr.eu-west-2.amazonaws.com
+            docker-compose -f docker-compose.prod.yml down
+            docker system prune -f
+            docker-compose -f docker-compose.prod.yml pull
+            docker-compose -f docker-compose.prod.yml up -d
+

@@ -1,2 +1,30 @@
-**/node_modules/
-**/node_modules/*
+# Node modules
+node_modules
+npm-debug.log
+yarn-error.log
+
+# Build directories
+.next
+out
+build
+
+# Cypress artifacts
+cypress/screenshots
+cypress/videos
+cypress/reports
+
+# Docker artifacts
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Environment files
+.env
+.cypress.env.json
+
+# Other project-specific files
+coverage
+*.log
+
+# Schema
+schema.sql

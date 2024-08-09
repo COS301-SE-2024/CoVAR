@@ -387,9 +387,9 @@ export const handleToggleReport = async (upload_id: number) => {
 export const populateReportsTable = async () => {
     const token = localStorage.getItem('accessToken');
     //define req
-    const request = {
-        method: 'get',
-        url: '/api/uploads/reports',
+    const request :AxiosRequestConfig = {
+        method: 'post',
+        url: `/api/reports/getReports`,
         headers: { Authorization: `Bearer ${token}` },
     };
    return await handleRequest(request);

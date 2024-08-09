@@ -24,6 +24,7 @@ jobs:
 
     - name: Build and push Docker images
       run: |
+        cd CoVAR-app && npm i && npm run build && cd ..
         docker build -t 211125691345.dkr.ecr.eu-west-2.amazonaws.com/covar_api:latest ./server
         docker build -t 211125691345.dkr.ecr.eu-west-2.amazonaws.com/covar_client:latest ./CoVAR-app
         docker build -t 211125691345.dkr.ecr.eu-west-2.amazonaws.com/covar_nginx:latest ./nginx

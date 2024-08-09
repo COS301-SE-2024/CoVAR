@@ -25,11 +25,13 @@ const organizations = require('./routes/organizations');
 const users = require('./routes/users');
 const authentication = require('./routes/authentication');
 const uploads = require('./routes/uploads');
+const dashboard = require('./routes/dashboard');
 
 app.use(authentication);
 app.use(users);
 app.use(organizations);
 app.use(uploads);
+app.use(dashboard);
 
 
 app.listen(5000, () => {

@@ -52,6 +52,7 @@ const ButtonGroup = styled(Box)(({ theme }) => ({
     alignItems: 'center',
     margin: theme.spacing(2, 0),
     width: '10%',
+    gap: theme.spacing(1),
 }));
 
 const UnmatchedReports = styled(Box)(({ theme }) => ({
@@ -76,12 +77,13 @@ const userConflicts = () => {
 
     const name = pathname.split('/').pop();
 
-   
+
     const [reportIds, setReportIds] = useState<number[]>([]);
-    const [reports, setReports] = useState<any[][]>([]);
     const [matchedReports, setMatchedReports] = useState<any[]>([]);
     const [unmatchedList1, setUnmatchedList1] = useState<any[]>([]);
     const [unmatchedList2, setUnmatchedList2] = useState<any[]>([]);
+    const [finalReport, setFinalReport] = useState<any[]>([]); // Initialize finalReport array
+    const [selectedReports, setSelectedReports] = useState<{ left: number[], right: number[] }>({ left: [], right: [] });
 
     const fetchUploadIDsForReport = async () => {
         try {
@@ -107,8 +109,6 @@ const userConflicts = () => {
         try {
             if (reportIds.length > 0) {
                 const fetchedReports = await fetchReports(reportIds);
-                console.log(fetchedReports);
-                setReports(fetchedReports);
 
                 const token = localStorage.getItem('accessToken');
 
@@ -124,8 +124,6 @@ const userConflicts = () => {
                 setMatchedReports(matches);
                 setUnmatchedList1(unmatchedList1);
                 setUnmatchedList2(unmatchedList2);
-            } else {
-                setReports([]);
             }
         } catch (error) {
             console.error('Error generating reports:', error);
@@ -140,8 +138,8 @@ const userConflicts = () => {
         fetchReportsJSON();
     }, [reportIds]);
 
-    const renderReport = (report: any) => (
-        <ReportCard>
+    const renderReport = (report: any, isSelected: boolean) => (
+        <ReportCard sx={{ border: isSelected ? '4px solid #4caf50' : 'none' }}>
             <CardContent>
                 {Object.entries(report).map(([key, value]) => (
                     <Typography key={key} variant="body2">
@@ -152,39 +150,57 @@ const userConflicts = () => {
         </ReportCard>
     );
 
-    const handleButtonClick = (action: string) => {
-        console.log(`Action selected: ${action}`);
-        // Implement logic for handling the selected action (Accept Right, Accept Left, Accept Both, Accept None)
+    const handleButtonClick = (action: string, index: number) => {
+        let updatedReport = [...finalReport];
+        let updatedSelectedReports = { ...selectedReports };
+
+        if (action === 'acceptLeft') {
+            updatedReport.push(matchedReports[index][0]);
+            updatedSelectedReports.left.push(index);
+        } else if (action === 'acceptRight') {
+            updatedReport.push(matchedReports[index][1]);
+            updatedSelectedReports.right.push(index);
+        } else if (action === 'acceptBoth') {
+            updatedReport.push(matchedReports[index][0], matchedReports[index][1]);
+            updatedSelectedReports.left.push(index);
+            updatedSelectedReports.right.push(index);
+        } else if (action === 'acceptNone') {
+            // Remove selected reports
+            updatedReport = updatedReport.filter(
+                (report) => report !== matchedReports[index][0] && report !== matchedReports[index][1]
+            );
+            updatedSelectedReports.left = updatedSelectedReports.left.filter((i) => i !== index);
+            updatedSelectedReports.right = updatedSelectedReports.right.filter((i) => i !== index);
+        }
+
+        setFinalReport(updatedReport);
+        setSelectedReports(updatedSelectedReports);
+        console.log('Final Report:', updatedReport);
     };
 
     return (
         <ReportsContainer sx={mainContentStyles}>
             <Box>
-                <Typography variant="h5" gutterBottom>Matched Reports</Typography>
+                <Typography variant="h5" gutterBottom>Identified Similarities</Typography>
                 {matchedReports.map(([report1, report2]: [any, any], index: number) => (
                     <MatchedPair key={index}>
                         <Box display="flex" width="100%" justifyContent="space-between" alignItems="center">
-
-                            {renderReport(report1)}
-
+                            {renderReport(report1, selectedReports.left.includes(index))}
                             <ButtonGroup>
-                                <Button variant="contained" color="primary" onClick={() => handleButtonClick('acceptRight')}>
+                                <Button variant="contained" color="primary" onClick={() => handleButtonClick('acceptRight', index)}>
                                     <ArrowForwardIcon />
                                 </Button>
-                                <Button variant="contained" color="primary" onClick={() => handleButtonClick('acceptLeft')}>
+                                <Button variant="contained" color="primary" onClick={() => handleButtonClick('acceptLeft', index)}>
                                     <ArrowBackIcon />
                                 </Button>
-                                <Button variant="contained" color="primary" onClick={() => handleButtonClick('acceptBoth')}>
+                                <Button variant="contained" color="primary" onClick={() => handleButtonClick('acceptBoth', index)}>
                                     <CheckCircleIcon />
                                 </Button>
-                                <Button variant="contained" color="primary" onClick={() => handleButtonClick('acceptNone')}>
+                                <Button variant="contained" color="primary" onClick={() => handleButtonClick('acceptNone', index)}>
                                     <CancelIcon />
                                 </Button>
                             </ButtonGroup>
-
-
-                            {renderReport(report2)}
-
+                            {renderReport(report2, selectedReports.right.includes(index))}
                         </Box>
                     </MatchedPair>
                 ))}

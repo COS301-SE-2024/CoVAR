@@ -70,23 +70,23 @@ const ReportPreview = ({ reports, reportIds, client }: { reports: any[][], repor
     return <Typography>No reports to display</Typography>;
   }
   
-  const generateReport = async () => {
-    try {
-      const token = localStorage.getItem('accessToken');
-      const response = await axios.post(
-        '/api/uploads/generateReport',
-        { reports, reportIds, client },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      console.log('Report generated successfully:', response.data);
-    } catch (error) {
-      console.error('Error generating report:', error);
-    }
-  };
+  // const generateReport = async () => {
+  //   try {
+  //     const token = localStorage.getItem('accessToken');
+  //     const response = await axios.post(
+  //       '/api/uploads/generateReport',
+  //       { reports, reportIds, client },
+  //       {
+  //         headers: {
+  //           Authorization: `Bearer ${token}`,
+  //         },
+  //       }
+  //     );
+  //     console.log('Report generated successfully:', response.data);
+  //   } catch (error) {
+  //     console.error('Error generating report:', error);
+  //   }
+  // };
 
   return (
     <>
@@ -98,16 +98,6 @@ const ReportPreview = ({ reports, reportIds, client }: { reports: any[][], repor
             </Grid>
           ))}
         </Grid>
-      </Box>
-      <Box sx={{ position: 'fixed', bottom: '5vh', right: '20%' }}>
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={generateReport}
-          sx={{ marginTop: 2 }}
-        >
-          Generate Report
-        </Button>
       </Box>
     </>
   );

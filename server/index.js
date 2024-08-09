@@ -25,12 +25,13 @@ const organizations = require('./routes/organizations');
 const users = require('./routes/users');
 const authentication = require('./routes/authentication');
 const uploads = require('./routes/uploads');
+const reports = require('./routes/reports');
 
 app.use(authentication);
 app.use(users);
 app.use(organizations);
 app.use(uploads);
-
+app.use(reports);
 
 app.listen(5000, () => {
     console.log('Listening');

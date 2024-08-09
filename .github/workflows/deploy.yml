@@ -1,7 +1,7 @@
 name: Deploy Codebase
 on:
   push:
-    branches: [ main, hotfix/deployment ]
+    branches: [ main ]
 
 jobs:
   publish-containers:

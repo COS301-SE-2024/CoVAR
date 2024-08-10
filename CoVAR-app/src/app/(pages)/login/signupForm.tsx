@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTheme, ThemeProvider } from '@mui/material/styles';
 import { Container, Box, Typography, TextField, Button, Link, CssBaseline, Card } from '@mui/material';
@@ -64,6 +64,16 @@ const Signup: React.FC<SignupProps> = ({ toggleForm }) => {
   const handleClickShowPassword = () => setShowPassword((prev) => !prev);
   const handleClickShowPasswordConfirm = () => setShowPasswordConfirm((prev) => !prev);
 
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => {
+        setError(''); 
+      }, 5000); 
+
+      return () => clearTimeout(timer); 
+    }
+  }, [error]);
+
   const handleEmailChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newEmail = event.target.value;
     setEmail(newEmail);
@@ -98,18 +108,84 @@ const Signup: React.FC<SignupProps> = ({ toggleForm }) => {
   };
 
   const signInWithGoogle = async () => {
-    // Your Google sign-in logic here
+    try {
+      const result = await doSignInWithGoogle();
+      if (result.user) {
+        const { uid, email } = result.user;
+        await addUserToFirestore(result.user as User);
+        const response = await axios.post('/api/users/create', { uid, email });
+        const firebaseToken = await result.user.getIdToken();
+
+        const loginResponse = await axios.post('/api/users/login', {
+          firebaseToken,
+          username: email
+        });
+
+        localStorage.setItem('accessToken', loginResponse.data.accessToken);
+        localStorage.setItem('refreshToken', loginResponse.data.refreshToken);
+        axios.defaults.headers.common['Authorization'] = `Bearer ${loginResponse.data.accessToken}`;
+        axios.defaults.headers.post['Content-Type'] = 'application/json';
+        document.cookie = `accessToken=${response.data.accessToken}`;
+        let getUserResponse;
+        try {
+          getUserResponse = await axios.post(
+            '/api/getUser',
+            { accessToken: localStorage.getItem('accessToken') },
+            { headers: { Authorization: `Bearer ${loginResponse.data.accessToken}` } }
+          );
+        } catch (error) {
+          throw error; // Re-throw the error to be caught by the outer catch block
+        }
+        const { role } = getUserResponse.data;
+        if (getUserResponse.status === 200) {
+          if (role === "unauthorised") {
+            router.replace('/lounge'); // Navigate to lounge if unauthorised
+          } else {
+            router.replace('/dashboard'); // Navigate to dashboard after successful login
+          }
+        } else {
+          throw new Error('Failed to create user in PostgreSQL');
+        }
+      }
+    } catch (error) {
+      setError('Error signing in with Google.');
+    }
   };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!isValidPassword || !doPasswordsMatch || emailError) {
-      setError('Please correct the errors before submitting.');
+    const data = new FormData(event.currentTarget);
+    const email = data.get('email') as string;
+    const password = data.get('password') as string;
+    const passwordConfirm = data.get('passwordConfirm') as string;
+
+    if (password !== passwordConfirm) {
+      setError('Passwords do not match.');
       return;
     }
-    
-    // Your user creation logic here
+
+    try {
+      const userCredential = await doCreateUserWithEmailAndPassword(email, password);
+      const user = userCredential.user;
+      await addUserToFirestore(user as User);
+      const response = await axios.post('/api/users/create', { uid: user.uid, email: user.email });
+      localStorage.setItem('accessToken', response.data.accessToken);
+      localStorage.setItem('refreshToken', response.data.refreshToken);
+      document.cookie = `accessToken=${response.data.accessToken}`;
+      if (response.status === 201) {
+          router.replace('/lounge'); 
+      } else {
+        throw new Error('Failed to create user in PostgreSQL');
+      }
+    } catch (error: any) {
+      if (error.code === "auth/email-already-in-use") {
+        setError('Email is already in use. Please use a different email address.');
+      } else {
+        setError('Error signing up. Please try again.');
+      }
+    }
   };
+
 
   return (
     <ThemeProvider theme={theme}>
@@ -127,135 +203,165 @@ const Signup: React.FC<SignupProps> = ({ toggleForm }) => {
               Sign Up
             </Typography>
             <Box component="form" onSubmit={handleSubmit} sx={{ width: '100%', mt: 1 }}>
-              <TextField
-                margin="normal"
-                required
-                fullWidth
-                id="email"
-                label="Email Address"
-                name="email"
-                autoComplete="email"
-                autoFocus
-                value={email}
-                onChange={handleEmailChange}
-                InputLabelProps={{ style: { color: theme.palette.text.primary } }}
-                error={!!emailError}
-                helperText={emailError}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    '& fieldset': { borderColor: theme.palette.divider },
-                    '&:hover fieldset': { borderColor: theme.palette.divider },
-                    '&.Mui-focused fieldset': { borderColor: theme.palette.primary.main },
-                  },
-                }}
-              />
-              <TextField
-                margin="normal"
-                required
-                fullWidth
-                name="password"
-                label="Password"
-                type={showPassword ? 'text' : 'password'}
-                id="password"
-                autoComplete="current-password"
-                value={password}
-                onChange={handlePasswordChange}
-                InputLabelProps={{ style: { color: theme.palette.text.primary } }}
-                error={!isValidPassword}
-                helperText={!isValidPassword && "Password must be at least 8 characters and include letters, numbers, and symbols."}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    '& fieldset': { borderColor: !isValidPassword ? theme.palette.error.main : theme.palette.divider },
-                    '&:hover fieldset': { borderColor: !isValidPassword ? theme.palette.error.main : theme.palette.divider },
-                    '&.Mui-focused fieldset': { borderColor: isValidPassword ? theme.palette.primary.main : theme.palette.error.main },
-                  },
-                  '& .MuiFormHelperText-root': {
-                    marginTop: 1, // Prevent overlap with TextField
-                  },
-                }}
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton
-                        aria-label="toggle password visibility"
-                        onClick={handleClickShowPassword}
-                        edge="end"
-                      >
-                        {showPassword ?  <Visibility /> : <VisibilityOff />}
-                      </IconButton>
-                    </InputAdornment>
-                  ),
-                }}
-              />
-              <TextField
-                margin="normal"
-                required
-                fullWidth
-                name="passwordConfirm"
-                label="Confirm Password"
-                type={showPasswordConfirm ? 'text' : 'password'}
-                id="passwordConfirm"
-                autoComplete="current-password"
-                value={passwordConfirm}
-                onChange={handlePasswordConfirmChange}
-                InputLabelProps={{ style: { color: theme.palette.text.primary } }}
-                error={!doPasswordsMatch}
-                helperText={!doPasswordsMatch && "Passwords do not match."}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    '& fieldset': { borderColor: !doPasswordsMatch ? theme.palette.error.main : theme.palette.divider },
-                    '&:hover fieldset': { borderColor: !doPasswordsMatch ? theme.palette.error.main : theme.palette.divider },
-                    '&.Mui-focused fieldset': { borderColor: doPasswordsMatch ? theme.palette.primary.main : theme.palette.error.main },
-                  },
-                  '& .MuiFormHelperText-root': {
-                    marginTop: 1, 
-                  },
-                }}
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton
-                        aria-label="toggle confirm password visibility"
-                        onClick={handleClickShowPasswordConfirm}
-                        edge="end"
-                      >
-                        {showPasswordConfirm ? <Visibility /> : <VisibilityOff />}
-                      </IconButton>
-                    </InputAdornment>
-                  ),
-                }}
-              />
+            <TextField
+              margin="normal"
+              required
+              fullWidth
+              id="email"
+              label="Email Address"
+              name="email"
+              autoComplete="email"
+              autoFocus
+              value={email}
+              onChange={handleEmailChange}
+              InputLabelProps={{ style: { color: theme.palette.text.primary } }}
+              error={!!emailError}
+              helperText={emailError}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  '& fieldset': { borderColor: theme.palette.divider },
+                  '&:hover fieldset': { borderColor: theme.palette.divider },
+                  '&.Mui-focused fieldset': { borderColor: theme.palette.primary.main },
+                },
+                '& .MuiFormHelperText-root': {
+                  position: 'absolute',
+                  bottom: '-25px',
+                  left: 0,
+                  color: theme.palette.error.main,
+                  marginTop: 0,
+                },
+                marginBottom: 3, 
+              }}
+            />
+
+            <TextField
+              margin="normal"
+              required
+              fullWidth
+              name="password"
+              label="Password"
+              type={showPassword ? 'text' : 'password'}
+              id="password"
+              autoComplete="current-password"
+              value={password}
+              onChange={handlePasswordChange}
+              InputLabelProps={{ style: { color: theme.palette.text.primary } }}
+              error={!isValidPassword}
+              helperText={!isValidPassword && "Password must be at least 8 characters and include letters, numbers, and symbols."}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  '& fieldset': { borderColor: !isValidPassword ? theme.palette.error.main : theme.palette.divider },
+                  '&:hover fieldset': { borderColor: !isValidPassword ? theme.palette.error.main : theme.palette.divider },
+                  '&.Mui-focused fieldset': { borderColor: isValidPassword ? theme.palette.primary.main : theme.palette.error.main },
+                },
+                '& .MuiFormHelperText-root': {
+                  position: 'absolute',
+                  bottom: '-25px',
+                  left: 0,
+                  color: theme.palette.error.main,
+                  marginTop: 0,
+                },
+                marginBottom: 3, 
+              }}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      aria-label="toggle password visibility"
+                      onClick={handleClickShowPassword}
+                      edge="end"
+                    >
+                      {showPassword ? <Visibility /> : <VisibilityOff />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
+            />
+
+            <TextField
+              margin="normal"
+              required
+              fullWidth
+              name="passwordConfirm"
+              label="Confirm Password"
+              type={showPasswordConfirm ? 'text' : 'password'}
+              id="passwordConfirm"
+              autoComplete="current-password"
+              value={passwordConfirm}
+              onChange={handlePasswordConfirmChange}
+              InputLabelProps={{ style: { color: theme.palette.text.primary } }}
+              error={!doPasswordsMatch}
+              helperText={!doPasswordsMatch && "Passwords do not match."}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  '& fieldset': { borderColor: !doPasswordsMatch ? theme.palette.error.main : theme.palette.divider },
+                  '&:hover fieldset': { borderColor: !doPasswordsMatch ? theme.palette.error.main : theme.palette.divider },
+                  '&.Mui-focused fieldset': { borderColor: doPasswordsMatch ? theme.palette.primary.main : theme.palette.error.main },
+                },
+                '& .MuiFormHelperText-root': {
+                  position: 'absolute',
+                  bottom: '-25px',
+                  left: 0,
+                  color: theme.palette.error.main,
+                  marginTop: 0,
+                },
+                marginBottom: 3, 
+              }}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      aria-label="toggle confirm password visibility"
+                      onClick={handleClickShowPasswordConfirm}
+                      edge="end"
+                    >
+                      {showPasswordConfirm ? <Visibility /> : <VisibilityOff />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
+            />
               <Button
                 type="submit"
                 fullWidth
                 variant="contained"
-                sx={{ mt: 3, mb: 2, backgroundColor: theme.palette.primary.main }}
+                sx={{ mt: 3, mb: 3, backgroundColor: theme.palette.primary.main }}
                 disabled={!isValidPassword || !doPasswordsMatch || !!emailError}
               >
                 Sign Up
               </Button>
-              {error && (
-                <Typography variant="body2" color="error">
-                  {error}
-                </Typography>
-              )}
               <Button
                 fullWidth
                 variant="contained"
                 color="secondary"
                 startIcon={<GoogleIcon />}
-                sx={{ mt: 1, mb: 2 }}
+                sx={{ mt: 1, mb: 3 }}
                 onClick={signInWithGoogle}
               >
                 Sign Up with Google
               </Button>
-              <Box display="flex" justifyContent="center" alignItems="center" mt={2}>
+              <Box display="flex" justifyContent="center" alignItems="center" mt={2} mb = {2}>
                 <Typography variant="body2" sx={{ color: theme.palette.text.primary }}>
                   Already have an account?
                 </Typography>
                 <Link href="#" variant="body2" id="link" onClick={toggleForm} sx={{ cursor: 'pointer', ml: 1 }}>
                   Sign In
                 </Link>
+              </Box>
+              <Box sx={{ position: 'relative', width: '100%' }}>
+                {error && (
+                  <Box 
+                    display="flex" 
+                    justifyContent="center" 
+                    alignItems="center" 
+                    width="100%" 
+                    sx={{ position: 'absolute', top: '110%', left: 0 }} 
+                  >
+                    <Typography variant="body2" color="error" textAlign="center">
+                      {error}
+                    </Typography>
+                  </Box>
+                )}
               </Box>
             </Box>
           </Box>

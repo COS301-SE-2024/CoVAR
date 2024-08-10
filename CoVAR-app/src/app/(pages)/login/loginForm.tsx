@@ -1,5 +1,5 @@
 'use client'
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTheme, ThemeProvider } from '@mui/material/styles';
 import { Container, Box, Typography, TextField, Button, Link, CssBaseline, Card } from '@mui/material';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
@@ -35,6 +35,17 @@ const Login: React.FC<LoginProps> = ({ toggleForm }) => {
   const [error, setError] = useState('');
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => {
+        setError(''); 
+      }, 5000); 
+
+      return () => clearTimeout(timer); 
+    }
+  }, [error]);
+
 
   const handleClickShowPassword = () => setShowPassword(!showPassword);
 
@@ -221,6 +232,7 @@ const Login: React.FC<LoginProps> = ({ toggleForm }) => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 sx={{
+                  marginBottom: 3, 
                   '& .MuiOutlinedInput-root': {
                     '& fieldset': {
                       borderColor: theme.palette.divider,
@@ -249,6 +261,7 @@ const Login: React.FC<LoginProps> = ({ toggleForm }) => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               sx={{
+                marginBottom: 3, 
                 '& .MuiOutlinedInput-root': {
                   '& fieldset': {
                     borderColor: theme.palette.divider,
@@ -276,7 +289,7 @@ const Login: React.FC<LoginProps> = ({ toggleForm }) => {
               }}
             />
 
-              <Box sx={{ textAlign: 'left', width: '100%', mt: 1 }}>
+              <Box sx={{ textAlign: 'left', width: '100%', mt: 1, mb: 3 }}>
                 <Link href="#" variant="body2" sx={{ color: theme.palette.text.secondary }}>
                   Forgot your password?
                 </Link>
@@ -285,19 +298,19 @@ const Login: React.FC<LoginProps> = ({ toggleForm }) => {
                 type="submit"
                 fullWidth
                 variant="contained"
-                sx={{ mt: 3, mb: 2, backgroundColor: theme.palette.primary.main }}
+                sx={{ mt: 1, mb: 3, backgroundColor: theme.palette.primary.main }}
               >
                 Log in
               </Button>
               <Button
                 fullWidth
                 variant="contained"
-                sx={{ mt: 3, mb: 2, backgroundColor: theme.palette.primary.main }}
+                sx={{ mt: 1, mb: 3, backgroundColor: theme.palette.primary.main }}
                 onClick={signInWithGoogle}
               >
                 <GoogleIcon />Continue with Google
               </Button>
-              <Box display="flex" justifyContent="center" alignItems="center" mt={2}>
+              <Box display="flex" justifyContent="center" alignItems="center" mt={2} mb = {2}>
                 <Typography variant="body2" sx={{ color: theme.palette.text.primary }}>
                   Don&apos;t have an account?
                 </Typography>
@@ -305,11 +318,21 @@ const Login: React.FC<LoginProps> = ({ toggleForm }) => {
                   Sign up
                 </Link>
               </Box>
-              {error && (
-                <Typography variant="body2" color="error" id="error" sx={{ mt: 2 }}>
-                  {error}
-                </Typography>
-              )}
+              <Box sx={{ position: 'relative', width: '100%' }}>
+                {error && (
+                  <Box 
+                    display="flex" 
+                    justifyContent="center" 
+                    alignItems="center" 
+                    width="100%" 
+                    sx={{ position: 'absolute', top: '110%', left: 0 }} 
+                  >
+                    <Typography variant="body2" color="error" textAlign="center">
+                      {error}
+                    </Typography>
+                  </Box>
+                )}
+              </Box>
             </Box>
           </Box>
         </Card>

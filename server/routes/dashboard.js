@@ -1,5 +1,5 @@
 const express = require('express');
-const { authenticateToken, verifyToken } = require('../lib/securityFunctions');
+const { authenticateToken } = require('../lib/securityFunctions');
 const pgClient = require('../lib/postgres');
 const router = express.Router();
 const { getAllReportIds } = require('../lib/serverHelperFunctions'); 

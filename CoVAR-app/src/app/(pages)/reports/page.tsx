@@ -82,7 +82,7 @@ const ReportsPage = () => {
                             <TableCell sx={{ color: '#CAD2C5', fontWeight: 'bold' }}>Critical Count</TableCell>
                             <TableCell sx={{ color: '#CAD2C5', fontWeight: 'bold' }}>Medium Count</TableCell>
                             <TableCell sx={{ color: '#CAD2C5', fontWeight: 'bold' }}>Low Count</TableCell>
-                            <TableCell sx={{ color: '#CAD2C5', fontWeight: 'bold' }}>Actions</TableCell> {/* New column for actions */}
+                            <TableCell sx={{ color: '#CAD2C5', fontWeight: 'bold' }}>Actions</TableCell> 
                         </TableRow>
                     </TableHead>
                     <TableBody>

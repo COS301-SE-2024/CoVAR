@@ -70,7 +70,7 @@ router.post('/reports/getReports', authenticateToken, async (req, res) => {
                         severity = severity.trim().toLowerCase();
                     }
                     
-                    console.log("Item Severity:", severity); // Log the severity to see what it returns
+                    //console.log("Item Severity:", severity); // Log the severity to see what it returns
 
                     switch (severity) {
                         case 'high':
@@ -149,9 +149,12 @@ router.get('/reports/executive/:report_id', authenticateToken, async (req, res) 
                 }
             });
         });
+        const doc = new PDFDocument({
+            size: 'A4',
+            margin: 50,
+            autoFirstPage: false  // Don't create a page automatically
+        });
 
-        // Create a PDF document
-        const doc = new PDFDocument();
         let filename = `executive_report_${report_id}.pdf`;
         filename = encodeURIComponent(filename) + '.pdf';
         res.setHeader('Content-disposition', `attachment; filename="${filename}"`);
@@ -160,22 +163,59 @@ router.get('/reports/executive/:report_id', authenticateToken, async (req, res) 
         // Pipe the PDF into the response
         doc.pipe(res);
 
+        // Get today's date for header and footer
+        const todayDate = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long' });
+
+        // Add header to each page
+        const addHeader = () => {
+            doc.fontSize(10).text(`Cyber Security Vulnerability Report ${todayDate}`, 50, 40);
+            doc.text(`BlueVision ITM (Pty) Limited`, { align: 'right' });
+            doc.moveDown();
+        };
+
+        // Add footer to each page
+        const addFooter = () => {
+            const bottom = doc.page.height - 60;
+            doc.fontSize(8).text(`Cyber Security Vulnerability Report ${todayDate} Revision: 1.0`, 50, bottom);
+            doc.text(`Disclosure Classification: Confidential`, 50, bottom + 10);
+            doc.text(`© Copyright BlueVision ITM (PTY) Limited – All Rights Reserved.`, 50, bottom + 20);
+            doc.text(`Page ${doc.pageNumber}`, { align: 'right' });
+        };
+
+        // Function to add a new page with header
+        const addNewPage = () => {
+            doc.addPage();
+            addHeader();
+        };
+
+        // Add the first page
+        addNewPage();
+
         // Add content to the PDF
         doc.fontSize(20).text('Executive Report', { align: 'center' });
         doc.moveDown();
+
         doc.fontSize(14).text(`Report ID: ${report.report_id}`);
         doc.text(`Date Created: ${new Date(report.created_at).toLocaleDateString()}`);
         doc.moveDown();
+
         doc.text(`Critical Issues: ${criticalCount}`);
         doc.text(`Medium Issues: ${mediumCount}`);
         doc.text(`Low Issues: ${lowCount}`);
         doc.moveDown();
 
-        // Add any other summary or trend information you want here
+        // Add any other content here...
+
+        // Add footer to all pages
+        let pages = doc.bufferedPageRange();
+        for (let i = 0; i < pages.count; i++) {
+            doc.switchToPage(i);
+            addFooter();
+        }
 
         // Finalize the PDF and end the response
         doc.end();
-        
+
     } catch (error) {
         console.error('Error generating executive report:', error);
         return res.status(500).json({ error: 'An error occurred while generating the report' });

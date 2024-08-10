@@ -202,7 +202,28 @@ const Sidebar: React.FC = () => {
             </ListItem>
           </Link>
         )}
-
+        {role === "client" && (
+          <Link href='/reports'>
+            <ListItem
+              test-id="reportsLink"
+              sx={{
+                ...sidebarItemStyles,
+                backgroundColor: isActive('/reports') ? theme.palette.primary.main : 'inherit',
+                color: isActive('/reports') ? 'white' : theme.palette.text.primary,
+                borderRadius: '10px',
+                '&:hover': {
+                  backgroundColor: theme.palette.action.hover,
+                  color: theme.palette.text.primary,
+                },
+              }}
+            >
+              <ListItemIcon sx={{ ...iconStyles, color: isActive('/reports') ? 'white' : theme.palette.text.primary }}>
+                <AssessmentIcon />
+              </ListItemIcon>
+              <ListItemText primary="Reports" />
+            </ListItem>
+          </Link>
+        )}
         <Link href='/help'>
           <ListItem
               sx={{

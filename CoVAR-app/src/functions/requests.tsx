@@ -395,7 +395,7 @@ export const populateReportsTable = async () => {
    return await handleRequest(request);
 };
 
-export const fetchExecReport = async (reportId) => {
+export const fetchExecReport = async (reportId:any) => {
     const token = localStorage.getItem('accessToken');
     // const response = await fetch(`/api/reports/executive/${reportId}`, {
     //     method: 'GET',
@@ -414,7 +414,8 @@ export const fetchExecReport = async (reportId) => {
         headers: {
             Authorization: `Bearer ${token}`,
         },
+        responseType: 'blob' ,
     };
     const response = await handleRequest(request);
-    return response.blob();
+    return new Blob([response]);
 }

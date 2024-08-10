@@ -157,6 +157,8 @@ router.get('/reports/executive/:report_id', authenticateToken, async (req, res) 
             autoFirstPage: false  // Don't create a page automatically
         });
 
+        const totalVulnerabilities = criticalCount + mediumCount + lowCount;
+
         let filename = `executive_report_${report_id}.pdf`;
         filename = encodeURIComponent(filename) + '.pdf';
         res.setHeader('Content-disposition', `attachment; filename="${filename}"`);
@@ -175,19 +177,19 @@ router.get('/reports/executive/:report_id', authenticateToken, async (req, res) 
         const imagePath = path.join(__dirname, '../routes/assets/4546131_3922.jpg');
         doc.image(imagePath, { fit: [500, 500], align: 'center', valign: 'center' });
         doc.moveDown(40);
+
         // Add a solid blue background behind the title
-        doc.rect(50, doc.y, 500, 65) // Adjust dimensions and position as needed
-        .fill('darkblue'); // Fill with blue color
+        doc.rect(50, doc.y, 500, 65).fill('darkblue');
 
         // Add the title on top of the blue background
         doc.fontSize(24).fillColor('white').text('Cyber Security Vulnerability Report January 2023', 60, doc.y + 10, {
             align: 'left',
         });
-        // Add a solid blue background behind the subtitle
-        doc.rect(50, doc.y, 500, 30) // Adjust dimensions and position as needed
-        .fill('gray'); // Fill with blue color
 
-        // Add the subtitle on top of the blue background
+        // Add a solid gray background behind the subtitle
+        doc.rect(50, doc.y, 500, 30).fill('gray');
+
+        // Add the subtitle on top of the gray background
         doc.fontSize(12).fillColor('white').text('BlueVision ITM (Pty) Limited', 60, doc.y + 10, {
             align: 'left',
         });
@@ -230,30 +232,63 @@ router.get('/reports/executive/:report_id', authenticateToken, async (req, res) 
         doc.moveDown();
         doc.text(`Date Created: ${new Date(report.created_at).toLocaleDateString()}`);
         doc.moveDown();
+
         // Vulnerability Manager Section
         doc.fontSize(18).fillColor('black').text('Vulnerability Manager', { align: 'left' });
         doc.fontSize(12).text('Greenbone Vulnerability Manager is proprietary software used to perform vulnerability scans on network devices. Greenbone Vulnerability Manager is used for all Andile Solutions vulnerability scanning.', { align: 'left' });
+        doc.moveDown(3);
         // Risk Profile Section
         doc.fontSize(18).text('Risk Profile', { align: 'left' });
         doc.fontSize(12).text('A system’s risk profile is constructed by considering the results by severity class of all known common vulnerabilities. The information below respectively shows the system’s risk profile of the number of affected hosts by severity class as well as vulnerability per identified category.', { align: 'left' });
         doc.moveDown();
-        // Vulnerability Summary Table for December 2022
+
+        // Add the Vulnerability Summary Table
         doc.fontSize(14).text('Vulnerability Summary', { align: 'left' });
-        doc.fontSize(12).text('Table 1 Vulnerability Summary – December 2022', { align: 'center' });
-        doc.moveDown();
-        doc.fontSize(10).text('VULNERABILITY SUMMARY', { align: 'center', underline: true });
         doc.moveDown(0.5);
-        doc.fontSize(10).text(`Threat                  Vulnerability number                  Affected hosts
-            Critical                  ${criticalCount}                                             6
-            Medium                      ${mediumCount}                                            4
-            Low                 ${lowCount}                                           68
-            Total                     ${mediumCount+criticalCount+lowCount}                                            78`, { align: 'left', lineGap: 3 });
-            
-        doc.moveDown(2);
+
+        // Define table dimensions and position
+        const tableTop = doc.y;
+        const tableLeft = 50;
+        const tableWidth = 500;
+        const cellPadding = 5;
+        const columnWidths = [150, 175, 175];
+        const rowHeight = 25;
+
+        // Draw table header background
+        doc.rect(tableLeft, tableTop, tableWidth, rowHeight).fillAndStroke('darkblue', 'black');
+
+        // Draw column titles
+        doc.fillColor('white').fontSize(10).text('Threat', tableLeft + cellPadding, tableTop + cellPadding, { width: columnWidths[0], align: 'center' });
+        doc.text('Vulnerability number', tableLeft + columnWidths[0] + cellPadding, tableTop + cellPadding, { width: columnWidths[1], align: 'center' });
+        doc.text('Affected hosts', tableLeft + columnWidths[0] + columnWidths[1] + cellPadding, tableTop + cellPadding, { width: columnWidths[2], align: 'center' });
+
+        // Reset fill color for rows
+        doc.fillColor('black');
+
+        // Helper function to draw rows
+        const drawRow = (y, label, vulNumber, affectedHosts) => {
+            doc.rect(tableLeft, y, columnWidths[0], rowHeight).stroke();
+            doc.rect(tableLeft + columnWidths[0], y, columnWidths[1], rowHeight).stroke();
+            doc.rect(tableLeft + columnWidths[0] + columnWidths[1], y, columnWidths[2], rowHeight).stroke();
+
+            doc.text(label, tableLeft + cellPadding, y + cellPadding, { width: columnWidths[0], align: 'center' });
+            doc.text(vulNumber.toString(), tableLeft + columnWidths[0] + cellPadding, y + cellPadding, { width: columnWidths[1], align: 'center' });
+            doc.text(affectedHosts.toString(), tableLeft + columnWidths[0] + columnWidths[1] + cellPadding, y + cellPadding, { width: columnWidths[2], align: 'center' });
+        };
+
+        // Draw each row
+        drawRow(tableTop + rowHeight, 'Critical', criticalCount, 6);
+        drawRow(tableTop + rowHeight * 2, 'Medium', mediumCount, 68);
+        drawRow(tableTop + rowHeight * 3, 'Low', lowCount, 0);
+
+        // Draw total row directly below the other rows
+        const totalRowY = tableTop + rowHeight * 4;
+        doc.rect(tableLeft, totalRowY, tableWidth, rowHeight).fillAndStroke('darkblue', 'black');
+        doc.fillColor('white').text('Total', tableLeft + cellPadding, totalRowY + cellPadding, { width: columnWidths[0], align: 'center' });
+        doc.text(totalVulnerabilities.toString(), tableLeft + columnWidths[0] + cellPadding, totalRowY + cellPadding, { width: columnWidths[1], align: 'center' });
+        doc.text('78', tableLeft + columnWidths[0] + columnWidths[1] + cellPadding, totalRowY + cellPadding, { width: columnWidths[2], align: 'center' });
 
         // Add any other content here...
-
-        // Finalize the footer on the last page
         addFooter();
 
         // Finalize the PDF and end the response

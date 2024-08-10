@@ -3,6 +3,7 @@ const { authenticateToken } = require('../lib/securityFunctions');
 const pgClient = require('../lib/postgres');
 const router = express.Router();
 const PDFDocument = require('pdfkit');
+const path = require('path');
 
 router.post('/reports/getReports', authenticateToken, async (req, res) => {
     try {
@@ -149,6 +150,7 @@ router.get('/reports/executive/:report_id', authenticateToken, async (req, res) 
                 }
             });
         });
+
         const doc = new PDFDocument({
             size: 'A4',
             margin: 50,
@@ -166,52 +168,93 @@ router.get('/reports/executive/:report_id', authenticateToken, async (req, res) 
         // Get today's date for header and footer
         const todayDate = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long' });
 
-        // Add header to each page
+        // Add the cover page
+        doc.addPage();
+
+        // Add the image
+        const imagePath = path.join(__dirname, '../routes/assets/4546131_3922.jpg');
+        doc.image(imagePath, { fit: [500, 500], align: 'center', valign: 'center' });
+        doc.moveDown(40);
+        // Add a solid blue background behind the title
+        doc.rect(50, doc.y, 500, 65) // Adjust dimensions and position as needed
+        .fill('darkblue'); // Fill with blue color
+
+        // Add the title on top of the blue background
+        doc.fontSize(24).fillColor('white').text('Cyber Security Vulnerability Report January 2023', 60, doc.y + 10, {
+            align: 'left',
+        });
+        // Add a solid blue background behind the subtitle
+        doc.rect(50, doc.y, 500, 30) // Adjust dimensions and position as needed
+        .fill('gray'); // Fill with blue color
+
+        // Add the subtitle on top of the blue background
+        doc.fontSize(12).fillColor('white').text('BlueVision ITM (Pty) Limited', 60, doc.y + 10, {
+            align: 'left',
+        });
+
+        // Add the footer on the cover page
+        doc.moveDown(4);
+        doc.fontSize(8).fillColor('gray').text(`Disclosure Classification: Confidential`, { align: 'left' });
+        doc.text(`2022 Revision: 1.0`, { align: 'right' });
+
+        // Function to add header and footer to each page
         const addHeader = () => {
             doc.fontSize(10).text(`Cyber Security Vulnerability Report ${todayDate}`, 50, 40);
             doc.text(`BlueVision ITM (Pty) Limited`, { align: 'right' });
             doc.moveDown();
         };
 
-        // Add footer to each page
         const addFooter = () => {
-            const bottom = doc.page.height - 60;
-            doc.fontSize(8).text(`Cyber Security Vulnerability Report ${todayDate} Revision: 1.0`, 50, bottom);
-            doc.text(`Disclosure Classification: Confidential`, 50, bottom + 10);
-            doc.text(`© Copyright BlueVision ITM (PTY) Limited – All Rights Reserved.`, 50, bottom + 20);
+            doc.fontSize(8).fillColor('gray').text(`Cyber Security Vulnerability Report ${todayDate} Revision: 1.0`, 50, doc.page.height - 90);
+            doc.text(`Disclosure Classification: Confidential`);
+            doc.text(`© Copyright BlueVision ITM (PTY) Limited – All Rights Reserved.`);
             doc.text(`Page ${doc.pageNumber}`, { align: 'right' });
         };
 
-        // Function to add a new page with header
+        // Function to add a new page with header and footer
         const addNewPage = () => {
-            doc.addPage();
+            if (doc.pageNumber > 0) {
+                addFooter();
+                doc.addPage();
+            } else {
+                doc.addPage();
+            }
             addHeader();
         };
 
-        // Add the first page
+        // Add the first content page
         addNewPage();
 
         // Add content to the PDF
         doc.fontSize(20).text('Executive Report', { align: 'center' });
         doc.moveDown();
-
-        doc.fontSize(14).text(`Report ID: ${report.report_id}`);
         doc.text(`Date Created: ${new Date(report.created_at).toLocaleDateString()}`);
         doc.moveDown();
-
-        doc.text(`Critical Issues: ${criticalCount}`);
-        doc.text(`Medium Issues: ${mediumCount}`);
-        doc.text(`Low Issues: ${lowCount}`);
+        // Vulnerability Manager Section
+        doc.fontSize(18).fillColor('black').text('Vulnerability Manager', { align: 'left' });
+        doc.fontSize(12).text('Greenbone Vulnerability Manager is proprietary software used to perform vulnerability scans on network devices. Greenbone Vulnerability Manager is used for all Andile Solutions vulnerability scanning.', { align: 'left' });
+        // Risk Profile Section
+        doc.fontSize(18).text('Risk Profile', { align: 'left' });
+        doc.fontSize(12).text('A system’s risk profile is constructed by considering the results by severity class of all known common vulnerabilities. The information below respectively shows the system’s risk profile of the number of affected hosts by severity class as well as vulnerability per identified category.', { align: 'left' });
         doc.moveDown();
+        // Vulnerability Summary Table for December 2022
+        doc.fontSize(14).text('Vulnerability Summary', { align: 'left' });
+        doc.fontSize(12).text('Table 1 Vulnerability Summary – December 2022', { align: 'center' });
+        doc.moveDown();
+        doc.fontSize(10).text('VULNERABILITY SUMMARY', { align: 'center', underline: true });
+        doc.moveDown(0.5);
+        doc.fontSize(10).text(`Threat                  Vulnerability number                  Affected hosts
+            Critical                  ${criticalCount}                                             6
+            Medium                      ${mediumCount}                                            4
+            Low                 ${lowCount}                                           68
+            Total                     ${mediumCount+criticalCount+lowCount}                                            78`, { align: 'left', lineGap: 3 });
+            
+        doc.moveDown(2);
 
         // Add any other content here...
 
-        // Add footer to all pages
-        let pages = doc.bufferedPageRange();
-        for (let i = 0; i < pages.count; i++) {
-            doc.switchToPage(i);
-            addFooter();
-        }
+        // Finalize the footer on the last page
+        addFooter();
 
         // Finalize the PDF and end the response
         doc.end();

@@ -54,13 +54,20 @@ const ButtonGroup = styled(Box)(({ theme }) => ({
     width: '10%',
     gap: theme.spacing(1),
 }));
+const UnmatchedButtonGroup = styled(Box)(({ theme }) => ({
+    display: 'flex',
+    justifyContent: 'center',
+    marginTop: theme.spacing(2),
+    gap: theme.spacing(1),
+}));
 
 const UnmatchedReports = styled(Box)(({ theme }) => ({
     marginTop: theme.spacing(4),
 }));
 
-const UnmatchedReportCard = styled(Card)(({ theme }) => ({
+const UnmatchedReportCard = styled(Card)(({ theme, selected }: { theme: any; selected: boolean }) => ({
     marginBottom: theme.spacing(2),
+    border: selected ? `4px solid ${theme.palette.success.main}` : 'none',
 }));
 
 const userConflicts = () => {
@@ -178,6 +185,39 @@ const userConflicts = () => {
         console.log('Final Report:', updatedReport);
     };
 
+    const handleUnmatchedReport = (action: string, report: any) => {
+        let updatedReport = [...finalReport];
+
+        if (action === 'add') {
+            updatedReport.push(report);
+        } else if (action === 'remove') {
+            updatedReport = updatedReport.filter((r) => r !== report);
+        }
+
+        setFinalReport(updatedReport);
+        console.log('Final Report:', updatedReport);
+    };
+
+    const generateReport = async () => {
+        try {
+          const token = localStorage.getItem('accessToken');
+          
+          const response = await axios.post(
+            '/api/uploads/generateReport',
+            { finalReport, name, type },    
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+          console.log('Report generated successfully:', response.data);
+        } catch (error) {
+          console.error('Error generating report:', error);
+        }
+      };
+    
+
     return (
         <ReportsContainer sx={mainContentStyles}>
             <Box>
@@ -206,31 +246,62 @@ const userConflicts = () => {
                 ))}
             </Box>
             <UnmatchedReports>
-                <Typography variant="h5" gutterBottom>Unmatched Reports List 1</Typography>
-                {unmatchedList1.map((report: any, index: number) => (
-                    <UnmatchedReportCard key={index}>
-                        <CardContent>
-                            {Object.entries(report).map(([key, value]) => (
-                                <Typography key={key} variant="body2">
-                                    <strong>{key}:</strong> {value as React.ReactNode}
-                                </Typography>
-                            ))}
-                        </CardContent>
-                    </UnmatchedReportCard>
-                ))}
-                <Typography variant="h5" gutterBottom>Unmatched Reports List 2</Typography>
-                {unmatchedList2.map((report: any, index: number) => (
-                    <UnmatchedReportCard key={index}>
-                        <CardContent>
-                            {Object.entries(report).map(([key, value]) => (
-                                <Typography key={key} variant="body2">
-                                    <strong>{key}:</strong> {value as React.ReactNode}
-                                </Typography>
-                            ))}
-                        </CardContent>
-                    </UnmatchedReportCard>
-                ))}
+                <Typography variant="h5" gutterBottom>Unmatched List 1</Typography>
+                {unmatchedList1.map((report: any, index: number) => {
+                    const isSelected = finalReport.includes(report);
+                    return (
+                        <UnmatchedReportCard key={index} selected={isSelected} theme={undefined}>
+                            <CardContent>
+                                {Object.entries(report).map(([key, value]) => (
+                                    <Typography key={key} variant="body2">
+                                        <strong>{key}:</strong> {value as React.ReactNode}
+                                    </Typography>
+                                ))}
+                                <UnmatchedButtonGroup>
+                                    <Button variant="contained" color="primary" onClick={() => handleUnmatchedReport('add', report)}>
+                                        <CheckCircleIcon />
+                                    </Button>
+                                    <Button variant="contained" color="secondary" onClick={() => handleUnmatchedReport('remove', report)}>
+                                        <CancelIcon />
+                                    </Button>
+                                </UnmatchedButtonGroup>
+                            </CardContent>
+                        </UnmatchedReportCard>
+                    );
+                })}
+
+                <Typography variant="h5" gutterBottom>Unmatched List 2</Typography>
+                {unmatchedList2.map((report: any, index: number) => {
+                    const isSelected = finalReport.includes(report);
+                    return (
+                        <UnmatchedReportCard key={index} selected={isSelected} theme={undefined}>
+                            <CardContent>
+                                {Object.entries(report).map(([key, value]) => (
+                                    <Typography key={key} variant="body2">
+                                        <strong>{key}:</strong> {value as React.ReactNode}
+                                    </Typography>
+                                ))}
+                                <UnmatchedButtonGroup>
+                                    <Button variant="contained" color="primary" onClick={() => handleUnmatchedReport('add', report)}>
+                                        <CheckCircleIcon />
+                                    </Button>
+                                    <Button variant="contained" color="secondary" onClick={() => handleUnmatchedReport('remove', report)}>
+                                        <CancelIcon />
+                                    </Button>
+                                </UnmatchedButtonGroup>
+                            </CardContent>
+                        </UnmatchedReportCard>
+                    );
+                })}
             </UnmatchedReports>
+            <Button
+                variant="contained"
+                color="primary"
+                onClick={generateReport}
+                sx={{ marginTop: 2 , marginBottom: 2, width: '100%' }}
+            >
+                Generate Report
+            </Button>
         </ReportsContainer>
     );
 };

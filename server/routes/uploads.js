@@ -160,7 +160,7 @@ router.get('/uploads/generateSingleReport/:upload_id', authenticateToken, async 
                     const otherReferences = "";
                     const Hostname = "";
                     const solutionType = "";
-                    
+
                     return {
                         IP, Hostname, Port, portProtocol, CVSS, Severity, solutionType, nvtName,
                         Summary, specificResult, nvtOid, CVEs, taskId, taskName, Timestamp,
@@ -405,20 +405,57 @@ router.get('/uploads/client/:clientName', authenticateToken, async (req, res) =>
 
 
 // Endpoint to generate report
-router.post('/uploads/generateReport', async (req, res) => {
-    const { reports, reportIds, client } = req.body;
-
-    if (!reports || reports.length === 0 || !reportIds || reportIds.length === 0) {
+router.post('/uploads/generateReport', authenticateToken, async (req, res) => {
+    const { finalReport, name, type } = req.body;
+    
+    if (!finalReport || finalReport.length === 0) {
         return res.status(400).json({ error: 'Reports or report IDs are missing' });
     }
 
     try {
-        // Combine reports into a single JSON object
-        const combinedReport = { reports };
+        // Combine finalReport into a single JSON object
+        const combinedReport = { finalReport };
 
         // Insert combined report into the reports table
         const insertQuery = 'INSERT INTO reports (title, content) VALUES ($1, $2) RETURNING *';
-        const result = await pgClient.query(insertQuery, [client, combinedReport]);
+        const result = await pgClient.query(insertQuery, [name, combinedReport]);
+        const reportId = result.rows[0].report_id;
+
+        let id;
+
+        if (type === 'client') {
+            // Get user_id from the users table
+            const getClientId = 'SELECT user_id FROM users WHERE username = $1';
+            const clientResult = await pgClient.query(getClientId, [name]);
+
+            if (clientResult.rows.length === 0) {
+                return res.status(404).json({ error: 'User not found' });
+            }
+
+            id = clientResult.rows[0].user_id;
+
+            // Insert into user_reports
+            const insertUserReports = 'INSERT INTO user_reports (user_id, report_id) VALUES ($1, $2)';
+            await pgClient.query(insertUserReports, [id, reportId]);
+
+        } else if (type === 'org') {
+            // Get organization_id from the organizations table
+            const getOrgId = 'SELECT organization_id FROM organizations WHERE organization_name = $1';
+            const orgResult = await pgClient.query(getOrgId, [name]);
+
+            if (orgResult.rows.length === 0) {
+                return res.status(404).json({ error: 'Organization not found' });
+            }
+
+            id = orgResult.rows[0].organization_id;
+
+            // Insert into organization_reports
+            const insertOrgReports = 'INSERT INTO organization_reports (organization_id, report_id) VALUES ($1, $2)';
+            await pgClient.query(insertOrgReports, [id, reportId]);
+
+        } else {
+            return res.status(400).json({ error: 'Invalid type specified' });
+        }
 
         res.status(200).json(result.rows[0]);
     } catch (error) {
@@ -426,6 +463,4 @@ router.post('/uploads/generateReport', async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 });
-
-
 module.exports = router;

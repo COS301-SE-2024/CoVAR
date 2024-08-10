@@ -125,6 +125,7 @@ const handleUnassignDialogOpen = async (user_id: string) => {
         setAssignedClients(assignedClients);
         const assignedOrganizations = await fetchAssignedOrganisations(user_id, accessToken);
         setAssignedOrganizations(assignedOrganizations);
+        console.log('Assigned clients:', assignedClients);
     } catch (error: any) {
         if (error.response?.status === 403) {
             redirectToLogin();
@@ -171,6 +172,8 @@ const handleAssignClient = async () => {
 
 const handleUnassignClient = async () => {
     if (user_id) {
+        console.log('Unassigning client:', clientToUnassign);
+        console.log('User ID:', user_id);
         try {
             if (!accessToken) {
                 throw new Error('Access token not found');
@@ -312,13 +315,13 @@ const handleConfirmUnassignVA = async () => {
                         <Typography
                             variant="body2"
                             sx={{
-                                marginTop: '8px',
+                                marginTop: '0.74vh',
                                 backgroundColor: '#52796F',
                                 color: '#CAD2C5',
                                 borderRadius: '4px',
                                 textAlign: 'center',
-                                width: '110px',
-                                height: '36.5px',
+                                width: '6.25vw',
+                                height: '3.38vh',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
@@ -335,24 +338,26 @@ const handleConfirmUnassignVA = async () => {
                                 sx={{
                                     backgroundColor: '#EE1D52',
                                     color: '#CAD2C5',
-                                    width: '110px',
+                                    width: '6.25vw',
+                                    height: '3.38vh', // added height for consistency
                                     '&:hover': {
                                         backgroundColor: '#D11C45',
                                     },
+                                    marginRight: '8px',
                                 }}
                                 onClick={() => handleUnassignVADialogOpen(params.row)}
-                                style={{ marginRight: '8px' }}
                             >
                                 Unassign
                             </Button>
                             <Button
                                 variant="contained"
                                 sx={{
-                                    backgroundColor: '#84A98C',
+                                    backgroundColor: '#2196F3',
                                     color: '#CAD2C5',
-                                    width: '120px',
+                                    width: '6.25vw',
+                                    height: '3.38vh', // added height for consistency
                                     '&:hover': {
-                                        backgroundColor: '#749F82',
+                                        backgroundColor: '#1976D2',
                                     },
                                     marginLeft: '0px',
                                 }}
@@ -360,7 +365,7 @@ const handleConfirmUnassignVA = async () => {
                                     setClientToAssign('');
                                     setUserID(null);
                                     setUsername(null);
-                                    handleAssignDialogOpen(params.row.user_id)
+                                    handleAssignDialogOpen(params.row.user_id);
                                 }}
                             >
                                 Assign Client
@@ -370,17 +375,18 @@ const handleConfirmUnassignVA = async () => {
                                 sx={{
                                     backgroundColor: '#D96E15',
                                     color: '#CAD2C5',
-                                    width: '150px',
+                                    width: '6.25vw',
+                                    height: '3.38vh', 
                                     '&:hover': {
                                         backgroundColor: '#FF8C00',
                                     },
-                                    marginLeft: '8px',
+                                    marginLeft: '8px', 
                                 }}
                                 onClick={() => {
                                     setClientToUnassign('');
                                     setUserID(null);
                                     setUsername(null);
-                                    handleUnassignDialogOpen(params.row.user_id)
+                                    handleUnassignDialogOpen(params.row.user_id);
                                 }}
                             >
                                 Remove Client
@@ -389,10 +395,10 @@ const handleConfirmUnassignVA = async () => {
                     );
                 } else if (params.row.role === 'unauthorised') {
                     return (
-                    <Button
+                        <Button
                             variant="contained"
                             sx={{
-                                marginTop: '8px',
+                                marginTop: '0.74vh', 
                                 backgroundColor: '#5C4B8A',
                                 color: '#CAD2C5', 
                                 '&:hover': {
@@ -400,8 +406,8 @@ const handleConfirmUnassignVA = async () => {
                                 },
                                 borderRadius: '4px',
                                 textAlign: 'center',
-                                width: '110px',
-                                height: '36.5px',
+                                width: '6.25vw',
+                                height: '3.38vh', 
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
@@ -418,7 +424,12 @@ const handleConfirmUnassignVA = async () => {
                             sx={{
                                 backgroundColor: '#84A98C',
                                 color: '#CAD2C5',
-                                width: '110px',
+                                width: '6.25vw',
+                                height: '3.38vh',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                marginTop: '0.74vh', 
                                 '&:hover': {
                                     backgroundColor: '#749F82',
                                 },

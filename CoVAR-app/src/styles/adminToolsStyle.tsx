@@ -10,7 +10,7 @@ export const adminToolsContainerStyles: SxProps = {
   };
   
   export const dataGridStyles = {
-    height: 600,
+    height: '90vh',
     flex: '1 auto',
     fontWeight: 500,
     borderColor: 'text.primary',
@@ -45,7 +45,7 @@ export const adminToolsContainerStyles: SxProps = {
         color: 'text.primary',
     },
     '& .MuiDataGrid-filler': {
-        backgroundColor: 'background.paper',
+        backgroundColor: 'background.default',
         color: 'text.primary',
     },
     '& .MuiDataGrid-scrollbarFiller': {
@@ -61,52 +61,6 @@ export const adminToolsContainerStyles: SxProps = {
 };
 
 
-export const adminButton  = {
-    color: '#FFFFFF',
-    borderRadius: '4px',
-    padding: '4px 8px',
-    backgroundColor: '#FFB300',
-}
-
-export const unassignButton = {
-    color: '#FFFFFF',
-    borderRadius: '4px',
-    padding: '4px 8px',
-    marginRight: '8px',
-    backgroundColor: '#FF6F61',
-}
-
-export const assignClientButton = {
-    color: '#FFFFFF',
-    borderRadius: '4px',
-    padding: '4px 8px',
-    marginRight: '8px',
-    backgroundColor: '#4CAF50',
-}
-
-export const removeClientButton = {
-    color: '#FFFFFF',
-    borderRadius: '4px',
-    padding: '4px 8px',
-    marginRight: '8px',
-    backgroundColor: '#F44336',
-}
-
-export const authorizeButton = {
-    color: '#FFFFFF',
-    borderRadius: '4px',
-    padding: '4px 8px',
-    backgroundColor: '#2196F3',
-}
-
-export const assignVAButton = {
-    color: '#FFFFFF',
-    borderRadius: '4px',
-    padding: '4px 8px',
-    backgroundColor: '#FF9800',
-}
-
-
 export const buttonStyles: SxProps<Theme> = {
     mt: 3,
     mb: 2,
@@ -120,10 +74,10 @@ export const buttonStyles: SxProps<Theme> = {
 
 export const dialogStyles: SxProps<Theme> = {
     '& .MuiDialog-paper': {
-        width: '500px',
-        height: '275px',
+        width: '45vw',
+        height: '29vh',
         backgroundColor: (theme) => theme.palette.background.paper,
         color: (theme) => theme.palette.text.secondary,
-        overflow: 'hidden', 
+        overflow: 'hidden',
     },
 };

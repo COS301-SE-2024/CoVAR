@@ -120,28 +120,28 @@ router.get('/uploads/generateSingleReport/:upload_id', authenticateToken, async 
                     const {
                         $: {
                             port: Port,
-                            svc_name: svc_name,
+                            // svc_name: svc_name,
                             protocol: portProtocol,
-                            pluginID: pluginID,
+                            // pluginID: pluginID,
                             pluginName: nvtName,
-                            pluginFamily: PluginFamily
+                            // pluginFamily: PluginFamily
                         },
                         cve: CVEs = '',
-                        cvss3_base_score: CVSS3BaseScore,
-                        cvss3_vector: CVSS3Vector,
+                        // cvss3_base_score: CVSS3BaseScore,
+                        // cvss3_vector: CVSS3Vector,
                         cvss_base_score: CVSS,
-                        cvss_vector: CVSSVector,
+                        // cvss_vector: CVSSVector,
                         description: specificResult,
-                        fname: FileName,
-                        plugin_modification_date: PluginModificationDate,
-                        plugin_publication_date: PluginPublicationDate,
-                        plugin_type: PluginType,
+                        // fname: FileName,
+                        // plugin_modification_date: PluginModificationDate,
+                        // plugin_publication_date: PluginPublicationDate,
+                        // plugin_type: PluginType,
                         risk_factor: Severity,
-                        script_version: ScriptVersion,
-                        see_also: SeeAlso,
+                        // script_version: ScriptVersion,
+                        // see_also: SeeAlso,
                         solution: Solution,
-                        synopsis: Synopsis,
-                        plugin_output: PluginOutput
+                        // synopsis: Synopsis,
+                        // plugin_output: PluginOutput
                     } = item;
                     const IP = "";
                     const Summary = "";
@@ -191,7 +191,7 @@ router.get('/uploads/generateSingleReport/:upload_id', authenticateToken, async 
                     // Process record based on expected headers
                     if (record['Plugin ID']) {
                         const {
-                            'Plugin ID': pluginID,
+                            // 'Plugin ID': pluginID,
                             'CVE': CVEs,
                             'CVSS v2.0 Base Score': CVSS,
                             'Risk': Severity,
@@ -199,7 +199,7 @@ router.get('/uploads/generateSingleReport/:upload_id', authenticateToken, async 
                             'Protocol': portProtocol,
                             Port,
                             'Name': nvtName,
-                            Synopsis,
+                            // Synopsis,
                             'Description': specificResult,
                             Solution,
 

@@ -220,11 +220,30 @@ router.get('/reports/executive/:report_id', authenticateToken, async (req, res) 
          let lowCount = 0;
         //pie chart data 
         // Prepare data for pie chart
+        // Helper function to check if a color is too light (like white or near white)
+        function isLightColor(color) {
+            // Convert the hex color to RGB
+            const r = parseInt(color.substring(1, 3), 16);
+            const g = parseInt(color.substring(1, 3), 16);
+            const b = parseInt(color.substring(1, 3), 16);
+
+            // Calculate brightness (a simplistic approach)
+            const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+
+            // Return true if the color is too light
+            return brightness > 230; // Adjust this value as needed
+        }
         const pieChartData = {
             labels: vulnerabilityTypes,
             datasets: [{
                 data: vulnerabilityCounts,
-                backgroundColor: vulnerabilityTypes.map(() => `#${Math.floor(Math.random() * 16777215).toString(16)}`) // Random color for each category
+                backgroundColor: vulnerabilityTypes.map(() => {
+                    let color;
+                    do {
+                        color = `#${Math.floor(Math.random() * 16777215).toString(16)}`;
+                    } while (isLightColor(color)); // Regenerate color if it's too light
+                    return color;
+                })
             }]
         };
         // Create the pie chart configuration
@@ -438,12 +457,12 @@ router.get('/reports/executive/:report_id', authenticateToken, async (req, res) 
             doc.text(`BlueVision ITM (Pty) Limited`, { align: 'right' });
             doc.moveDown();
         };
-
+        let pagenumber = 1;
         const addFooter = () => {
             doc.fontSize(8).fillColor('gray').text(`Cyber Security Vulnerability Report ${creationDate} Revision: 1.0`, 50, doc.page.height - 90);
             doc.text(`Disclosure Classification: Confidential`);
             doc.text(`© Copyright BlueVision ITM (PTY) Limited – All Rights Reserved.`);
-            doc.text(`Page ${doc.pageNumber}`, { align: 'right' });
+            doc.text(`Page ${pagenumber++}`, { align: 'right' });
         };
 
         // Function to add a new page with header and footer

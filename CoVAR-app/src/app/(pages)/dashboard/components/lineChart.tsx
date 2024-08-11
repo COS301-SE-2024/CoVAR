@@ -14,11 +14,11 @@ const VulnerabilityLineChart: React.FC<VulnerabilityLineChartProps> = ({ respons
 
     for (let i = 0; i < responseData.length; i++) {
       const report = responseData[i];
-      const flattenedReports = report.content.reports.flat();
-      const critical = flattenedReports.filter((vuln: any) => vuln.Severity === 'Critical').length;
-      const high = flattenedReports.filter((vuln: any) => vuln.Severity === 'High').length;
-      const medium = flattenedReports.filter((vuln: any) => vuln.Severity === 'Medium').length;
-      const low = flattenedReports.filter((vuln: any) => vuln.Severity === 'Low').length;
+      const vulnerabilities = report.content.finalReport; 
+      const critical = vulnerabilities.filter((vuln: any) => vuln.Severity === 'Critical').length;
+      const high = vulnerabilities.filter((vuln: any) => vuln.Severity === 'High').length;
+      const medium = vulnerabilities.filter((vuln: any) => vuln.Severity === 'Medium').length;
+      const low = vulnerabilities.filter((vuln: any) => vuln.Severity === 'Low').length;
 
       lineChartData.push({ name: `Report ${i + 1}`, critical, high, medium, low });
     }

@@ -164,6 +164,11 @@ const OrganizationEvaluation: React.FC = () => {
           <Paper sx={{ textAlign: 'center', overflowY: 'scroll', maxHeight: '80vh' }}>
             <ReportPreview reports={reports} reportIds={reportIds} client={organizationName ?? ''} />
           </Paper>
+          <Button style={{
+            left: '45%', marginTop: 5, position: 'relative'
+          }} variant='outlined' color="primary" onClick={() => router.push(`/evaluate/conflicts/${organizationName}?type=org`)}>
+            Next
+          </Button>
         </Grid>
       </Grid>
     </Container>

@@ -1,17 +1,30 @@
 'use client'
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
-const VulnerabilityLineChart: React.FC = () => {
-  const data = [
-    { name: '1', critical: 10, high: 5, medium: 10, low: 20 },
-    { name: '2', critical: 9, high: 4, medium: 5, low: 12 },
-    { name: '3', critical: 8, high: 4, medium: 5, low: 11 },
-    { name: '4', critical: 7, high: 4, medium: 5, low: 9 },
-    { name: '5', critical: 6, high: 4, medium: 5, low: 1 },
-    { name: '6', critical: 5, high: 4, medium: 5, low: 1 },
-    { name: '7', critical: 2, high: 4, medium: 5, low: 0 },
-  ];
+interface VulnerabilityLineChartProps {
+  responseData: any[];
+}
+
+const VulnerabilityLineChart: React.FC<VulnerabilityLineChartProps> = ({ responseData }) => {
+  const [data, setData] = useState<{ name: string; critical: number; high: number; medium: number; low: number }[]>([]);
+
+  useEffect(() => {
+    const lineChartData: { name: string; critical: number; high: number; medium: number; low: number }[] = [];
+
+    for (let i = 0; i < responseData.length; i++) {
+      const report = responseData[i];
+      const vulnerabilities = report.content.finalReport; 
+      const critical = vulnerabilities.filter((vuln: any) => vuln.Severity === 'Critical').length;
+      const high = vulnerabilities.filter((vuln: any) => vuln.Severity === 'High').length;
+      const medium = vulnerabilities.filter((vuln: any) => vuln.Severity === 'Medium').length;
+      const low = vulnerabilities.filter((vuln: any) => vuln.Severity === 'Low').length;
+
+      lineChartData.push({ name: `Report ${i + 1}`, critical, high, medium, low });
+    }
+
+    setData(lineChartData);
+  }, [responseData]);
 
   return (
     <ResponsiveContainer width="100%" height={400}>

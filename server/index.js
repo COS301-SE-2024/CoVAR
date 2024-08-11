@@ -25,6 +25,13 @@ const organizations = require('./routes/organizations');
 const users = require('./routes/users');
 const authentication = require('./routes/authentication');
 const uploads = require('./routes/uploads');
+
+const reports = require('./routes/reports');
+
+const conflicts = require('./routes/conflicts');
+
+const dashboard = require('./routes/dashboard');
+
 const chain = require('./routes/chain');
 
 app.use(chain);
@@ -32,6 +39,9 @@ app.use(authentication);
 app.use(users);
 app.use(organizations);
 app.use(uploads);
+app.use(reports);
+app.use(conflicts);
+app.use(dashboard);
 
 
 app.listen(5000, () => {

@@ -1,5 +1,6 @@
 import axios, { AxiosRequestConfig, ResponseType } from 'axios';
 import { doSignOut } from './firebase/auth';
+import { blob } from 'stream/consumers';
 
 const signOut = async () => {
     try {
@@ -89,7 +90,7 @@ const handleRequest = async (request: AxiosRequestConfig) => {
         if (error.response && error.response.status === 403) {
             try {
                 const response = await retryRequestWithNewToken(error.config);
-                
+
                 // Check again after retrying with new token
                 const url = error.config.url?.toLowerCase();
                 if (url?.endsWith('change_name') || url?.endsWith('delete') || url?.endsWith('remove_user')) {
@@ -266,44 +267,37 @@ export const createOrganisation = async (organisationName: string, username: str
 };
 
 export const fetchUnauthorizedUsers = async (search: string) => {
-    try {
-        const accessToken = localStorage.getItem('accessToken');
-        if (!accessToken) {
-            throw new Error('Access token not found');
-        }
-        const response = await axios.get('/api/users/unauthorized', {
-            headers: { Authorization: `Bearer ${accessToken}` },
-            params: { search },
-        });
-        return response.data;
-    } catch (error) {
-        throw error;
+    const accessToken = localStorage.getItem('accessToken');
+    if (!accessToken) {
+        throw new Error('Access token not found');
     }
+    const request = {
+        method: 'get',
+        url: '/api/users/unauthorized',
+        headers: { Authorization: `Bearer ${accessToken}` },
+        params: { search },
+    };
+    return await handleRequest(request);
 };
 
 export const authorizeUser = async (username: string, accessToken: string) => {
-    try {
-        await axios.patch(`/api/users/authorize`, { username }, {
-            headers: { Authorization: `Bearer ${accessToken}` },
-        });
-    } catch (error) {
-        console.error('Error updating user role:', error);
-        throw error;
-    }
+    const request = {
+        method: 'patch',
+        url: '/api/users/authorize',
+        data: { username },
+        headers: { Authorization: `Bearer ${accessToken}` },
+    };
+    return await handleRequest(request);
 };
 
 export const leaveOrganisation = async (orgId: string, username: string, accessToken: string) => {
-    try {
-        const response = await axios.post(
-            `/api/organizations/leave`,
-            { organizationId: orgId, username: username },
-            { headers: { Authorization: `Bearer ${accessToken}` } }
-        );
-        return response.status;
-    } catch (error) {
-        console.error('Error leaving organization:', error);
-        throw error;
-    }
+    const request = {
+        method: 'post',
+        url: '/api/organizations/leave',
+        data: { organizationId: orgId, username },
+        headers: { Authorization: `Bearer ${accessToken}` },
+    };
+    return await handleRequest(request);
 };
 
 export const handleDownloadFile = async (loid: number, fileName: string) => {
@@ -330,36 +324,49 @@ export const handleDownloadFile = async (loid: number, fileName: string) => {
     }
 };
 
+
+export const getAllReports = async () => {
+    const accessToken = localStorage.getItem('accessToken');
+    const request = {
+        method: 'get',
+        url: '/api/reports/all',
+        headers: { Authorization: `Bearer ${accessToken}` },
+    };
+    return await handleRequest(request);
+};
+
 export const fetchUploadsClient = async (username: string) => {
     const token = localStorage.getItem('accessToken');
-    const response = await axios.get(`/api/uploads/client/${username}`, {
-        headers: {
-            Authorization: `Bearer ${token}`,
-        },
-    });
-    return response.data;
+    const request: AxiosRequestConfig = {
+        method: 'get',
+        url: `/api/uploads/client/${username}`,
+        headers: { Authorization: `Bearer ${token}` },
+    };
+    return await handleRequest(request);
 };
 
 export const fetchUploadsOrganization = async (organizationName: string) => {
     const token = localStorage.getItem('accessToken');
-    const response = await axios.get(`/api/uploads/organization/${organizationName}`, {
-        headers: {
-            Authorization: `Bearer ${token}`,
-        },
-    });
-    return response.data;
+
+    const request: AxiosRequestConfig = {
+        method: 'get',
+        url: `/api/uploads/organization/${organizationName}`,
+        headers: { Authorization: `Bearer ${token}` },
+    };
+    return await handleRequest(request);
 };
 
 export const fetchReports = async (reportIds: number[]) => {
     const token = localStorage.getItem('accessToken');
     const fetchedReports = await Promise.all(
         reportIds.map(async (id) => {
-            const response = await axios.get(`/api/uploads/generateSingleReport/${id}`, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            });
-            return response.data;
+
+            const request: AxiosRequestConfig = {
+                method: 'get',
+                url: `/api/uploads/generateSingleReport/${id}`,
+                headers: { Authorization: `Bearer ${token}` },
+            };
+            return await handleRequest(request);
         })
     );
     return fetchedReports;
@@ -367,20 +374,108 @@ export const fetchReports = async (reportIds: number[]) => {
 
 export const handleRemoveFile = async (upload_id: number) => {
     const token = localStorage.getItem('accessToken');
-    await axios.delete(`/api/uploads/${upload_id}`, {
-        headers: {
-            Authorization: `Bearer ${token}`,
-        },
-    });
+
+    const request: AxiosRequestConfig = {
+        method: 'delete',
+        url: `/api/uploads/${upload_id}`,
+        headers: { Authorization: `Bearer ${token}` },
+    };
+    return await handleRequest(request);
+
 };
 
 export const handleToggleReport = async (upload_id: number) => {
     const token = localStorage.getItem('accessToken');
-    await axios.put(`/api/uploads/inReport/${upload_id}`, null, {
+    const request: AxiosRequestConfig = {
+        method: 'put',
+        url: `/api/uploads/inReport/${upload_id}`,
+        headers: { Authorization: `Bearer ${token}` },
+    };
+    return await handleRequest(request);
+
+};
+
+
+export const populateReportsTable = async () => {
+    const token = localStorage.getItem('accessToken');
+    //define req
+    const request :AxiosRequestConfig = {
+        method: 'post',
+        url: `/api/reports/getReports`,
+        headers: { Authorization: `Bearer ${token}` },
+    };
+   return await handleRequest(request);
+};
+
+export const fetchExecReport = async (reportId:any) => {
+    const token = localStorage.getItem('accessToken');
+    // const response = await fetch(`/api/reports/executive/${reportId}`, {
+    //     method: 'GET',
+    //     headers: {
+    //         'Content-Type': 'application/pdf',
+    //         Authorization: `Bearer ${token}`
+    //     },
+    // });
+
+    // if (!response.ok) {
+    //     throw new Error('Failed to fetch executive report');
+    // }
+    const request: AxiosRequestConfig = {
+        method: 'get',
+        url: `/api/reports/executive/${reportId}`,
         headers: {
             Authorization: `Bearer ${token}`,
         },
-    });
+        responseType: 'blob' ,
+    };
+    const response = await handleRequest(request);
+    return new Blob([response]);
+}
+
+export const fetchAndMatchReports = async (reportIds: number[]) => {
+    try {
+        if (reportIds.length > 0) {
+            const fetchedReports = await fetchReports(reportIds);
+
+            const token = localStorage.getItem('accessToken');
+
+            const response = await axios.post('/api/conflicts/match', {
+                listUploads: fetchedReports,
+            }, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            const { matches, unmatchedList1, unmatchedList2 } = response.data;
+            return { matches, unmatchedList1, unmatchedList2 };
+        }
+    } catch (error) {
+        console.error('Error generating reports:', error);
+        throw error;
+    }
 };
+
+// Function to generate a report
+export const generateReportRequest = async (finalReport: any[], name: string | undefined, type: string | null) => {
+    try {
+        const token = localStorage.getItem('accessToken');
+
+
+        const request: AxiosRequestConfig = {
+            method: 'post',
+            url: '/api/uploads/generateReport',
+            data: { finalReport, name, type },
+            headers: { Authorization: `Bearer ${token}` },
+        };
+        return await handleRequest(request);
+    } catch (error) {
+        console.error('Error generating report:', error);
+        throw error;
+    }
+};
+
+
+
 
 

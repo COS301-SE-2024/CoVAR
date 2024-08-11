@@ -5,6 +5,7 @@ const { authenticateToken, verifyToken } = require('../lib/securityFunctions');
 const { parse } = require('csv-parse');
 const stream = require('stream');
 const pgClient = require('../lib/postgres');
+const xml2js = require('xml2js');
 
 const router = express.Router();
 
@@ -99,95 +100,202 @@ router.get('/uploads/generateSingleReport/:upload_id', authenticateToken, async 
 
         await pgClient.query('COMMIT');
 
-        const records = [];
-        const parser = parse({
-            columns: true,
-            trim: true,
-            skipEmptyLines: true,
-        });
+        const fileSignature = fileContent.toString('utf8', 0, 100).trim();
 
-        const bufferStream = new stream.PassThrough();
-        bufferStream.end(Buffer.from(fileContent, 'binary'));
+        if (fileSignature.startsWith('<?xml')) {
+            xml2js.parseString(fileContent, { explicitArray: false }, (err, result) => {
+                if (err) {
+                    console.error('Error parsing XML:', err);
+                    return res.status(500).send('Error processing XML');
+                }
 
-        parser.on('readable', function () {
-            let record;
-            while ((record = parser.read()) !== null) {
-                // Process record based on expected headers
-                if (record['Plugin ID']) {
-                    // Nessus file processing
-                    console.log("Nessus file processing");
+                // Extract ReportItem elements
+                const allItems = findAllReportItems(result);
+
+                // Filter out ReportItems where risk_factor is "None"
+                const filteredItems = allItems.filter(item => item.risk_factor && item.risk_factor.toLowerCase() !== 'none');
+
+                // Rename fields in the filtered items
+                const renamedItems = filteredItems.map(item => {
                     const {
-                        'Plugin ID': pluginID,
-                        'CVE': CVEs,
-                        'CVSS v2.0 Base Score': CVSS,
-                        'Risk': Severity,
-                        'Host': IP,
-                        'Protocol': portProtocol,
-                        Port,
-                        'Name': Summary,
-                        Synopsis,
-                        'Description': specificResult,
-                        Solution,
-                    } = record;
+                        $: {
+                            port: Port,
+                            // svc_name: svc_name,
+                            protocol: portProtocol,
+                            // pluginID: pluginID,
+                            pluginName: nvtName,
+                            // pluginFamily: PluginFamily
+                        },
+                        cve: CVEs = '',
+                        // cvss3_base_score: CVSS3BaseScore,
+                        // cvss3_vector: CVSS3Vector,
+                        cvss_base_score: CVSS,
+                        // cvss_vector: CVSSVector,
+                        description: specificResult,
+                        // fname: FileName,
+                        // plugin_modification_date: PluginModificationDate,
+                        // plugin_publication_date: PluginPublicationDate,
+                        // plugin_type: PluginType,
+                        risk_factor: Severity,
+                        // script_version: ScriptVersion,
+                        // see_also: SeeAlso,
+                        solution: Solution,
+                        // synopsis: Synopsis,
+                        // plugin_output: PluginOutput
+                    } = item;
+                    const IP = "";
+                    const Summary = "";
+                    const nvtOid = "";
+                    const taskId = "";
+                    const taskName = "";
+                    const Timestamp = "";
+                    const resultId = "";
+                    const Impact = "";
+                    const affectedSoftwareOs = "";
+                    const vulnerabilityInsight = "";
+                    const vulnerabilityDetectionMethod = "";
+                    const productDetectionResult = "";
+                    const BIDs = "";
+                    const CERTs = "";
+                    const otherReferences = "";
+                    const Hostname = "";
+                    const solutionType = "";
 
-                    if (Severity && Severity !== 'None') {
-                        records.push({
-                            pluginID,
-                            CVEs,
-                            CVSS,
-                            Severity,
-                            IP,
-                            portProtocol,
+                    return {
+                        IP, Hostname, Port, portProtocol, CVSS, Severity, solutionType, nvtName,
+                        Summary, specificResult, nvtOid, CVEs, taskId, taskName, Timestamp,
+                        resultId, Impact, Solution, affectedSoftwareOs, vulnerabilityInsight,
+                        vulnerabilityDetectionMethod, productDetectionResult, BIDs, CERTs, otherReferences
+                    };
+                });
+
+                // Respond with the filtered and renamed JSON data
+                return res.json(renamedItems);
+            });
+
+        } else {
+            // Handle CSV file
+            const records = [];
+            const parser = parse({
+                columns: true,
+                trim: true,
+                skipEmptyLines: true,
+            });
+
+            const bufferStream = new stream.PassThrough();
+            bufferStream.end(Buffer.from(fileContent, 'binary'));
+
+            parser.on('readable', function () {
+                let record;
+                while ((record = parser.read()) !== null) {
+                    // Process record based on expected headers
+                    if (record['Plugin ID']) {
+                        const {
+                            // 'Plugin ID': pluginID,
+                            'CVE': CVEs,
+                            'CVSS v2.0 Base Score': CVSS,
+                            'Risk': Severity,
+                            'Host': IP,
+                            'Protocol': portProtocol,
                             Port,
-                            Summary,
-                            Synopsis,
-                            specificResult,
+                            'Name': nvtName,
+                            // Synopsis,
+                            'Description': specificResult,
                             Solution,
-                        });
-                    }
-                    // console.log(records);
-                } else {
-                    // Other file type processing
-                    const {
-                        IP, Hostname, Port, 'Port Protocol': portProtocol, CVSS, Severity, 'Solution Type': solutionType,
-                        'NVT Name': nvtName, Summary, 'Specific Result': specificResult, 'NVT OID': nvtOid,
-                        CVEs, 'Task ID': taskId, 'Task Name': taskName, Timestamp, 'Result ID': resultId,
-                        Impact, Solution, 'Affected Software/OS': affectedSoftwareOs, 'Vulnerability Insight': vulnerabilityInsight,
-                        'Vulnerability Detection Method': vulnerabilityDetectionMethod, 'Product Detection Result': productDetectionResult,
-                        BIDs, CERTs, 'Other References': otherReferences
-                    } = record;
 
-                    // Only add records with some defined fields
-                    if (IP || Hostname || Port) {
-                        records.push({
-                            IP, Hostname, Port, portProtocol, CVSS, Severity, solutionType, nvtName,
-                            Summary, specificResult, nvtOid, CVEs, taskId, taskName, Timestamp,
-                            resultId, Impact, Solution, affectedSoftwareOs, vulnerabilityInsight,
-                            vulnerabilityDetectionMethod, productDetectionResult, BIDs, CERTs, otherReferences
-                        });
+                        } = record;
+
+
+                        const Summary = "";
+                        const nvtOid = "";
+                        const taskId = "";
+                        const taskName = "";
+                        const Timestamp = "";
+                        const resultId = "";
+                        const Impact = "";
+                        const affectedSoftwareOs = "";
+                        const vulnerabilityInsight = "";
+                        const vulnerabilityDetectionMethod = "";
+                        const productDetectionResult = "";
+                        const BIDs = "";
+                        const CERTs = "";
+                        const otherReferences = "";
+                        const Hostname = "";
+                        const solutionType = "";
+
+                        if (Severity && Severity !== 'None') {
+                            records.push({
+                                IP, Hostname, Port, portProtocol, CVSS, Severity, solutionType, nvtName,
+                                Summary, specificResult, nvtOid, CVEs, taskId, taskName, Timestamp,
+                                resultId, Impact, Solution, affectedSoftwareOs, vulnerabilityInsight,
+                                vulnerabilityDetectionMethod, productDetectionResult, BIDs, CERTs, otherReferences
+                            });
+                        }
+                    } else {
+                        const {
+                            IP, Hostname, Port, 'Port Protocol': portProtocol, CVSS, Severity, 'Solution Type': solutionType,
+                            'NVT Name': nvtName, Summary, 'Specific Result': specificResult, 'NVT OID': nvtOid,
+                            CVEs, 'Task ID': taskId, 'Task Name': taskName, Timestamp, 'Result ID': resultId,
+                            Impact, Solution, 'Affected Software/OS': affectedSoftwareOs, 'Vulnerability Insight': vulnerabilityInsight,
+                            'Vulnerability Detection Method': vulnerabilityDetectionMethod, 'Product Detection Result': productDetectionResult,
+                            BIDs, CERTs, 'Other References': otherReferences
+                        } = record;
+
+                        if (IP || Hostname || Port) {
+                            records.push({
+                                IP, Hostname, Port, portProtocol, CVSS, Severity, solutionType, nvtName,
+                                Summary, specificResult, nvtOid, CVEs, taskId, taskName, Timestamp,
+                                resultId, Impact, Solution, affectedSoftwareOs, vulnerabilityInsight,
+                                vulnerabilityDetectionMethod, productDetectionResult, BIDs, CERTs, otherReferences
+                            });
+                        }
                     }
                 }
-                // console.log(records);
-            }
-        });
+            });
 
-        parser.on('end', function () {
-            res.json(records);
-        });
+            parser.on('end', function () {
+                res.json(records);
+            });
 
-        parser.on('error', function (err) {
-            console.error(err.message);
-            res.status(500).send('Error processing CSV');
-        });
+            parser.on('error', function (err) {
+                console.error(err.message);
+                res.status(500).send('Error processing CSV');
+            });
 
-        bufferStream.pipe(parser);
-
+            bufferStream.pipe(parser);
+        }
     } catch (err) {
         console.error(err.message);
         await pgClient.query('ROLLBACK');
         res.status(500).send('Server Error');
     }
 });
+
+// Helper function to find all ReportItem elements in the parsed JSON
+function findAllReportItems(obj) {
+    let items = [];
+
+    function recurse(current) {
+        if (Array.isArray(current)) {
+            current.forEach(recurse);
+        } else if (current && typeof current === 'object') {
+            Object.keys(current).forEach(key => {
+                if (key === 'ReportItem') {
+                    if (Array.isArray(current[key])) {
+                        items = items.concat(current[key]);
+                    } else {
+                        items.push(current[key]);
+                    }
+                } else {
+                    recurse(current[key]);
+                }
+            });
+        }
+    }
+
+    recurse(obj);
+    return items;
+}
 
 
 // Toggle the value in_report to true/false for a specific file
@@ -297,20 +405,57 @@ router.get('/uploads/client/:clientName', authenticateToken, async (req, res) =>
 
 
 // Endpoint to generate report
-router.post('/uploads/generateReport', async (req, res) => {
-    const { reports, reportIds, client } = req.body;
-
-    if (!reports || reports.length === 0 || !reportIds || reportIds.length === 0) {
+router.post('/uploads/generateReport', authenticateToken, async (req, res) => {
+    const { finalReport, name, type } = req.body;
+    
+    if (!finalReport || finalReport.length === 0) {
         return res.status(400).json({ error: 'Reports or report IDs are missing' });
     }
 
     try {
-        // Combine reports into a single JSON object
-        const combinedReport = { reports };
+        // Combine finalReport into a single JSON object
+        const combinedReport = { finalReport };
 
         // Insert combined report into the reports table
         const insertQuery = 'INSERT INTO reports (title, content) VALUES ($1, $2) RETURNING *';
-        const result = await pgClient.query(insertQuery, [client, combinedReport]);
+        const result = await pgClient.query(insertQuery, [name, combinedReport]);
+        const reportId = result.rows[0].report_id;
+
+        let id;
+
+        if (type === 'client') {
+            // Get user_id from the users table
+            const getClientId = 'SELECT user_id FROM users WHERE username = $1';
+            const clientResult = await pgClient.query(getClientId, [name]);
+
+            if (clientResult.rows.length === 0) {
+                return res.status(404).json({ error: 'User not found' });
+            }
+
+            id = clientResult.rows[0].user_id;
+
+            // Insert into user_reports
+            const insertUserReports = 'INSERT INTO user_reports (user_id, report_id) VALUES ($1, $2)';
+            await pgClient.query(insertUserReports, [id, reportId]);
+
+        } else if (type === 'org') {
+            // Get organization_id from the organizations table
+            const getOrgId = 'SELECT organization_id FROM organizations WHERE name = $1';
+            const orgResult = await pgClient.query(getOrgId, [name]);
+
+            if (orgResult.rows.length === 0) {
+                return res.status(404).json({ error: 'Organization not found' });
+            }
+
+            id = orgResult.rows[0].organization_id;
+
+            // Insert into organization_reports
+            const insertOrgReports = 'INSERT INTO organization_reports (organization_id, report_id) VALUES ($1, $2)';
+            await pgClient.query(insertOrgReports, [id, reportId]);
+
+        } else {
+            return res.status(400).json({ error: 'Invalid type specified' });
+        }
 
         res.status(200).json(result.rows[0]);
     } catch (error) {
@@ -318,6 +463,4 @@ router.post('/uploads/generateReport', async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 });
-
-
 module.exports = router;

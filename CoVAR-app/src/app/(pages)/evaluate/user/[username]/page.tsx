@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { mainContentStyles } from '../../../../../styles/evaluateStyle';
 import FileUpload from '../../components/fileUpload';
 import { handleDownloadFile } from '../../../../../functions/requests';
-import ReportPreview from '../../components/reportPreview'; 
+import ReportPreview from '../../components/reportPreview';
 import { fetchUploadsClient, fetchReports, handleRemoveFile, handleToggleReport } from '../../../../../functions/requests';
 import { useRouter } from 'next/navigation';
 interface FileUpload {
@@ -25,11 +25,11 @@ const UserEvaluation: React.FC = () => {
   const redirectToLogin = useCallback(() => {
     router.replace('/login');
   }, [router]);
-  const pathname = usePathname(); 
+  const pathname = usePathname();
   const username = pathname.split('/').pop();
 
   const [uploads, setUploads] = useState<FileUpload[]>([]);
-  const [reportIds, setReportIds] = useState<number[]>([]); 
+  const [reportIds, setReportIds] = useState<number[]>([]);
   const [reports, setReports] = useState<any[][]>([]);
 
   useEffect(() => {
@@ -41,9 +41,9 @@ const UserEvaluation: React.FC = () => {
           const inReportIds = data.filter((upload: FileUpload) => upload.in_report).map((upload: FileUpload) => upload.upload_id);
           setReportIds(inReportIds);
         }
-      } catch (error:any) {
+      } catch (error: any) {
         //console.error('Error fetching uploads:', error);
-        if(error.response?.status === 403) {
+        if (error.response?.status === 403) {
           redirectToLogin();
         }
       }
@@ -75,9 +75,9 @@ const UserEvaluation: React.FC = () => {
         const inReportIds = data.filter((upload: FileUpload) => upload.in_report).map((upload: FileUpload) => upload.upload_id);
         setReportIds(inReportIds);
       }
-    } catch (error:any) {
+    } catch (error: any) {
       //console.error('Error fetching uploads:', error);
-      if(error.response?.status === 403) {
+      if (error.response?.status === 403) {
         redirectToLogin();
       }
     }
@@ -88,9 +88,9 @@ const UserEvaluation: React.FC = () => {
       await handleRemoveFile(upload_id);
       setUploads(uploads.filter(upload => upload.upload_id !== upload_id));
       setReportIds(reportIds.filter(id => id !== upload_id));
-    } catch (error:any) {
+    } catch (error: any) {
       //console.error('Error removing upload:', error);
-      if(error.response?.status === 403) {
+      if (error.response?.status === 403) {
         redirectToLogin();
       }
     }
@@ -110,6 +110,7 @@ const UserEvaluation: React.FC = () => {
   };
 
   return (
+
     <Container maxWidth={false} sx={{ ...mainContentStyles, paddingTop: 8, width: '100vw' }}>
       <Grid container spacing={2}>
         <Grid item xs={6}>
@@ -164,9 +165,20 @@ const UserEvaluation: React.FC = () => {
           <Paper sx={{ textAlign: 'center', overflowY: 'scroll', maxHeight: '80vh' }}>
             <ReportPreview reports={reports} reportIds={reportIds} client={username ?? ''} />
           </Paper>
+          <Button style={{
+            left: '45%', marginTop: 5, position: 'relative'
+          }} variant='outlined' color="primary" onClick={() => router.push(`/evaluate/conflicts/${username}?type=client`)}>
+            Next
+          </Button>
         </Grid>
       </Grid>
+
     </Container>
+
+
+
+
+
   );
 };
 

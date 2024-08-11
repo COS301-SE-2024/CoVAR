@@ -28,8 +28,12 @@ describe('Admin tools E2E Tests', () => {
 
         //Demote and promote
         cy.get('.MuiDataGrid-root .MuiDataGrid-row', { timeout: 8000 }).contains(Cypress.env('va_username'), { log: false }).closest('.MuiDataGrid-row').contains('button', 'Unassign').click();
+        cy.get('.MuiDialog-root').should('exist'); 
+        cy.get('.MuiDialog-root').contains('Confirm').click();
         cy.get('.MuiDataGrid-root .MuiDataGrid-row').contains(Cypress.env('va_username'), { log: false }).closest('.MuiDataGrid-row').contains('client').should('exist');
         cy.get('.MuiDataGrid-root .MuiDataGrid-row').contains(Cypress.env('va_username'), { log: false }).closest('.MuiDataGrid-row').contains('button', 'Assign VA').click();
+        cy.get('.MuiDialog-root').should('exist'); 
+        cy.get('.MuiDialog-root').contains('Confirm').click();
         cy.get('.MuiDataGrid-root .MuiDataGrid-row').contains(Cypress.env('va_username'), { log: false }).closest('.MuiDataGrid-row').contains('va').should('exist');
     })
 
@@ -42,9 +46,29 @@ describe('Admin tools E2E Tests', () => {
         //Navigate to the admin tools page
         cy.get('[test-id="adminToolsLink"]', { timeout: 4500 }).click();
 
-        //Assign client to va
-        cy.get('.MuiDataGrid-root .MuiDataGrid-row').contains(Cypress.env('va_username'), { log: false }).closest('.MuiDataGrid-row').contains('button', 'Assign Client').click();
-        cy.get('.MuiFormControl-root > .MuiInputBase-root').type(Cypress.env('client_username') + '{enter}', { log: false });
+        // Assign client to va
+        cy.get('.MuiDataGrid-root .MuiDataGrid-row')
+        .contains(Cypress.env('va_username'), { log: false })
+        .closest('.MuiDataGrid-row')
+        .contains('button', 'Assign Client')
+        .click();
+
+        cy.get('.MuiDialog-root').should('exist'); 
+        const clientUsername = Cypress.env('client_username');
+
+        // Type part of the client username and immediately look for the options
+        cy.get('.MuiFormControl-root > .MuiInputBase-root')
+        .type(clientUsername.charAt(0)) 
+        .wait(100) 
+        .then(() => {
+            // Select the specific client_username from the Autocomplete options
+            cy.get('.MuiAutocomplete-listbox') .contains(clientUsername) .click(); 
+        });
+
+        // Ensure the assign button is visible and click it
+        cy.get('.MuiDialog-root').find('button').contains('Assign').click({force: true});
+
+
 
         //Logout
         cy.get('[test-id="logoutButton"]').click();
@@ -70,8 +94,20 @@ describe('Admin tools E2E Tests', () => {
 
         //Remove client from va
         cy.get('.MuiDataGrid-root .MuiDataGrid-row').contains(Cypress.env('va_username'), { log: false }).closest('.MuiDataGrid-row').contains('button', 'Remove Client').click();
-        cy.get('.MuiFormControl-root > .MuiInputBase-root').type(Cypress.env('client_username') + '{enter}', { log: false });
+        cy.get('.MuiDialog-root').should('exist'); 
+        const clientUsername = Cypress.env('client_username');
 
+        // Type part of the client username and immediately look for the options
+        cy.get('.MuiFormControl-root > .MuiInputBase-root')
+        .type(clientUsername.charAt(0)) 
+        .wait(100) 
+        .then(() => {
+            // Select the specific client_username from the Autocomplete options
+            cy.get('.MuiAutocomplete-listbox') .contains(clientUsername) .click(); 
+        });
+
+        // Ensure the assign button is visible and click it
+        cy.get('.MuiDialog-root').find('button').contains('Unassign').click({force: true});
         cy.contains('Successfully unassigned', { timeout: 2000 }).should('exist');
     })
 })

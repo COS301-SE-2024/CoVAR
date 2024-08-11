@@ -4,13 +4,14 @@ const axios = require('axios');
 
 const router = express.Router();
 
-router.post('/chain', async (req, res) => {
+router.post('/topVulChain', authenticateToken ,async (req, res) => {
     const { chain_prompt } = req.body;
 
     try {
         //carry jwt through to chain server
         const token = req.headers.authorization;
-        const response = await axios.post('http://langchain:6000/chain', { chain_prompt }, { headers: { Authorization: token } });
+        console.log('Token', token);
+        const response = await axios.post('http://langchain:6000/topVulChain', { chain_prompt }, { headers: { Authorization: token } });
         res.status(200).json(response.data);
     } catch (error) {
         console.error('Error occurred during /chain POST request:');

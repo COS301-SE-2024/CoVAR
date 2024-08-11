@@ -476,6 +476,17 @@ export const generateReportRequest = async (finalReport: any[], name: string | u
 };
 
 
+export const TOPG = async (data:any) => {
+    const token = localStorage.getItem('accessToken');
+    const request: AxiosRequestConfig = {
+        method: 'post',
+        url: 'api/topVulChain',
+        data,
+        headers: { Authorization: `Bearer ${token}` },
+    };
+    return await handleRequest(request);
+};
+
 
 
 

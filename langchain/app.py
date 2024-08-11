@@ -12,12 +12,21 @@ import openai
 app = Flask(__name__)
 
 # Load the public key from the .pem file
-with open('public.pem', 'r') as pem_file:
-    public_key = pem_file.read()
+try:
+    with open('public.pem', 'r') as pem_file:
+        public_key = pem_file.read()
+    print(f"PEM file loaded successfully. Public key: {public_key[:30]}...")  # Print the first 30 characters for verification
+except FileNotFoundError:
+    print("PEM file not found. Please check the file path.")
+    public_key = None
+except Exception as e:
+    print(f"Error loading PEM file: {e}")
+    public_key = None
 
 def verify_jwt(token):
     try:
         # Decode the token using the public key
+        print(f"Received token: {public_key}")
         decoded_token = jwt.decode(token, public_key, algorithms=["RS256"])
         return decoded_token
     except jwt.ExpiredSignatureError:
@@ -25,21 +34,17 @@ def verify_jwt(token):
     except jwt.InvalidTokenError:
         return None
 
-@app.route('/run_test', methods=['POST'])
+@app.route('/topVulChain', methods=['POST'])  
 def run_test():
-    # Get the JWT from the Authorization header
-    auth_header = request.headers.get('Authorization')
-    if not auth_header or not auth_header.startswith("Bearer "):
-        return jsonify({'error': 'Missing or invalid JWT'}), 401
+    # Get the question from the request body
+    data = request.json
+    chain_prompt = data.get('chain_prompt', '')
 
-    token = auth_header.split(" ")[1]
-    decoded_token = verify_jwt(token)
-
-    if not decoded_token:
-        return jsonify({'error': 'Invalid or expired JWT'}), 401
+    if not chain_prompt:
+        return jsonify({'error': 'chain_prompt is required'}), 400
 
     print("Running test")
-    template = """Question {question}\nAnswer Let's think step by step."""
+    template = """Vulnerability {chain_prompt}\nYou are a cyber security specialist. Give an insight into which of these vulnerabilities is the most concerning.Keep it short and concise."""
     prompt = ChatPromptTemplate.from_template(template)
 
     try:
@@ -55,14 +60,14 @@ def run_test():
         
         elif model_type == 'gemini':
             if "GOOGLE_API_KEY" not in os.environ:
-                os.environ["GOOGLE_API_KEY"]=os.environ['API_KEY']
+                os.environ["GOOGLE_API_KEY"] = os.environ['API_KEY']
             model = ChatGoogleGenerativeAI(model="gemini-pro")
         
         else:
             raise ValueError(f"Invalid model type: {model_type}")
         
         chain = prompt | model
-        result = chain.invoke({"question": "What are CVE's and should issues be stored by that category in networks?"})
+        result = chain.invoke({"chain_prompt": chain_prompt})
         print(f"Model invocation result: {result}")
         return jsonify({'result': result.content})
     

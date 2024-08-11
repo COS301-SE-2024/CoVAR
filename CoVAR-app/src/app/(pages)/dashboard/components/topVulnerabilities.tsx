@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, Paper, List, ListItem, ListItemText, CircularProgress } from '@mui/material';
+import { Box, Typography, Paper, List, ListItem, ListItemText, CircularProgress, Button, Dialog, DialogTitle, DialogContent } from '@mui/material';
 import { VulnerabilityReport } from '../page';
 import { ResponsiveContainer } from 'recharts';
 import { TOPG } from '@/functions/requests';
@@ -12,6 +12,7 @@ interface TopVulnerabilitiesProps {
 const TopVulnerabilities: React.FC<TopVulnerabilitiesProps> = ({ vulnerabilities }) => {
     const [theG, setTheG] = useState<{ result: string } | null>(null);
     const [loading, setLoading] = useState(true);
+    const [open, setOpen] = useState(false);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -37,24 +38,46 @@ const TopVulnerabilities: React.FC<TopVulnerabilitiesProps> = ({ vulnerabilities
         fetchData();
     }, [vulnerabilities]); // Include vulnerabilities as a dependency
 
+    const handleClickOpen = () => {
+        setOpen(true);
+    };
+
+    const handleClose = () => {
+        setOpen(false);
+    };
+
     return (
         <ResponsiveContainer width="100%" height={400}>
-                <List>
-                    {vulnerabilities.map((vulnerability, index) => (
-                        <ListItem key={index}>
-                            <ListItemText
-                                primary={
-                                    loading
-                                        ? index === 0 && <CircularProgress size={20} />
-                                        : `${vulnerability.nvtName} (${vulnerability.Severity})${index === 0 && theG ? ` - ${theG.result}` : ''}`
-                                }
-                                secondary={`IP: ${vulnerability.IP}, Port: ${vulnerability.Port}, CVSS: ${vulnerability.CVSS}`}
-                            />
-                        </ListItem>
-                    ))}
-                </List>
+            <List>
+                {vulnerabilities.map((vulnerability, index) => (
+                    <ListItem key={index}>
+                        <ListItemText
+                            primary={
+                                loading
+                                    ? index === 0 && <CircularProgress size={20} />
+                                    : `${vulnerability.nvtName} (${vulnerability.Severity})`
+                            }
+                            secondary={`IP: ${vulnerability.IP}, Port: ${vulnerability.Port}, CVSS: ${vulnerability.CVSS}`}
+                        />
+                        {index === 0 && theG && !loading && (
+                            <Box mt={2}>
+                                <Button variant="outlined" color="primary" onClick={handleClickOpen}>
+                                    View Insight
+                                </Button>
+                                <Dialog open={open} onClose={handleClose}>
+                                    <DialogTitle>Insight</DialogTitle>
+                                    <DialogContent>
+                                        <Typography variant="body2">
+                                            {theG.result}
+                                        </Typography>
+                                    </DialogContent>
+                                </Dialog>
+                            </Box>
+                        )}
+                    </ListItem>
+                ))}
+            </List>
         </ResponsiveContainer>
-
     );
 };
 

@@ -134,43 +134,51 @@ router.get('/reports/executive/:report_id', authenticateToken, async (req, res) 
         const clientReports = reportResult.rows;
 
        
-            let ReportscriticalCount = 0;
-            let ReportsmediumCount = 0;
-            let ReportslowCount = 0;
+        // Initialize counters and unique host sets
+        let ReportscriticalCount = 0, ReportsmediumCount = 0, ReportslowCount = 0;
+        let criticalHosts = new Set(), mediumHosts = new Set(), lowHosts = new Set();
+
         let reports = reportResult.rows.map(report => {
-            const content = report.content.reports; // Accessing the 'reports' array within the content object
-            //console.log("Report Content:", content); // Log the entire content to see its structure
-            
+            const content = report.content.reports;
 
             content.forEach(reportItem => {
                 reportItem.forEach(item => {
-                    //console.log("Item:", item); // Log the entire item to examine its structure
-                    let severity = item.Severity || item.severity; // Check for both 'Severity' and 'severity'
+                    let severity = item.Severity || item.severity;
+                    let hostIdentifier = `${item.IP}:${item.Port}`; // Unique identifier for the host
 
-                    // Ensure that the severity is trimmed and in a consistent case
                     if (severity) {
                         severity = severity.trim().toLowerCase();
                     }
-                    
-                    //console.log("Item Severity:", severity); // Log the severity to see what it returns
 
                     switch (severity) {
                         case 'high':
                             ReportscriticalCount++;
+                            criticalHosts.add(hostIdentifier); // Add to critical hosts set
                             break;
                         case 'medium':
                             ReportsmediumCount++;
+                            mediumHosts.add(hostIdentifier); // Add to medium hosts set
                             break;
                         case 'low':
                             ReportslowCount++;
+                            lowHosts.add(hostIdentifier); // Add to low hosts set
                             break;
                         default:
-                            console.log("Unknown severity:", severity); // Log any severity that doesn't match expected values
+                            console.log("Unknown severity:", severity);
                             break;
                     }
                 });
             });
         });
+
+        // Count unique hosts for each severity
+        let uniqueCriticalHostsCount = criticalHosts.size;
+        let uniqueMediumHostsCount = mediumHosts.size;
+        let uniqueLowHostsCount = lowHosts.size;
+
+        // console.log("Unique Critical Hosts:", uniqueCriticalHostsCount);
+        // console.log("Unique Medium Hosts:", uniqueMediumHostsCount);
+        // console.log("Unique Low Hosts:", uniqueLowHostsCount);
          // Initialize counts
          let criticalCount = 0;
          let mediumCount = 0;
@@ -435,16 +443,16 @@ router.get('/reports/executive/:report_id', authenticateToken, async (req, res) 
         };
 
         // Draw each row
-        drawRow(tableTop + rowHeight, 'Critical', ReportscriticalCount, 6);
-        drawRow(tableTop + rowHeight * 2, 'Medium', ReportsmediumCount, 68);
-        drawRow(tableTop + rowHeight * 3, 'Low', ReportslowCount, 0);
+        drawRow(tableTop + rowHeight, 'Critical', ReportscriticalCount, uniqueCriticalHostsCount);
+        drawRow(tableTop + rowHeight * 2, 'Medium', ReportsmediumCount, uniqueMediumHostsCount);
+        drawRow(tableTop + rowHeight * 3, 'Low', ReportslowCount, uniqueLowHostsCount);
 
         // Draw total row directly below the other rows
-        const totalRowY = tableTop + rowHeight * 4;
-        doc.rect(tableLeft, totalRowY, tableWidth, rowHeight).fillAndStroke('darkblue', 'black');
-        doc.fillColor('white').text('Total', tableLeft + cellPadding, totalRowY + cellPadding, { width: columnWidths[0], align: 'center' });
-        doc.text((ReportscriticalCount+ReportsmediumCount+ReportslowCount).toString(), tableLeft + columnWidths[0] + cellPadding, totalRowY + cellPadding, { width: columnWidths[1], align: 'center' });
-        doc.text('78', tableLeft + columnWidths[0] + columnWidths[1] + cellPadding, totalRowY + cellPadding, { width: columnWidths[2], align: 'center' });
+const totalRowY = tableTop + rowHeight * 4;
+doc.rect(totalRowY, tableLeft, tableWidth, rowHeight).fillAndStroke('darkblue', 'black');
+doc.fillColor('white').text('Total', tableLeft + cellPadding, totalRowY + cellPadding, { width: columnWidths[0], align: 'center' });
+doc.text((ReportscriticalCount + ReportsmediumCount + ReportslowCount).toString(), tableLeft + columnWidths[0] + cellPadding, totalRowY + cellPadding, { width: columnWidths[1], align: 'center' });
+doc.text((uniqueCriticalHostsCount + uniqueMediumHostsCount + uniqueLowHostsCount).toString(), tableLeft + columnWidths[0] + columnWidths[1] + cellPadding, totalRowY + cellPadding, { width: columnWidths[2], align: 'center' });
 
         // Add any other content here...
         addFooter();

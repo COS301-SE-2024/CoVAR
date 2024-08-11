@@ -141,6 +141,7 @@ router.get('/reports/executive/:report_id', authenticateToken, async (req, res) 
         // Initialize sets to track unique vulnerabilities
         let criticalVulnerabilities = new Set(), mediumVulnerabilities = new Set(), lowVulnerabilities = new Set();
         let vulnerabilityCategories = new Map();
+        let aggregatedVulnerabilities = new Map();
         let reports = reportResult.rows.map(report => {
             const content = report.content.reports;
 
@@ -148,7 +149,21 @@ router.get('/reports/executive/:report_id', authenticateToken, async (req, res) 
                 reportItem.forEach(item => {
                     let severity = item.Severity || item.severity;
                     let hostIdentifier = `${item.IP}:${item.Port}`; // Unique identifier for the host
-                    let vulnerabilityIdentifier = `${item.nvtOid}:${item.nvtName}`; // Unique identifier for the vulnerability
+                    let vulnerabilityIdentifier = item.nvtName;
+                    let cvssScore = item.CVSS;
+                    if (vulnerabilityIdentifier && cvssScore) {
+                        if (aggregatedVulnerabilities.has(vulnerabilityIdentifier)) {
+                            let existingEntry = aggregatedVulnerabilities.get(vulnerabilityIdentifier);
+                            existingEntry.hosts.push(hostIdentifier);
+                        } else {
+                            // Otherwise, create a new entry
+                            aggregatedVulnerabilities.set(vulnerabilityIdentifier, {
+                                vulnerability: vulnerabilityIdentifier,
+                                cvss: cvssScore,
+                                hosts: [hostIdentifier]
+                            });
+                        }
+                    }
                     if (vulnerabilityIdentifier) {
                         if (!vulnerabilityCategories.has(vulnerabilityIdentifier)) {
                             vulnerabilityCategories.set(vulnerabilityIdentifier, 1);
@@ -213,18 +228,25 @@ router.get('/reports/executive/:report_id', authenticateToken, async (req, res) 
             }]
         };
         // Create the pie chart configuration
-            const pieChartConfig = {
-                type: 'pie',
-                data: pieChartData,
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: {
-                            position: 'top',
+        const pieChartConfig = {
+            type: 'pie',
+            data: pieChartData,
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',  // Move legend to the bottom
+                        labels: {
+                            font: {
+                                size: 10  // Decrease the font size of the legend
+                            },
+                            boxWidth: 10,  // Adjust the box width to fit better
+                            padding: 10,  // Add padding between legend items
                         },
                     },
                 },
-            };
+            },
+        };
          // Generate the pie chart image
          const pieChartBuffer = await chartJSNodeCanvas.renderToBuffer(pieChartConfig);
 
@@ -510,11 +532,11 @@ router.get('/reports/executive/:report_id', authenticateToken, async (req, res) 
             align: 'center',
             valign: 'center'
         })
-        doc.moveDown(18);
+        doc.moveDown(17);
         // Add the trend graph
         // addNewPage();
         doc.fontSize(16).text('Trend Graph', { align: 'center' });
-        doc.moveDown(2);
+        doc.moveDown(1);
 
         // Embed the trend graph image in the PDF
         doc.image(imageBuffer, {
@@ -522,7 +544,167 @@ router.get('/reports/executive/:report_id', authenticateToken, async (req, res) 
             align: 'center',
             valign: 'center'
         });
+        addFooter();
+        doc.fontSize(16).text('Vulnerabilities Detail Table', { align: 'center' });
+        doc.moveDown();
+        let vulnerabilityTableData = Array.from(aggregatedVulnerabilities.values()).map(entry => {
+            // Sort the hosts
+            let sortedHosts = entry.hosts.sort((a, b) => a.localeCompare(b));
+        
+            // Function to condense IP addresses into ranges and CIDR notation
+            const condenseHosts = (hosts) => {
+                if (hosts.length === 0) return '';
+        
+                let ranges = [];
+                let start = hosts[0];
+                let end = hosts[0];
+        
+                for (let i = 1; i < hosts.length; i++) {
+                    if (hosts[i] === incrementIP(end)) {
+                        end = hosts[i];
+                    } else {
+                        ranges.push(createCIDR(start, end));
+                        start = hosts[i];
+                        end = hosts[i];
+                    }
+                }
+        
+                // Push the last range
+                ranges.push(createCIDR(start, end));
+                return ranges.join(', ');
+            };
+        
+            // Function to increment an IP address
+            const incrementIP = (ip) => {
+                let parts = ip.split('.').map(Number);
+                for (let i = parts.length - 1; i >= 0; i--) {
+                    if (parts[i] < 255) {
+                        parts[i]++;
+                        break;
+                    } else {
+                        parts[i] = 0;
+                    }
+                }
+                return parts.join('.');
+            };
+        
+            // Function to calculate CIDR notation for a range
+            const createCIDR = (start, end) => {
+                if (start === end) return start; // Single IP, no CIDR needed
+        
+                let startParts = start.split('.').map(Number);
+                let endParts = end.split('.').map(Number);
+        
+                // Calculate the difference between the start and end IPs
+                let diff = 0;
+                for (let i = 0; i < 4; i++) {
+                    diff = (diff << 8) + (endParts[i] - startParts[i]);
+                }
+        
+                // Find the highest bit that differs
+                let mask = 32;
+                while (diff > 0) {
+                    diff >>= 1;
+                    mask--;
+                }
+        
+                return `${start}/${mask}`;
+            };
+        
+            return {
+                vulnerability: entry.vulnerability,
+                cvss: entry.cvss,
+                host: condenseHosts(sortedHosts)
+            };
+        });
+                // Set up the table headers
+        // const tableTopY = doc.y;
+        // const tableLeftX = 50;
+        // const columnWidths2 = [200, 100, 250]; // Set widths for the columns
 
+        // // Draw the table header background
+        // doc.rect(tableLeftX, tableTopY, columnWidths2[0] + columnWidths2[1] + columnWidths2[2], 25).fillAndStroke('darkblue', 'black');
+
+        // // Draw column titles
+        // doc.fillColor('white').fontSize(12).text('Vulnerability', tableLeftX + 5, tableTopY + 5, { width: columnWidths[0], align: 'center' });
+        // doc.text('CVSS Score', tableLeftX + columnWidths2[0] + 5, tableTopY + 5, { width: columnWidths2[1], align: 'center' });
+        // doc.text('Hosts', tableLeftX + columnWidths2[0] + columnWidths2[1] + 5, tableTopY + 5, { width: columnWidths2[2], align: 'center' });
+
+        // // Reset fill color for table rows
+        // doc.fillColor('black');
+
+        // // Helper function to draw a row
+        // const drawTableRow = (y, vulnerability, cvss, hosts) => {
+        //     doc.rect(tableLeftX, y, columnWidths2[0], 25).stroke();
+        //     doc.rect(tableLeftX + columnWidths2[0], y, columnWidths2[1], 25).stroke();
+        //     doc.rect(tableLeftX + columnWidths2[0] + columnWidths2[1], y, columnWidths2[2], 25).stroke();
+
+        //     doc.text(vulnerability, tableLeftX + 5, y + 5, { width: columnWidths2[0], align: 'center' });
+        //     doc.text(cvss.toString(), tableLeftX + columnWidths2[0] + 5, y + 5, { width:columnWidths2[1], align: 'center' });
+        //     doc.text(hosts, tableLeftX + columnWidths2[0] + columnWidths2[1] + 5, y + 5, { width:columnWidths2[2], align: 'center' });
+        // };
+
+        // // Iterate through the vulnerabilityTableData and add rows to the table
+        // vulnerabilityTableData.forEach((entry, index) => {
+        //     const rowY = tableTopY + 25 + (index * 25);
+        //     drawTableRow(rowY, entry.vulnerability, entry.cvss, entry.host);
+
+        //     // If the row goes beyond the page, add a new page
+        //     if (rowY + 50 > doc.page.height - 50) {
+        //         addFooter();
+        //         doc.addPage();
+        //         addHeader();
+        //     }
+        // });
+        const tableconfiguration = {
+            type: 'bar',
+            data: {
+                labels: vulnerabilityTableData.map(entry => entry.vulnerability),
+                datasets: [
+                    {
+                        label: 'CVSS',
+                        data: vulnerabilityTableData.map(entry => entry.cvss),
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 1,
+                    },
+                    {
+                        label: 'Hosts',
+                        data: vulnerabilityTableData.map(entry => entry.host),
+                        backgroundColor: 'rgba(153, 102, 255, 0.2)',
+                        borderColor: 'rgba(153, 102, 255, 1)',
+                        borderWidth: 1,
+                    },
+                ],
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 10, // Adjust as needed
+                    },
+                },
+                plugins: {
+                    legend: {
+                        display: true,
+                    },
+                    tooltip: {
+                        enabled: true,
+                    },
+                },
+            },
+        };
+        
+       const image = await chartJSNodeCanvas.renderToBuffer(tableconfiguration );
+    
+        // Add the table to the PDF
+        doc.image(image, {
+            fit: [500, 300],
+            align: 'center',
+            valign: 'center'
+        });
+        // Finalize the PDF and send it
+        addFooter();
         // Finalize the PDF and send it
         doc.end();
 

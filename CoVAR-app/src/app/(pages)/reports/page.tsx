@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { CircularProgress, Box, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Typography, Button } from '@mui/material';
 import { populateReportsTable, fetchExecReport } from '@/functions/requests';
+import DownloadIcon from '@mui/icons-material/Download';
 
 type Report = {
     report_id: string;
@@ -94,13 +95,15 @@ const ReportsPage = () => {
                                 <TableCell>{report.mediumCount}</TableCell>
                                 <TableCell>{report.lowCount}</TableCell>
                                 <TableCell>
-                                    <Button 
-                                        variant="contained" 
-                                        color="primary" 
-                                        onClick={() => handleFetchExecReport(report.report_id)}
-                                    >
-                                        Download Executive Report
-                                    </Button>
+                                <Button 
+                                    variant="contained" 
+                                    color="primary" 
+                                    onClick={() => handleFetchExecReport(report.report_id)}
+                                    startIcon={<DownloadIcon />} // Add this line to include the icon
+                                >
+                                    Download Executive Report
+                                </Button>
+
                                 </TableCell>
                             </TableRow>
                         ))}

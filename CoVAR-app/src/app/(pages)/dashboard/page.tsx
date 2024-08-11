@@ -128,14 +128,20 @@ const Dashboard: React.FC = () => {
                         </Paper>
                     </Grid>
                     <Grid item xs={12} md={6}>
-                            <TopVulnerabilities vulnerabilities={topVulnerabilities} />
+                        <Paper sx={chartContainerStyles}>
+                            <Typography variant="h6">Top Vulnerabilities</Typography>
+                            <TopVulnerabilities vulnerabilities={topVulnerabilities}></TopVulnerabilities>
+                        </Paper>
                     </Grid>
                     <Grid item xs={12} md={6}>
+                        <Paper sx={chartContainerStyles}>
+                            <Typography variant="h6">Filter by Severity</Typography>
                             <ReportsList
                                 reports={filteredReports}
                                 selectedSeverity={selectedSeverity}
                                 handleSeverityChange={handleSeverityChange}
                             />
+                        </Paper>
                     </Grid>
                 </Grid>
             )}

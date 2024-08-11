@@ -18,11 +18,7 @@ const severityColors: { [key: string]: { border: string; background: string } } 
 
 const ReportsList: React.FC<ReportsListProps> = ({ reports, selectedSeverity, handleSeverityChange }) => {
     return (
-        <Paper sx={{ maxHeight: '400px', overflowY: 'auto', margin: '16px 0' }}>
-            <Box sx={{ padding: '16px' }}>
-                <Typography variant="h6" gutterBottom>
-                    Filter by Severity
-                </Typography>
+        <Box sx={{ maxHeight: '400px', overflowY: 'auto', margin: '16px 0', width : '100%', overflowX : 'hidden', padding : '10px' }}>
                 <RadioGroup
                     row
                     value={selectedSeverity}
@@ -43,7 +39,7 @@ const ReportsList: React.FC<ReportsListProps> = ({ reports, selectedSeverity, ha
                         label="All"
                     />
                 </RadioGroup>
-            </Box>
+
             {reports.length === 0 ? (
                 <Typography variant="body1" sx={{ padding: '16px', textAlign: 'center' }}>
                     No reports
@@ -68,7 +64,7 @@ const ReportsList: React.FC<ReportsListProps> = ({ reports, selectedSeverity, ha
                     ))}
                 </List>
             )}
-        </Paper>
+        </Box>
     );
 };
 

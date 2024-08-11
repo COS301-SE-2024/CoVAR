@@ -2,6 +2,7 @@
 import React from 'react';
 import { Box, Typography, Paper, List, ListItem, ListItemText } from '@mui/material';
 import { VulnerabilityReport } from '../page';
+import { ResponsiveContainer } from 'recharts';
 
 interface TopVulnerabilitiesProps {
     vulnerabilities: VulnerabilityReport[];
@@ -9,9 +10,7 @@ interface TopVulnerabilitiesProps {
 
 const TopVulnerabilities: React.FC<TopVulnerabilitiesProps> = ({ vulnerabilities }) => {
     return (
-        <Paper>
-            <Box p={2} textAlign="center">
-                <Typography variant="h6">Top Vulnerabilities</Typography>
+        <ResponsiveContainer width="100%" height={400}>
                 <List>
                     {vulnerabilities.map((vulnerability, index) => (
                         <ListItem key={index}>
@@ -22,8 +21,8 @@ const TopVulnerabilities: React.FC<TopVulnerabilitiesProps> = ({ vulnerabilities
                         </ListItem>
                     ))}
                 </List>
-            </Box>
-        </Paper>
+        </ResponsiveContainer>
+
     );
 };
 

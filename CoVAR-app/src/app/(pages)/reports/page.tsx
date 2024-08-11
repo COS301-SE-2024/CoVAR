@@ -37,41 +37,53 @@ const ReportsPage = () => {
 
     if (loading) {
         return (
-            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+            <Box sx={{
+                ...mainContentStyles,
+                position: 'absolute',
+                top: '50%',
+                left: '57%',
+                transform: 'translate(-50%, -50%)',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                width: '90%',
+                height: '100%',
+
+            }}>
                 <CircularProgress />
             </Box>
         );
     }
 
     const handleFetchExecReport = async (reportId: string) => {
-      try {
-          const blob = await fetchExecReport(reportId); // Fetch the PDF blob
-  
-          // Create a URL for the blob
-          const url = window.URL.createObjectURL(new Blob([blob]));
-  
-          // Create a link element
-          const link = document.createElement('a');
-          link.href = url;
-          link.setAttribute('download', `executive_report_${reportId}.pdf`); // Set the file name
-  
-          // Append the link to the document body
-          document.body.appendChild(link);
-  
-          // Programmatically click the link to trigger the download
-          link.click();
-  
-          // Clean up by removing the link and revoking the object URL
-          link.parentNode?.removeChild(link);
-          window.URL.revokeObjectURL(url);
-  
-      } catch (error) {
-          console.error('Error fetching executive report:', error);
-      }
-  };
+        try {
+            const blob = await fetchExecReport(reportId); // Fetch the PDF blob
+
+            // Create a URL for the blob
+            const url = window.URL.createObjectURL(new Blob([blob]));
+
+            // Create a link element
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `executive_report_${reportId}.pdf`); // Set the file name
+
+            // Append the link to the document body
+            document.body.appendChild(link);
+
+            // Programmatically click the link to trigger the download
+            link.click();
+
+            // Clean up by removing the link and revoking the object URL
+            link.parentNode?.removeChild(link);
+            window.URL.revokeObjectURL(url);
+
+        } catch (error) {
+            console.error('Error fetching executive report:', error);
+        }
+    };
 
     return (
-        <Box sx={{ ...mainContentStyles ,padding: 3, width: '100%' }}>
+        <Box sx={{ ...mainContentStyles, padding: 3, width: '100%' }}>
             <Typography variant="h4" sx={{ marginBottom: 2 }}>
                 Reports
             </Typography>
@@ -84,7 +96,7 @@ const ReportsPage = () => {
                             <TableCell sx={{ color: '#CAD2C5', fontWeight: 'bold' }}>Critical Count</TableCell>
                             <TableCell sx={{ color: '#CAD2C5', fontWeight: 'bold' }}>Medium Count</TableCell>
                             <TableCell sx={{ color: '#CAD2C5', fontWeight: 'bold' }}>Low Count</TableCell>
-                            <TableCell sx={{ color: '#CAD2C5', fontWeight: 'bold' }}>Actions</TableCell> 
+                            <TableCell sx={{ color: '#CAD2C5', fontWeight: 'bold' }}>Actions</TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
@@ -96,14 +108,14 @@ const ReportsPage = () => {
                                 <TableCell>{report.mediumCount}</TableCell>
                                 <TableCell>{report.lowCount}</TableCell>
                                 <TableCell>
-                                <Button 
-                                    variant="contained" 
-                                    color="primary" 
-                                    onClick={() => handleFetchExecReport(report.report_id)}
-                                    startIcon={<DownloadIcon />} // Add this line to include the icon
-                                >
-                                    Download Executive Report
-                                </Button>
+                                    <Button
+                                        variant="contained"
+                                        color="primary"
+                                        onClick={() => handleFetchExecReport(report.report_id)}
+                                        startIcon={<DownloadIcon />} // Add this line to include the icon
+                                    >
+                                        Download Executive Report
+                                    </Button>
 
                                 </TableCell>
                             </TableRow>

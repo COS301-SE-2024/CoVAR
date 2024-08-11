@@ -96,7 +96,7 @@ const UserConflicts = () => {
     const [snackbarOpen, setSnackbarOpen] = useState(false);
 
     const fetchUploadIDsForReport = async () => {
-        
+
         try {
             if (name && type === 'client') {
                 const data = await fetchUploadsClient(name);
@@ -189,7 +189,7 @@ const UserConflicts = () => {
         }
 
         setFinalReport(updatedReport);
-        console.log('Final Report:', updatedReport);
+        // console.log('Final Report:', updatedReport);
     };
 
     const handleCloseSnackbar = () => {
@@ -213,18 +213,18 @@ const UserConflicts = () => {
 
     if (loading) {
         return (
-            <Box sx={{ 
+            <Box sx={{
                 ...mainContentStyles,
-                position: 'absolute', 
-                top: '50%', 
-                left: '57%', 
-                transform: 'translate(-50%, -50%)', 
-                display: 'flex', 
-                justifyContent: 'center', 
-                alignItems: 'center', 
+                position: 'absolute',
+                top: '50%',
+                left: '57%',
+                transform: 'translate(-50%, -50%)',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
                 width: '90%',
-                height: '100%', 
-                
+                height: '100%',
+
             }}>
                 <CircularProgress />
             </Box>

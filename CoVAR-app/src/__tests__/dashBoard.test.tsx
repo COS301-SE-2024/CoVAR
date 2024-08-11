@@ -16,6 +16,16 @@ jest.mock('next/navigation', () => ({
       replace: jest.fn(),
     }),
   }));
+
+  jest.mock('../app/(pages)/dashboard/page.tsx', () => {
+    return {
+      __esModule: true,
+      default: jest.fn(),
+      initializeApp: jest.fn(),
+      getAuth: jest.fn(),
+      getFirestore: jest.fn(),
+    };
+  });
 describe('Dashboard Component', () => {
     test('renders example charts and list', () => {
         render(<div style={{ minWidth: '300px', minHeight: '300px' }}>

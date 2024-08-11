@@ -138,6 +138,9 @@ router.get('/reports/executive/:report_id', authenticateToken, async (req, res) 
         let ReportscriticalCount = 0, ReportsmediumCount = 0, ReportslowCount = 0;
         let criticalHosts = new Set(), mediumHosts = new Set(), lowHosts = new Set();
 
+        // Initialize sets to track unique vulnerabilities
+        let criticalVulnerabilities = new Set(), mediumVulnerabilities = new Set(), lowVulnerabilities = new Set();
+        let vulnerabilityCategories = new Map();
         let reports = reportResult.rows.map(report => {
             const content = report.content.reports;
 
@@ -145,7 +148,14 @@ router.get('/reports/executive/:report_id', authenticateToken, async (req, res) 
                 reportItem.forEach(item => {
                     let severity = item.Severity || item.severity;
                     let hostIdentifier = `${item.IP}:${item.Port}`; // Unique identifier for the host
-
+                    let vulnerabilityIdentifier = `${item.nvtOid}:${item.nvtName}`; // Unique identifier for the vulnerability
+                    if (vulnerabilityIdentifier) {
+                        if (!vulnerabilityCategories.has(vulnerabilityIdentifier)) {
+                            vulnerabilityCategories.set(vulnerabilityIdentifier, 1);
+                        } else {
+                            vulnerabilityCategories.set(vulnerabilityIdentifier, vulnerabilityCategories.get(vulnerabilityIdentifier) + 1);
+                        }
+                    }
                     if (severity) {
                         severity = severity.trim().toLowerCase();
                     }
@@ -154,14 +164,17 @@ router.get('/reports/executive/:report_id', authenticateToken, async (req, res) 
                         case 'high':
                             ReportscriticalCount++;
                             criticalHosts.add(hostIdentifier); // Add to critical hosts set
+                            criticalVulnerabilities.add(vulnerabilityIdentifier); // Add to critical vulnerabilities set
                             break;
                         case 'medium':
                             ReportsmediumCount++;
                             mediumHosts.add(hostIdentifier); // Add to medium hosts set
+                            mediumVulnerabilities.add(vulnerabilityIdentifier); // Add to medium vulnerabilities set
                             break;
                         case 'low':
                             ReportslowCount++;
                             lowHosts.add(hostIdentifier); // Add to low hosts set
+                            lowVulnerabilities.add(vulnerabilityIdentifier); // Add to low vulnerabilities set
                             break;
                         default:
                             console.log("Unknown severity:", severity);
@@ -176,6 +189,13 @@ router.get('/reports/executive/:report_id', authenticateToken, async (req, res) 
         let uniqueMediumHostsCount = mediumHosts.size;
         let uniqueLowHostsCount = lowHosts.size;
 
+        // Count unique vulnerabilities for each severity
+        let uniqueCriticalVulnerabilitiesCount = criticalVulnerabilities.size;
+        let uniqueMediumVulnerabilitiesCount = mediumVulnerabilities.size;
+        let uniqueLowVulnerabilitiesCount = lowVulnerabilities.size;
+        // Convert the Map to an array of categories and their counts
+        const vulnerabilityTypes = Array.from(vulnerabilityCategories.keys());
+        const vulnerabilityCounts = Array.from(vulnerabilityCategories.values());
         // console.log("Unique Critical Hosts:", uniqueCriticalHostsCount);
         // console.log("Unique Medium Hosts:", uniqueMediumHostsCount);
         // console.log("Unique Low Hosts:", uniqueLowHostsCount);
@@ -183,6 +203,31 @@ router.get('/reports/executive/:report_id', authenticateToken, async (req, res) 
          let criticalCount = 0;
          let mediumCount = 0;
          let lowCount = 0;
+        //pie chart data 
+        // Prepare data for pie chart
+        const pieChartData = {
+            labels: vulnerabilityTypes,
+            datasets: [{
+                data: vulnerabilityCounts,
+                backgroundColor: vulnerabilityTypes.map(() => `#${Math.floor(Math.random() * 16777215).toString(16)}`) // Random color for each category
+            }]
+        };
+        // Create the pie chart configuration
+            const pieChartConfig = {
+                type: 'pie',
+                data: pieChartData,
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                    },
+                },
+            };
+         // Generate the pie chart image
+         const pieChartBuffer = await chartJSNodeCanvas.renderToBuffer(pieChartConfig);
+
          //getting data for graph
          //check if org or user
          const userResult = await pgClient.query(
@@ -339,7 +384,7 @@ router.get('/reports/executive/:report_id', authenticateToken, async (req, res) 
         // Add the image
         const imagePath = path.join(__dirname, '../routes/assets/4546131_3922.jpg');
         doc.image(imagePath, { fit: [500, 500], align: 'center', valign: 'center' });
-        doc.moveDown(40);
+        doc.moveDown(35);
 
         // Add a solid blue background behind the title
         doc.rect(50, doc.y, 500, 70).fill('darkblue');
@@ -448,16 +493,24 @@ router.get('/reports/executive/:report_id', authenticateToken, async (req, res) 
         drawRow(tableTop + rowHeight * 3, 'Low', ReportslowCount, uniqueLowHostsCount);
 
         // Draw total row directly below the other rows
-const totalRowY = tableTop + rowHeight * 4;
-doc.rect(totalRowY, tableLeft, tableWidth, rowHeight).fillAndStroke('darkblue', 'black');
-doc.fillColor('white').text('Total', tableLeft + cellPadding, totalRowY + cellPadding, { width: columnWidths[0], align: 'center' });
-doc.text((ReportscriticalCount + ReportsmediumCount + ReportslowCount).toString(), tableLeft + columnWidths[0] + cellPadding, totalRowY + cellPadding, { width: columnWidths[1], align: 'center' });
-doc.text((uniqueCriticalHostsCount + uniqueMediumHostsCount + uniqueLowHostsCount).toString(), tableLeft + columnWidths[0] + columnWidths[1] + cellPadding, totalRowY + cellPadding, { width: columnWidths[2], align: 'center' });
+        const totalRowY = tableTop + rowHeight * 4;
+        //doc.rect(totalRowY, tableLeft, tableWidth, rowHeight).fillAndStroke('darkblue', 'black');
+        doc.fillColor('white').text('Total', tableLeft + cellPadding, totalRowY + cellPadding, { width: columnWidths[0], align: 'center' });
+        doc.text((ReportscriticalCount + ReportsmediumCount + ReportslowCount).toString(), tableLeft + columnWidths[0] + cellPadding, totalRowY + cellPadding, { width: columnWidths[1], align: 'center' });
+        doc.text((uniqueCriticalHostsCount + uniqueMediumHostsCount + uniqueLowHostsCount).toString(), tableLeft + columnWidths[0] + columnWidths[1] + cellPadding, totalRowY + cellPadding, { width: columnWidths[2], align: 'center' });
 
         // Add any other content here...
         addFooter();
         doc.moveDown();
+        doc.fontSize(16).text('Vulnerability Distribution', { align: 'center' });
+        doc.moveDown(2);
 
+        doc.image(pieChartBuffer, {
+            fit: [500, 300],
+            align: 'center',
+            valign: 'center'
+        })
+        doc.moveDown(18);
         // Add the trend graph
         // addNewPage();
         doc.fontSize(16).text('Trend Graph', { align: 'center' });

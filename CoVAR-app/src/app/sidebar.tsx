@@ -235,27 +235,6 @@ const Sidebar: React.FC = () => {
             </ListItem>
           </Link>
         )}
-        <Link href='/help'>
-          <ListItem
-              sx={{
-                  ...sidebarItemStyles,
-                  backgroundColor: isActive('/help') ? theme.palette.primary.main : 'inherit',
-                  color: isActive('/help') ? 'white' : theme.palette.text.primary,
-                  borderRadius: '10px',
-                  '&:hover': {
-                  backgroundColor: theme.palette.action.hover,
-                  color: theme.palette.text.primary,
-                  },
-              }}
-              >
-              <ListItemIcon sx={{ ...iconStyles, color: isActive('/help') ? 'white' : theme.palette.text.primary }}>
-                  <HelpOutlineIcon />
-              </ListItemIcon>
-              <ListItemText primary="Help" />
-          </ListItem>
-        </Link>
-
-
       <ListItem
         onClick={handleOpenHelpDialog}
         sx={{

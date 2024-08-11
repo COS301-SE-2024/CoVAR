@@ -9,6 +9,7 @@ services:
       - "5555:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./schema.sql:/docker-entrypoint-initdb.d/schema.sql
       
   nginx:
     image: 211125691345.dkr.ecr.eu-west-2.amazonaws.com/covar_nginx:latest

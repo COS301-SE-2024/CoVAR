@@ -8,7 +8,7 @@ function matchSentences(list1, list2) {
     list1 = list1.filter((item, index, self) => index === self.findIndex((t) => (t.nvtName === item.nvtName && t.port === item.port)));
     list2 = list2.filter((item, index, self) => index === self.findIndex((t) => (t.nvtName === item.nvtName && t.port === item.port)));
 
-    
+
     const matches = [];
     const unmatchedList1 = [];
     const unmatchedList2 = [...list2];
@@ -44,12 +44,19 @@ function matchSentences(list1, list2) {
 
 router.post('/conflicts/match', authenticateToken, async (req, res) => {
     const { listUploads } = req.body;
-    
-    if (!listUploads || listUploads.length !== 2) {
+
+    if (!listUploads || listUploads.length === 0 || listUploads.length > 2) {
         return res.status(400).json({ error: 'Invalid request data' });
     }
-    
+
+    // If only one list is provided
+    if (listUploads.length === 1) {
+        const list1 = listUploads[0];
+        return res.json({ matches: [], unmatchedList1: list1, unmatchedList2: [] });
+    }
+
     const [list1, list2] = listUploads;
+
     const { matches, unmatchedList1, unmatchedList2 } = matchSentences(list1, list2);
     res.json({ matches, unmatchedList1, unmatchedList2 });
 });

@@ -99,7 +99,7 @@ const Signup: React.FC<SignupProps> = ({ toggleForm }) => {
   };
 
   const validatePassword = (password: string) => {
-    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/;
+    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?.&])[A-Za-z\d@$!%*#?.]{8,}$/;
     setIsValidPassword(passwordRegex.test(password));
   };
 

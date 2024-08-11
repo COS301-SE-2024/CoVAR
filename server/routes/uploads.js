@@ -297,7 +297,7 @@ router.get('/uploads/client/:clientName', authenticateToken, async (req, res) =>
 
 
 // Endpoint to generate report
-router.post('/uploads/generateReport', async (req, res) => {
+router.post('/uploads/generateReport',authenticateToken, async (req, res) => {
     const { reports, reportIds, client } = req.body;
 
     if (!reports || reports.length === 0 || !reportIds || reportIds.length === 0) {
@@ -311,7 +311,23 @@ router.post('/uploads/generateReport', async (req, res) => {
         // Insert combined report into the reports table
         const insertQuery = 'INSERT INTO reports (title, content) VALUES ($1, $2) RETURNING *';
         const result = await pgClient.query(insertQuery, [client, combinedReport]);
-
+        //check if user in org
+        //get client id 
+        const getClientId = 'SELECT user_id FROM users WHERE username = $1';
+        const clientResult = await pgClient.query(getClientId, [client]);
+        const id = clientResult.rows[0].user_id;
+        const checkUserInOrg = 'SELECT organization_id FROM users WHERE user_id = $1';
+        const checkResult = await pgClient.query(checkUserInOrg, [id]);
+        console.log(checkResult.rows[0]);
+        if(checkResult.rows[0].organization_id === null){
+            //insert into user_reports
+            const insertUserReports = 'INSERT INTO user_reports (user_id, report_id) VALUES ($1, $2)';
+            await pgClient.query(insertUserReports, [id, result.rows[0].report_id]);
+        }else{
+            //insert into org_reports
+            const insertOrgReports = 'INSERT INTO organization_reports (organization_id, report_id) VALUES ($1, $2)';
+            await pgClient.query(insertOrgReports, [checkResult.rows[0].organization_id, result.rows[0].report_id]);
+        }
         res.status(200).json(result.rows[0]);
     } catch (error) {
         console.error('Error generating report:', error);

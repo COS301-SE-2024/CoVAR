@@ -30,7 +30,7 @@ const Organisation = () => {
     const [addMemberMessage, setAddMemberMessage] = useState<string | null>(null);
     const [changeNameMessage, setChangeNameMessage] = useState<string | null>(null);
     const [disbandOrgMessage, setDisbandOrgMessage] = useState<string | null>(null);
-
+    const [createOrgErrorMessage, setCreateOrgErrorMessage] = useState<string | null>(null);
 
     const router = useRouter();
     
@@ -216,15 +216,22 @@ const Organisation = () => {
                 const orgData = await createOrganisation(organisationName, username, accessToken);
                 setIsInOrg(orgData.id);
                 setOrganisationName(orgData.name); // Set the organisation name
-
+                setCreateOrgErrorMessage(null); 
             }
-        } catch (error:any) {
-            //console.error('Error creating organisation:', error);
-            if(error.response?.status === 403) {
+        } catch (error: any) {
+            // Handle specific error for organization name already exists
+            if (error.response?.status === 409) { 
+                setCreateOrgErrorMessage('An organisation with this name already exists.');
+            } else if (error.response?.status === 403) {
                 redirectToLogin();
+            } else {
+                setCreateOrgErrorMessage('Error creating organisation.');
             }
+            console.error('Error creating organisation:', error);
+        } finally {
+            setLoading(false);
         }
-    };
+    }
 
     const columns: GridColDef[] = [
         { field: 'email', headerName: 'Email', flex: 1, headerAlign: 'left', resizable: false },
@@ -300,6 +307,21 @@ const Organisation = () => {
                         >
                             Create Organisation
                         </Button>
+                        {createOrgErrorMessage && (
+                        <Typography
+                            variant="body2"
+                            color="error.main"
+                            sx={{ 
+                                display: 'inline-block',
+                                whiteSpace: 'nowrap',
+                                mb: 4,  
+                                textAlign: "center"
+                            }}
+                        >
+                            {createOrgErrorMessage}
+                        </Typography>
+                    )}
+
                     </CardContent>
                 </Card>
             </Box>

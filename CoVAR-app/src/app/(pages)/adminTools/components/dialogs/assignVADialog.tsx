@@ -14,9 +14,9 @@ const AssignVADialog: React.FC<AssignVADialogProps> = ({ open, user, onClose, on
     return (
         <Dialog open={open} onClose={onClose} sx={dialogStyles}>
             <DialogTitle>Assign Vulnerability Assessor</DialogTitle>
-            <DialogContent sx={{ padding: '0 24px',  display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column' }}>
+            <DialogContent sx={{ padding: '0 24px',  display: 'flex', justifyContent: 'center', flexDirection: 'column', color: 'text.primary' }}>
                 <Typography>
-                    Are you sure you want to assign <span style={{ color: 'text.secondary' }}>{user?.username}</span> as a Vulnerability Assessor?
+                    Are you sure you want to assign {user?.username} as a Vulnerability Assessor?
                 </Typography>
             </DialogContent>
             <DialogActions>

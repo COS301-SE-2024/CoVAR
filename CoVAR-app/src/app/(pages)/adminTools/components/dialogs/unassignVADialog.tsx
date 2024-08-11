@@ -16,7 +16,7 @@ const UnassignVADialog: React.FC<UnassignVADialogProps> = ({ open, user, onClose
             <DialogTitle>Unassign Vulnerability Assessor</DialogTitle>
             <DialogContent sx={{ padding: '0 24px',  display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column' }}>
                 <Typography>
-                    Are you sure you want to unassign <span style={{ color: 'text.secondary' }}>{user?.username}</span> as a Vulnerability Assessor?
+                    Are you sure you want to unassign {user?.username} as a Vulnerability Assessor?
                 </Typography>
             </DialogContent>
             <DialogActions>

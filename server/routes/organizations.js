@@ -246,6 +246,41 @@ router.post('/organizations/leave', authenticateToken, async (req, res) => {
     }
 });
 
+// Delete organization (remove all users from the organization)
+router.delete('/organizations/:orgId/delete', authenticateToken, async (req, res) => {
+    try {
+        const accessToken = req.headers.authorization?.split(' ')[1];
+        if (!accessToken) {
+            return res.status(403).json({ error: 'No access token provided' });
+        }
+
+        const decodedToken = verifyToken(accessToken); 
+        const userId = decodedToken.user_id;
+
+        const { orgId } = req.params;
+
+        // Fetch the organization and check if the requesting user is the owner
+        const orgQuery = 'SELECT * FROM organizations WHERE organization_id = $1';
+        const organization = await pgClient.query(orgQuery, [orgId]);
+
+        if (organization.rows.length === 0) {
+            return res.status(404).json({ error: 'Organization not found' });
+        }
+
+        // Check if the user is the owner of the organization
+        if (organization.rows[0].owner !== userId) {
+            return res.status(403).json({ error: 'Only the owner can remove users from the organization' });
+        }
+
+        // Remove all users from the organization
+        await pgClient.query('UPDATE users SET organization_id = NULL WHERE organization_id = $1', [orgId]);
+
+        return res.status(200).json({ message: 'All users removed from the organization successfully' });
+    } catch (error) {
+        console.error('Error deleting organization:', error);
+        return res.status(500).json({ error: 'Internal server error' });
+    }
+});
 
 
 module.exports = router;

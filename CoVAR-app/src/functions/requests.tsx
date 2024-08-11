@@ -237,7 +237,7 @@ export const addUser = async (orgId: string, ownerId: string, email: string, acc
 
 export const deleteOrganisation = async (orgId: string, organisationName: string, accessToken: string) => {
     const request = {
-        method: 'post',
+        method: 'delete',
         url: `/api/organizations/${orgId}/delete`,
         data: { organizationId: orgId, OrgName: organisationName },
         headers: { Authorization: `Bearer ${accessToken}` },

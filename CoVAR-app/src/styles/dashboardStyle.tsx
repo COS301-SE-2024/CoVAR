@@ -10,6 +10,7 @@ export const chartContainerStyles: SxProps<Theme> = (theme) => ({
   justifyContent: 'center',
   alignItems: 'center',
   flex: 1,
+  height: '100%',
   '& .recharts-wrapper': {
     fill: 'none',
   },

@@ -42,7 +42,6 @@ export const logoStyles: SxProps<Theme> = (theme) => ({
 });
 
 export const logoutButtonStyles: SxProps<Theme> = (theme) => ({
-  marginTop: 'auto',
   marginBottom: theme.spacing(2),
   width: '90%',
   backgroundColor: theme.palette.primary.main,

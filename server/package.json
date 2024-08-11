@@ -14,6 +14,7 @@
     "jsonwebtoken": "^9.0.2",
     "nodemon": "^2.0.7",
     "pg": "^8.5.1",
+    "string-similarity": "^4.0.4",
     "xml2js": "^0.6.2"
   },
   "scripts": {

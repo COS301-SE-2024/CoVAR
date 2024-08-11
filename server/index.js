@@ -25,12 +25,14 @@ const organizations = require('./routes/organizations');
 const users = require('./routes/users');
 const authentication = require('./routes/authentication');
 const uploads = require('./routes/uploads');
+const conflicts = require('./routes/conflicts');
 const dashboard = require('./routes/dashboard');
 
 app.use(authentication);
 app.use(users);
 app.use(organizations);
 app.use(uploads);
+app.use(conflicts);
 app.use(dashboard);
 
 

@@ -43,6 +43,9 @@ The CoVAR project by BlueVision ITM aims to develop a comprehensive vulnerabilit
 * [Architectural Structural Design](https://docs.google.com/document/d/1rhLhNdHQONaVFSU4WyOLPm6ZoKlxLMqk/edit?usp=sharing&ouid=112929114105055327648&rtpof=true&sd=true)
 * [Coding and Testing Standards](https://docs.google.com/document/d/19x0yDaAYaYr555nFialOXTFLBrfKUHfo8NFclaq-4Zg/edit?usp=sharing)
 * [Project Board](https://github.com/orgs/COS301-SE-2024/projects/94)
+* [User Manual](https://docs.google.com/document/d/1H26oOpBHo4t9EL1G9kraeXB6f_Abepx8sn1_zJdNeCU/edit?usp=sharing)
+* [Technical Installation](https://docs.google.com/document/d/1dU5z7HhWsoiKwqF611Anz3zIODVH_MwI2TRsUfeYXCE)
+
 
 ## Team Profiles
 |  |  |  |  | |

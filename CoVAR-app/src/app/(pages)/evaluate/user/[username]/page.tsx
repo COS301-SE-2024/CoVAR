@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useEffect, useCallback } from 'react';
-import { Box, Typography, Paper, Container, List, ListItem, ListItemText, Button, Grid } from '@mui/material';
+import { Box, Typography, Paper, Container, List, ListItem, ListItemText, Button, Grid, Snackbar } from '@mui/material';
 import { usePathname } from 'next/navigation';
 import { mainContentStyles } from '../../../../../styles/evaluateStyle';
 import FileUpload from '../../components/fileUpload';
@@ -31,6 +31,7 @@ const UserEvaluation: React.FC = () => {
   const [uploads, setUploads] = useState<FileUpload[]>([]);
   const [reportIds, setReportIds] = useState<number[]>([]);
   const [reports, setReports] = useState<any[][]>([]);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
 
   useEffect(() => {
     const fetchInitialUploads = async () => {
@@ -102,16 +103,34 @@ const UserEvaluation: React.FC = () => {
       if (reportIds.includes(upload_id)) {
         setReportIds(reportIds.filter(id => id !== upload_id));
       } else {
-        setReportIds([...reportIds, upload_id]);
+        if (reportIds.length < 2) {
+          setReportIds([...reportIds, upload_id]);
+        } else {
+          setSnackbarOpen(true);
+        }
       }
     } catch (error) {
       console.error('Error updating report status:', error);
     }
   };
-
+  const handleCloseSnackbar = () => {
+    setSnackbarOpen(false);
+  };
   return (
 
     <Container maxWidth={false} sx={{ ...mainContentStyles, paddingTop: 8, width: '100vw' }}>
+      <Snackbar
+        sx={{
+          width: '100%',
+          position: 'absolute',
+        }}
+        open={snackbarOpen}
+        autoHideDuration={1000}
+        onClose={handleCloseSnackbar}
+        message="Cannot add more than 2 report IDs"
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+      </Snackbar>
       <Grid container spacing={2}>
         <Grid item xs={6}>
           <Paper sx={{ padding: 4, textAlign: 'center', overflowY: 'auto', maxHeight: '80vh' }}>

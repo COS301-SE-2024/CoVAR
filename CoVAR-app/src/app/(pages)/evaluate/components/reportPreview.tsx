@@ -22,10 +22,10 @@ const styles = {
 
 
 const ReportCard = ({ report, index }: { report: any[], index: number }) => {
- 
+
   return (
 
-    <Box sx={{ ...mainContentStyles }}>
+    <Box sx={{ ...mainContentStyles, overflow: 'hidden' }}>
       {report.map((item, idx) => (
         <Box key={idx} sx={{ marginTop: '10px' }}>
           <Typography variant="h6" sx={{ ...styles.header }}>
@@ -69,7 +69,7 @@ const ReportPreview = ({ reports, reportIds, client }: { reports: any[][], repor
   if (!reports || reports.length === 0) {
     return <Typography>No reports to display</Typography>;
   }
-  
+
   // const generateReport = async () => {
   //   try {
   //     const token = localStorage.getItem('accessToken');

@@ -1,7 +1,7 @@
 'use client';
 import React, { useState, useEffect, useCallback } from 'react';
-import { Box, Typography, Paper, Container, List, ListItem, ListItemText, Button, Grid } from '@mui/material';
-import { usePathname, useRouter } from 'next/navigation'; 
+import { Box, Typography, Paper, Container, List, ListItem, ListItemText, Button, Grid, Snackbar } from '@mui/material';
+import { usePathname, useRouter } from 'next/navigation';
 import { mainContentStyles } from '../../../../../styles/evaluateStyle';
 import FileUpload from '../../components/fileUpload';
 import { handleDownloadFile } from '../../../../../functions/requests';
@@ -31,6 +31,7 @@ const OrganizationEvaluation: React.FC = () => {
   const [uploads, setUploads] = useState<FileUpload[]>([]);
   const [reportIds, setReportIds] = useState<number[]>([]);
   const [reports, setReports] = useState<any[][]>([]);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
 
   useEffect(() => {
     const fetchInitialUploads = async () => {
@@ -41,9 +42,9 @@ const OrganizationEvaluation: React.FC = () => {
           const inReportIds = data.filter((upload: FileUpload) => upload.in_report).map((upload: FileUpload) => upload.upload_id);
           setReportIds(inReportIds);
         }
-      } catch (error:any) {
+      } catch (error: any) {
         //console.error('Error fetching uploads:', error);
-        if(error.response?.status === 403) {
+        if (error.response?.status === 403) {
           redirectToLogin();
         }
       }
@@ -75,9 +76,9 @@ const OrganizationEvaluation: React.FC = () => {
         const inReportIds = data.filter((upload: FileUpload) => upload.in_report).map((upload: FileUpload) => upload.upload_id);
         setReportIds(inReportIds);
       }
-    } catch (error:any) {
+    } catch (error: any) {
       //console.error('Error fetching uploads:', error);
-      if(error.response?.status === 403) {
+      if (error.response?.status === 403) {
         redirectToLogin();
       }
     }
@@ -88,9 +89,9 @@ const OrganizationEvaluation: React.FC = () => {
       await handleRemoveFile(upload_id);
       setUploads(uploads.filter(upload => upload.upload_id !== upload_id));
       setReportIds(reportIds.filter(id => id !== upload_id));
-    } catch (error:any) {
+    } catch (error: any) {
       //console.error('Error removing upload:', error);
-      if(error.response?.status === 403) {
+      if (error.response?.status === 403) {
         redirectToLogin();
       }
     }
@@ -102,15 +103,33 @@ const OrganizationEvaluation: React.FC = () => {
       if (reportIds.includes(upload_id)) {
         setReportIds(reportIds.filter(id => id !== upload_id));
       } else {
-        setReportIds([...reportIds, upload_id]);
+        if (reportIds.length < 2) {
+          setReportIds([...reportIds, upload_id]);
+        } else {
+          setSnackbarOpen(true);
+        }
       }
     } catch (error) {
       console.error('Error updating report status:', error);
     }
   };
-
+  const handleCloseSnackbar = () => {
+    setSnackbarOpen(false);
+  };
   return (
     <Container maxWidth={false} sx={{ ...mainContentStyles, paddingTop: 8, width: '100vw' }}>
+      <Snackbar
+        sx={{
+          width: '100%',
+          position: 'absolute',
+        }}
+        open={snackbarOpen}
+        autoHideDuration={1000}
+        onClose={handleCloseSnackbar}
+        message="Cannot add more than 2 report IDs"
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+      </Snackbar>
       <Grid container spacing={2}>
         <Grid item xs={6}>
           <Paper sx={{ padding: 4, textAlign: 'center', overflowY: 'auto', maxHeight: '80vh' }}>

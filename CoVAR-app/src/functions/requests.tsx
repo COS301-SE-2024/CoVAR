@@ -1,5 +1,6 @@
 import axios, { AxiosRequestConfig, ResponseType } from 'axios';
 import { doSignOut } from './firebase/auth';
+import { blob } from 'stream/consumers';
 
 const signOut = async () => {
     try {
@@ -394,6 +395,43 @@ export const handleToggleReport = async (upload_id: number) => {
 
 };
 
+
+export const populateReportsTable = async () => {
+    const token = localStorage.getItem('accessToken');
+    //define req
+    const request :AxiosRequestConfig = {
+        method: 'post',
+        url: `/api/reports/getReports`,
+        headers: { Authorization: `Bearer ${token}` },
+    };
+   return await handleRequest(request);
+};
+
+export const fetchExecReport = async (reportId:any) => {
+    const token = localStorage.getItem('accessToken');
+    // const response = await fetch(`/api/reports/executive/${reportId}`, {
+    //     method: 'GET',
+    //     headers: {
+    //         'Content-Type': 'application/pdf',
+    //         Authorization: `Bearer ${token}`
+    //     },
+    // });
+
+    // if (!response.ok) {
+    //     throw new Error('Failed to fetch executive report');
+    // }
+    const request: AxiosRequestConfig = {
+        method: 'get',
+        url: `/api/reports/executive/${reportId}`,
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+        responseType: 'blob' ,
+    };
+    const response = await handleRequest(request);
+    return new Blob([response]);
+}
+
 export const fetchAndMatchReports = async (reportIds: number[]) => {
     try {
         if (reportIds.length > 0) {
@@ -436,7 +474,6 @@ export const generateReportRequest = async (finalReport: any[], name: string | u
         throw error;
     }
 };
-
 
 
 

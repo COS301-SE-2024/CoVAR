@@ -56,7 +56,7 @@ router.post('/reports/getReports', authenticateToken, async (req, res) => {
         //console.log(reportsResult.rows);
 
         let reports = reportsResult.rows.map(report => {
-            const content = report.content.reports; // Accessing the 'reports' array within the content object
+            const content = report.content.finalReports; // Accessing the 'reports' array within the content object
             //console.log("Report Content:", content); // Log the entire content to see its structure
             let criticalCount = 0;
             let mediumCount = 0;
@@ -125,7 +125,7 @@ router.get('/reports/executive/:report_id', authenticateToken, async (req, res) 
             return res.status(404).json({ error: 'Report not found' });
         }
         const report = reportResult.rows[0];
-        const content = report.content.reports;
+        const content = report.content.finalReports;
 
         // Extract the client's name and creation date from the report
         const clientName = report.title || 'UnknownClient';
@@ -143,7 +143,7 @@ router.get('/reports/executive/:report_id', authenticateToken, async (req, res) 
         let vulnerabilityCategories = new Map();
         let aggregatedVulnerabilities = new Map();
         let reports = reportResult.rows.map(report => {
-            const content = report.content.reports;
+            const content = report.content.finalReports;
 
             content.forEach(reportItem => {
                 reportItem.forEach(item => {
@@ -312,7 +312,7 @@ router.get('/reports/executive/:report_id', authenticateToken, async (req, res) 
             let currentLowCount = 0;
         
             // Process each report to count the vulnerabilities
-            report.content.reports.forEach((reportItem) => {
+            report.content.finalReports.forEach((reportItem) => {
                 reportItem.forEach((item) => {
                     let severity = item.Severity || item.severity;
                     if (severity) severity = severity.trim().toLowerCase();

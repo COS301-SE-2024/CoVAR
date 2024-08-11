@@ -9,7 +9,7 @@ describe('Login E2E Tests', () => {
       cy.get('button[type="submit"]').click()
   
       cy.wait(1000)
-      cy.get('#error').should("have.text", 'Failed to sign in. Please check your credentials.') 
+      cy.contains('Failed to sign in. Please check your credentials.', { timeout: 2000 }).should('be.visible');
     })
   
     it('successfully logs in with correct credentials', () => {

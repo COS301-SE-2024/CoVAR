@@ -7,8 +7,11 @@ const ThemeContext = createContext({ toggleTheme: () => {} });
 
 const CustomThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [isDarkMode, setIsDarkMode] = useState(() => {
-    const savedTheme = localStorage.getItem('theme');
-    return savedTheme === 'dark';
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const savedTheme = localStorage.getItem('theme');
+      return savedTheme === 'dark';
+    }
+    return false; 
   });
 
   const toggleTheme = () => {

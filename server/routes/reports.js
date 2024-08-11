@@ -125,14 +125,10 @@ router.get('/reports/executive/:report_id', authenticateToken, async (req, res) 
             return res.status(404).json({ error: 'Report not found' });
         }
         const report = reportResult.rows[0];
-        const content = report.content.finalReports;
 
         // Extract the client's name and creation date from the report
         const clientName = report.title || 'UnknownClient';
         const reportCreationDate = new Date(report.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-
-        const clientReports = reportResult.rows;
-
        
         // Initialize counters and unique host sets
         let ReportscriticalCount = 0, ReportsmediumCount = 0, ReportslowCount = 0;
@@ -142,7 +138,7 @@ router.get('/reports/executive/:report_id', authenticateToken, async (req, res) 
         let criticalVulnerabilities = new Set(), mediumVulnerabilities = new Set(), lowVulnerabilities = new Set();
         let vulnerabilityCategories = new Map();
         let aggregatedVulnerabilities = new Map();
-        let reports = reportResult.rows.map(report => {
+        const reports = reportResult.rows.map(report => {
             const content = report.content.finalReports;
 
             content.forEach(reportItem => {
@@ -198,16 +194,14 @@ router.get('/reports/executive/:report_id', authenticateToken, async (req, res) 
                 });
             });
         });
-
+        if(reports.length === 0){
+            return res.status(404).json({ error: 'Report not found' });
+        }
         // Count unique hosts for each severity
         let uniqueCriticalHostsCount = criticalHosts.size;
         let uniqueMediumHostsCount = mediumHosts.size;
         let uniqueLowHostsCount = lowHosts.size;
 
-        // Count unique vulnerabilities for each severity
-        let uniqueCriticalVulnerabilitiesCount = criticalVulnerabilities.size;
-        let uniqueMediumVulnerabilitiesCount = mediumVulnerabilities.size;
-        let uniqueLowVulnerabilitiesCount = lowVulnerabilities.size;
         // Convert the Map to an array of categories and their counts
         const vulnerabilityTypes = Array.from(vulnerabilityCategories.keys());
         const vulnerabilityCounts = Array.from(vulnerabilityCategories.values());
@@ -215,9 +209,9 @@ router.get('/reports/executive/:report_id', authenticateToken, async (req, res) 
         // console.log("Unique Medium Hosts:", uniqueMediumHostsCount);
         // console.log("Unique Low Hosts:", uniqueLowHostsCount);
          // Initialize counts
-         let criticalCount = 0;
-         let mediumCount = 0;
-         let lowCount = 0;
+        let criticalCount = 0;
+        let mediumCount = 0;
+        let lowCount = 0;
         //pie chart data 
         // Prepare data for pie chart
         // Helper function to check if a color is too light (like white or near white)
@@ -275,6 +269,7 @@ router.get('/reports/executive/:report_id', authenticateToken, async (req, res) 
              'SELECT user_id, organization_id FROM users WHERE user_id = $1',
              [req.user.user_id]
          );
+         let graphData = [];
          if (userResult.rows[0].organization_id === null) {
             // Select all reports from the database associated with the user that are earlier than the current report
             const reportsResult = await pgClient.query(
@@ -334,9 +329,9 @@ router.get('/reports/executive/:report_id', authenticateToken, async (req, res) 
             });
         
             // Accumulate counts for the summary table
-            criticalCount += currentCriticalCount;
-            mediumCount += currentMediumCount;
-            lowCount += currentLowCount;
+            criticalCount = currentCriticalCount+criticalCount;
+            mediumCount = currentMediumCount+mediumCount;
+            lowCount = currentLowCount+lowCount;
         
             return {
                 date: new Date(report.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
@@ -403,8 +398,6 @@ router.get('/reports/executive/:report_id', authenticateToken, async (req, res) 
             margin: 50,
             autoFirstPage: false  // Don't create a page automatically
         });
-
-        const totalVulnerabilities = criticalCount + mediumCount + lowCount;
 
         // Construct the filename using the client name and report creation date
         const sanitizedClientName = clientName.replace(/[^a-zA-Z0-9]/g, '_'); // Sanitize client name to avoid illegal characters in filename
@@ -732,10 +725,10 @@ router.get('/reports/executive/:report_id', authenticateToken, async (req, res) 
         res.status(500).json({ error: 'Internal Server Error' });
     }
 });
-const truncateToSecond = (date) => {
-    const newDate = new Date(date);
-    newDate.setMilliseconds(0);
-    return newDate.toISOString();;
-};
+// const truncateToSecond = (date) => {
+//     const newDate = new Date(date);
+//     newDate.setMilliseconds(0);
+//     return newDate.toISOString();;
+// };
 
 module.exports = router;

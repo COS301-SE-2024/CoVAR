@@ -9,26 +9,17 @@ services:
       - "5555:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./schema.sql:/docker-entrypoint-initdb.d/schema.sql
-
+      
   nginx:
-    depends_on:
-      - api
-      - client
-    restart: always
-    build:
-      dockerfile: Dockerfile.dev
-      context: './nginx'
+    image: 211125691345.dkr.ecr.eu-west-2.amazonaws.com/covar_nginx:latest
     ports:
-      - '3050:80'
+      - '80:80'
+      - '443:443'      
+    volumes:
+      - /etc/letsencrypt:/etc/letsencrypt
 
   api:
-    build:
-      dockerfile: Dockerfile.dev
-      context: './server'
-    volumes:
-      - /app/node_modules
-      - ./server:/app
+    image: 211125691345.dkr.ecr.eu-west-2.amazonaws.com/covar_api:latest
     environment:
       - PG_USER=${PG_USER}
       - PG_HOST=${PG_HOST}
@@ -41,10 +32,7 @@ services:
       - postgres
 
   client:
-    stdin_open: true
-    build:
-      dockerfile: Dockerfile.dev
-      context: './CoVAR-app'
+    image: 211125691345.dkr.ecr.eu-west-2.amazonaws.com/covar_client:latest
     environment:
       - NEXT_PUBLIC_API_KEY=${NEXT_PUBLIC_API_KEY}
       - NEXT_PUBLIC_AUTH_DOMAIN=${NEXT_PUBLIC_AUTH_DOMAIN}
@@ -53,9 +41,6 @@ services:
       - NEXT_PUBLIC_MESSAGING_SENDER_ID=${NEXT_PUBLIC_MESSAGING_SENDER_ID}
       - NEXT_PUBLIC_APP_ID=${NEXT_PUBLIC_APP_ID}
       - NEXT_PUBLIC_MEASUREMENT_ID=${NEXT_PUBLIC_MEASUREMENT_ID}
-    volumes:
-      - /app/node_modules
-      - ./CoVAR-app:/app
 
 volumes:
   postgres_data:

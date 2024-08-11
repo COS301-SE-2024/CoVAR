@@ -8,7 +8,9 @@ router.post('/chain', async (req, res) => {
     const { chain_prompt } = req.body;
 
     try {
-        const response = await axios.post('http://langchain:6000/run_test', { chain_prompt });
+        //carry jwt through to chain server
+        const token = req.headers.authorization;
+        const response = await axios.post('http://langchain:6000/chain', { chain_prompt }, { headers: { Authorization: token } });
         res.status(200).json(response.data);
     } catch (error) {
         console.error('Error occurred during /chain POST request:');

@@ -315,19 +315,19 @@ const Organisation = () => {
                             Create Organisation
                         </Button>
                         {createOrgErrorMessage && (
-                        <Typography
-                            variant="body2"
-                            color="error.main"
-                            sx={{ 
-                                display: 'inline-block',
-                                whiteSpace: 'nowrap',
-                                mb: 4,  
-                                textAlign: "center"
-                            }}
-                        >
-                            {createOrgErrorMessage}
-                        </Typography>
+                        <Box sx={{ display: 'flex', justifyContent: 'center', width: '100%', mb: 4 }}>
+                            <Typography
+                                variant="body2"
+                                color="error.main"
+                                sx={{ 
+                                    whiteSpace: 'nowrap',
+                                }}
+                            >
+                                {createOrgErrorMessage}
+                            </Typography>
+                        </Box>
                     )}
+
 
                     </CardContent>
                 </Card>

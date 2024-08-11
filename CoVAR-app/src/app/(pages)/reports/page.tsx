@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { CircularProgress, Box, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Typography, Button } from '@mui/material';
 import { populateReportsTable, fetchExecReport } from '@/functions/requests';
 import DownloadIcon from '@mui/icons-material/Download';
+import { mainContentStyles } from '@/styles/evaluateStyle';
 
 type Report = {
     report_id: string;
@@ -70,7 +71,7 @@ const ReportsPage = () => {
   };
 
     return (
-        <Box sx={{ padding: 3 }}>
+        <Box sx={{ ...mainContentStyles ,padding: 3, width: '100%' }}>
             <Typography variant="h4" sx={{ marginBottom: 2 }}>
                 Reports
             </Typography>

@@ -52,43 +52,43 @@ router.post('/reports/getReports', authenticateToken, async (req, res) => {
             'SELECT report_id, created_at, content FROM reports WHERE report_id = ANY($1)',
             [reportIds]
         );
-        //console.log('Reports fetched successfully');
-        //console.log(reportsResult.rows);
+        
 
+        // console.log(reportResult.rows);
         let reports = reportsResult.rows.map(report => {
-            const content = report.content.finalReports; // Accessing the 'reports' array within the content object
+            const content = report.content.finalReport; // Accessing the 'reports' array within the content object
             //console.log("Report Content:", content); // Log the entire content to see its structure
             let criticalCount = 0;
             let mediumCount = 0;
             let lowCount = 0;
 
             content.forEach(reportItem => {
-                reportItem.forEach(item => {
-                    //console.log("Item:", item); // Log the entire item to examine its structure
-                    let severity = item.Severity || item.severity; // Check for both 'Severity' and 'severity'
 
-                    // Ensure that the severity is trimmed and in a consistent case
-                    if (severity) {
-                        severity = severity.trim().toLowerCase();
-                    }
-                    
-                    //console.log("Item Severity:", severity); // Log the severity to see what it returns
+                //console.log("Item:", item); // Log the entire item to examine its structure
+                let severity = reportItem.Severity || reportItem.severity; // Check for both 'Severity' and 'severity'
 
-                    switch (severity) {
-                        case 'high':
-                            criticalCount++;
-                            break;
-                        case 'medium':
-                            mediumCount++;
-                            break;
-                        case 'low':
-                            lowCount++;
-                            break;
-                        default:
-                            console.log("Unknown severity:", severity); // Log any severity that doesn't match expected values
-                            break;
-                    }
-                });
+                // Ensure that the severity is trimmed and in a consistent case
+                if (severity) {
+                    severity = severity.trim().toLowerCase();
+                }
+
+                //console.log("Item Severity:", severity); // Log the severity to see what it returns
+
+                switch (severity) {
+                    case 'high':
+                        criticalCount++;
+                        break;
+                    case 'medium':
+                        mediumCount++;
+                        break;
+                    case 'low':
+                        lowCount++;
+                        break;
+                    default:
+                        console.log("Unknown severity:", severity); // Log any severity that doesn't match expected values
+                        break;
+                }
+
             });
 
             return {
@@ -102,7 +102,7 @@ router.post('/reports/getReports', authenticateToken, async (req, res) => {
 
         console.log(reports);
         res.json({ reports });
-        
+
     } catch (error) {
         console.error('Error fetching reports:', error);
         return res.status(500).json({ error: 'An error occurred while fetching reports' });
@@ -129,7 +129,7 @@ router.get('/reports/executive/:report_id', authenticateToken, async (req, res) 
         // Extract the client's name and creation date from the report
         const clientName = report.title || 'UnknownClient';
         const reportCreationDate = new Date(report.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-       
+
         // Initialize counters and unique host sets
         let ReportscriticalCount = 0, ReportsmediumCount = 0, ReportslowCount = 0;
         let criticalHosts = new Set(), mediumHosts = new Set(), lowHosts = new Set();
@@ -139,62 +139,62 @@ router.get('/reports/executive/:report_id', authenticateToken, async (req, res) 
         let vulnerabilityCategories = new Map();
         let aggregatedVulnerabilities = new Map();
         const reports = reportResult.rows.map(report => {
-            const content = report.content.finalReports;
+            const content = report.content.finalReport;
 
             content.forEach(reportItem => {
-                reportItem.forEach(item => {
-                    let severity = item.Severity || item.severity;
-                    let hostIdentifier = `${item.IP}:${item.Port}`; // Unique identifier for the host
-                    let vulnerabilityIdentifier = item.nvtName;
-                    let cvssScore = item.CVSS;
-                    if (vulnerabilityIdentifier && cvssScore) {
-                        if (aggregatedVulnerabilities.has(vulnerabilityIdentifier)) {
-                            let existingEntry = aggregatedVulnerabilities.get(vulnerabilityIdentifier);
-                            existingEntry.hosts.push(hostIdentifier);
-                        } else {
-                            // Otherwise, create a new entry
-                            aggregatedVulnerabilities.set(vulnerabilityIdentifier, {
-                                vulnerability: vulnerabilityIdentifier,
-                                cvss: cvssScore,
-                                hosts: [hostIdentifier]
-                            });
-                        }
-                    }
-                    if (vulnerabilityIdentifier) {
-                        if (!vulnerabilityCategories.has(vulnerabilityIdentifier)) {
-                            vulnerabilityCategories.set(vulnerabilityIdentifier, 1);
-                        } else {
-                            vulnerabilityCategories.set(vulnerabilityIdentifier, vulnerabilityCategories.get(vulnerabilityIdentifier) + 1);
-                        }
-                    }
-                    if (severity) {
-                        severity = severity.trim().toLowerCase();
-                    }
 
-                    switch (severity) {
-                        case 'high':
-                            ReportscriticalCount++;
-                            criticalHosts.add(hostIdentifier); // Add to critical hosts set
-                            criticalVulnerabilities.add(vulnerabilityIdentifier); // Add to critical vulnerabilities set
-                            break;
-                        case 'medium':
-                            ReportsmediumCount++;
-                            mediumHosts.add(hostIdentifier); // Add to medium hosts set
-                            mediumVulnerabilities.add(vulnerabilityIdentifier); // Add to medium vulnerabilities set
-                            break;
-                        case 'low':
-                            ReportslowCount++;
-                            lowHosts.add(hostIdentifier); // Add to low hosts set
-                            lowVulnerabilities.add(vulnerabilityIdentifier); // Add to low vulnerabilities set
-                            break;
-                        default:
-                            console.log("Unknown severity:", severity);
-                            break;
+                let severity = reportItem.Severity || reportItem.severity;
+                let hostIdentifier = `${reportItem.IP}:${reportItem.Port}`; // Unique identifier for the host
+                let vulnerabilityIdentifier = reportItem.nvtName;
+                let cvssScore = reportItem.CVSS;
+                if (vulnerabilityIdentifier && cvssScore) {
+                    if (aggregatedVulnerabilities.has(vulnerabilityIdentifier)) {
+                        let existingEntry = aggregatedVulnerabilities.get(vulnerabilityIdentifier);
+                        existingEntry.hosts.push(hostIdentifier);
+                    } else {
+                        // Otherwise, create a new entry
+                        aggregatedVulnerabilities.set(vulnerabilityIdentifier, {
+                            vulnerability: vulnerabilityIdentifier,
+                            cvss: cvssScore,
+                            hosts: [hostIdentifier]
+                        });
                     }
-                });
+                }
+                if (vulnerabilityIdentifier) {
+                    if (!vulnerabilityCategories.has(vulnerabilityIdentifier)) {
+                        vulnerabilityCategories.set(vulnerabilityIdentifier, 1);
+                    } else {
+                        vulnerabilityCategories.set(vulnerabilityIdentifier, vulnerabilityCategories.get(vulnerabilityIdentifier) + 1);
+                    }
+                }
+                if (severity) {
+                    severity = severity.trim().toLowerCase();
+                }
+
+                switch (severity) {
+                    case 'high':
+                        ReportscriticalCount++;
+                        criticalHosts.add(hostIdentifier); // Add to critical hosts set
+                        criticalVulnerabilities.add(vulnerabilityIdentifier); // Add to critical vulnerabilities set
+                        break;
+                    case 'medium':
+                        ReportsmediumCount++;
+                        mediumHosts.add(hostIdentifier); // Add to medium hosts set
+                        mediumVulnerabilities.add(vulnerabilityIdentifier); // Add to medium vulnerabilities set
+                        break;
+                    case 'low':
+                        ReportslowCount++;
+                        lowHosts.add(hostIdentifier); // Add to low hosts set
+                        lowVulnerabilities.add(vulnerabilityIdentifier); // Add to low vulnerabilities set
+                        break;
+                    default:
+                        console.log("Unknown severity:", severity);
+                        break;
+                }
+
             });
         });
-        if(reports.length === 0){
+        if (reports.length === 0) {
             return res.status(404).json({ error: 'Report not found' });
         }
         // Count unique hosts for each severity
@@ -208,7 +208,7 @@ router.get('/reports/executive/:report_id', authenticateToken, async (req, res) 
         // console.log("Unique Critical Hosts:", uniqueCriticalHostsCount);
         // console.log("Unique Medium Hosts:", uniqueMediumHostsCount);
         // console.log("Unique Low Hosts:", uniqueLowHostsCount);
-         // Initialize counts
+        // Initialize counts
         let criticalCount = 0;
         let mediumCount = 0;
         let lowCount = 0;
@@ -260,17 +260,17 @@ router.get('/reports/executive/:report_id', authenticateToken, async (req, res) 
                 },
             },
         };
-         // Generate the pie chart image
-         const pieChartBuffer = await chartJSNodeCanvas.renderToBuffer(pieChartConfig);
+        // Generate the pie chart image
+        const pieChartBuffer = await chartJSNodeCanvas.renderToBuffer(pieChartConfig);
 
-         //getting data for graph
-         //check if org or user
-         const userResult = await pgClient.query(
-             'SELECT user_id, organization_id FROM users WHERE user_id = $1',
-             [req.user.user_id]
-         );
-         let graphData = [];
-         if (userResult.rows[0].organization_id === null) {
+        //getting data for graph
+        //check if org or user
+        const userResult = await pgClient.query(
+            'SELECT user_id, organization_id FROM users WHERE user_id = $1',
+            [req.user.user_id]
+        );
+        let graphData = [];
+        if (userResult.rows[0].organization_id === null) {
             // Select all reports from the database associated with the user that are earlier than the current report
             const reportsResult = await pgClient.query(
                 `SELECT report_id, created_at, content 
@@ -285,7 +285,7 @@ router.get('/reports/executive/:report_id', authenticateToken, async (req, res) 
             console.log('report created at', report.created_at);
             graphData = reportsResult.rows;
             console.log('graph data', graphData);
-        }else{
+        } else {
             // Select all reports from the database associated with the organization that are earlier than the current report
             const reportsResult = await pgClient.query(
                 `SELECT report_id, created_at, content 
@@ -305,34 +305,31 @@ router.get('/reports/executive/:report_id', authenticateToken, async (req, res) 
             let currentCriticalCount = 0;
             let currentMediumCount = 0;
             let currentLowCount = 0;
-        
+
             // Process each report to count the vulnerabilities
-            report.content.finalReports.forEach((reportItem) => {
-                reportItem.forEach((item) => {
-                    let severity = item.Severity || item.severity;
-                    if (severity) severity = severity.trim().toLowerCase();
-        
-                    switch (severity) {
-                        case 'high':
-                            currentCriticalCount++;
-                            break;
-                        case 'medium':
-                            currentMediumCount++;
-                            break;
-                        case 'low':
-                            currentLowCount++;
-                            break;
-                        default:
-                            break;
-                    }
-                });
+            report.content.finalReport.forEach((reportItem) => {
+                let severity = reportItem.Severity || reportItem.severity;
+                if (severity) severity = severity.trim().toLowerCase();
+                switch (severity) {
+                    case 'high':
+                        currentCriticalCount++;
+                        break;
+                    case 'medium':
+                        currentMediumCount++;
+                        break;
+                    case 'low':
+                        currentLowCount++;
+                        break;
+                    default:
+                        break;
+                }
             });
-        
+
             // Accumulate counts for the summary table
-            criticalCount = currentCriticalCount+criticalCount;
-            mediumCount = currentMediumCount+mediumCount;
-            lowCount = currentLowCount+lowCount;
-        
+            criticalCount = currentCriticalCount + criticalCount;
+            mediumCount = currentMediumCount + mediumCount;
+            lowCount = currentLowCount + lowCount;
+
             return {
                 date: new Date(report.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
                 criticalCount: currentCriticalCount,
@@ -340,13 +337,13 @@ router.get('/reports/executive/:report_id', authenticateToken, async (req, res) 
                 lowCount: currentLowCount,
             };
         });
-        console.log('trend data',trendData);
+        console.log('trend data', trendData);
         // Generate trend graph using chart.js-node-canvas
         const labels = trendData.map((data) => data.date);
         const criticalCounts = trendData.map((data) => data.criticalCount);
         const mediumCounts = trendData.map((data) => data.mediumCount);
         const lowCounts = trendData.map((data) => data.lowCount);
-        
+
         const configuration = {
             type: 'line',
             data: {
@@ -562,15 +559,15 @@ router.get('/reports/executive/:report_id', authenticateToken, async (req, res) 
         let vulnerabilityTableData = Array.from(aggregatedVulnerabilities.values()).map(entry => {
             // Sort the hosts
             let sortedHosts = entry.hosts.sort((a, b) => a.localeCompare(b));
-        
+
             // Function to condense IP addresses into ranges and CIDR notation
             const condenseHosts = (hosts) => {
                 if (hosts.length === 0) return '';
-        
+
                 let ranges = [];
                 let start = hosts[0];
                 let end = hosts[0];
-        
+
                 for (let i = 1; i < hosts.length; i++) {
                     if (hosts[i] === incrementIP(end)) {
                         end = hosts[i];
@@ -580,12 +577,12 @@ router.get('/reports/executive/:report_id', authenticateToken, async (req, res) 
                         end = hosts[i];
                     }
                 }
-        
+
                 // Push the last range
                 ranges.push(createCIDR(start, end));
                 return ranges.join(', ');
             };
-        
+
             // Function to increment an IP address
             const incrementIP = (ip) => {
                 let parts = ip.split('.').map(Number);
@@ -599,37 +596,37 @@ router.get('/reports/executive/:report_id', authenticateToken, async (req, res) 
                 }
                 return parts.join('.');
             };
-        
+
             // Function to calculate CIDR notation for a range
             const createCIDR = (start, end) => {
                 if (start === end) return start; // Single IP, no CIDR needed
-        
+
                 let startParts = start.split('.').map(Number);
                 let endParts = end.split('.').map(Number);
-        
+
                 // Calculate the difference between the start and end IPs
                 let diff = 0;
                 for (let i = 0; i < 4; i++) {
                     diff = (diff << 8) + (endParts[i] - startParts[i]);
                 }
-        
+
                 // Find the highest bit that differs
                 let mask = 32;
                 while (diff > 0) {
                     diff >>= 1;
                     mask--;
                 }
-        
+
                 return `${start}/${mask}`;
             };
-        
+
             return {
                 vulnerability: entry.vulnerability,
                 cvss: entry.cvss,
                 host: condenseHosts(sortedHosts)
             };
         });
-                // Set up the table headers
+        // Set up the table headers
         // const tableTopY = doc.y;
         // const tableLeftX = 50;
         // const columnWidths2 = [200, 100, 250]; // Set widths for the columns
@@ -706,9 +703,9 @@ router.get('/reports/executive/:report_id', authenticateToken, async (req, res) 
                 },
             },
         };
-        
-       const image = await chartJSNodeCanvas.renderToBuffer(tableconfiguration );
-    
+
+        const image = await chartJSNodeCanvas.renderToBuffer(tableconfiguration);
+
         // Add the table to the PDF
         doc.image(image, {
             fit: [500, 300],

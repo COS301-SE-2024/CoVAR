@@ -266,44 +266,37 @@ export const createOrganisation = async (organisationName: string, username: str
 };
 
 export const fetchUnauthorizedUsers = async (search: string) => {
-    try {
-        const accessToken = localStorage.getItem('accessToken');
-        if (!accessToken) {
-            throw new Error('Access token not found');
-        }
-        const response = await axios.get('/api/users/unauthorized', {
-            headers: { Authorization: `Bearer ${accessToken}` },
-            params: { search },
-        });
-        return response.data;
-    } catch (error) {
-        throw error;
+    const accessToken = localStorage.getItem('accessToken');
+    if (!accessToken) {
+        throw new Error('Access token not found');
     }
+    const request = {
+        method: 'get',
+        url: '/api/users/unauthorized',
+        headers: { Authorization: `Bearer ${accessToken}` },
+        params: { search },
+    };
+    return await handleRequest(request);
 };
 
 export const authorizeUser = async (username: string, accessToken: string) => {
-    try {
-        await axios.patch(`/api/users/authorize`, { username }, {
-            headers: { Authorization: `Bearer ${accessToken}` },
-        });
-    } catch (error) {
-        console.error('Error updating user role:', error);
-        throw error;
-    }
+    const request = {
+        method: 'patch',
+        url: '/api/users/authorize',
+        data: { username },
+        headers: { Authorization: `Bearer ${accessToken}` },
+    };
+    return await handleRequest(request);
 };
 
 export const leaveOrganisation = async (orgId: string, username: string, accessToken: string) => {
-    try {
-        const response = await axios.post(
-            `/api/organizations/leave`,
-            { organizationId: orgId, username: username },
-            { headers: { Authorization: `Bearer ${accessToken}` } }
-        );
-        return response.status;
-    } catch (error) {
-        console.error('Error leaving organization:', error);
-        throw error;
-    }
+    const request = {
+        method: 'post',
+        url: '/api/organizations/leave',
+        data: { organizationId: orgId, username },
+        headers: { Authorization: `Bearer ${accessToken}` },
+    };
+    return await handleRequest(request);
 };
 
 export const handleDownloadFile = async (loid: number, fileName: string) => {

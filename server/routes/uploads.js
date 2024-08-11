@@ -440,7 +440,7 @@ router.post('/uploads/generateReport', authenticateToken, async (req, res) => {
 
         } else if (type === 'org') {
             // Get organization_id from the organizations table
-            const getOrgId = 'SELECT organization_id FROM organizations WHERE organization_name = $1';
+            const getOrgId = 'SELECT organization_id FROM organizations WHERE name = $1';
             const orgResult = await pgClient.query(getOrgId, [name]);
 
             if (orgResult.rows.length === 0) {

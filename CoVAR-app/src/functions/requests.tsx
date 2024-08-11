@@ -89,7 +89,7 @@ const handleRequest = async (request: AxiosRequestConfig) => {
         if (error.response && error.response.status === 403) {
             try {
                 const response = await retryRequestWithNewToken(error.config);
-                
+
                 // Check again after retrying with new token
                 const url = error.config.url?.toLowerCase();
                 if (url?.endsWith('change_name') || url?.endsWith('delete') || url?.endsWith('remove_user')) {
@@ -387,21 +387,53 @@ export const handleToggleReport = async (upload_id: number) => {
         headers: { Authorization: `Bearer ${token}` },
     };
     return await handleRequest(request);
-  
-};
-
-export const fetchConflicts = async (fetchedReports: any[][]) => {
-    const token = localStorage.getItem('accessToken');
-
-    const request: AxiosRequestConfig = {
-        method: 'post',
-        url: '/api/conflicts/match',
-        data: { listUploads: fetchedReports },
-        headers: { Authorization: `Bearer ${token}` },
-    };
-    return await handleRequest(request);
 
 };
+
+export const fetchAndMatchReports = async (reportIds: number[]) => {
+    try {
+        if (reportIds.length > 0) {
+            const fetchedReports = await fetchReports(reportIds);
+
+            const token = localStorage.getItem('accessToken');
+
+            const response = await axios.post('/api/conflicts/match', {
+                listUploads: fetchedReports,
+            }, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            const { matches, unmatchedList1, unmatchedList2 } = response.data;
+            return { matches, unmatchedList1, unmatchedList2 };
+        }
+    } catch (error) {
+        console.error('Error generating reports:', error);
+        throw error;
+    }
+};
+
+// Function to generate a report
+export const generateReportRequest = async (finalReport: any[], name: string | undefined, type: string | null) => {
+    try {
+        const token = localStorage.getItem('accessToken');
+
+
+        const request: AxiosRequestConfig = {
+            method: 'post',
+            url: '/api/uploads/generateReport',
+            data: { finalReport, name, type },
+            headers: { Authorization: `Bearer ${token}` },
+        };
+        return await handleRequest(request);
+    } catch (error) {
+        console.error('Error generating report:', error);
+        throw error;
+    }
+};
+
+
 
 
 

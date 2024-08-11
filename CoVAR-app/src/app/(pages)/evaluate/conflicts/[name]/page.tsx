@@ -1,9 +1,9 @@
 'use client';
-import { fetchReports, fetchUploadsClient, fetchUploadsOrganization } from "@/functions/requests";
+import { fetchAndMatchReports, fetchReports, fetchUploadsClient, fetchUploadsOrganization, generateReportRequest } from "@/functions/requests";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import axios from 'axios';
-import { Card, CardContent, Typography, Box, Grid, Button } from '@mui/material';
+import { Card, CardContent, Typography, Box, Grid, Button, Snackbar, Alert, CircularProgress } from '@mui/material';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
@@ -70,7 +70,7 @@ const UnmatchedReportCard = styled(Card)(({ theme, selected }: { theme: any; sel
     border: selected ? `4px solid ${theme.palette.success.main}` : 'none',
 }));
 
-const userConflicts = () => {
+const UserConflicts = () => {
     const router = useRouter();
     const redirectToLogin = useCallback(() => {
         router.replace('/login');
@@ -91,10 +91,13 @@ const userConflicts = () => {
     const [unmatchedList2, setUnmatchedList2] = useState<any[]>([]);
     const [finalReport, setFinalReport] = useState<any[]>([]); // Initialize finalReport array
     const [selectedReports, setSelectedReports] = useState<{ left: number[], right: number[] }>({ left: [], right: [] });
+    const [loading, setLoading] = useState(true);
+
+    const [snackbarOpen, setSnackbarOpen] = useState(false);
 
     const fetchUploadIDsForReport = async () => {
+        
         try {
-
             if (name && type === 'client') {
                 const data = await fetchUploadsClient(name);
                 const inReportIds = data.filter((upload: FileUpload) => upload.in_report).map((upload: FileUpload) => upload.upload_id);
@@ -112,28 +115,17 @@ const userConflicts = () => {
         }
     };
 
+    // Fetch and match reports
     const fetchReportsJSON = async () => {
         try {
-            if (reportIds.length > 0) {
-                const fetchedReports = await fetchReports(reportIds);
-
-                const token = localStorage.getItem('accessToken');
-
-                const response = await axios.post('/api/conflicts/match', {
-                    listUploads: fetchedReports,
-                }, {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                });
-
-                const { matches, unmatchedList1, unmatchedList2 } = response.data;
-                setMatchedReports(matches);
-                setUnmatchedList1(unmatchedList1);
-                setUnmatchedList2(unmatchedList2);
-            }
+            const { matches, unmatchedList1, unmatchedList2 } = await fetchAndMatchReports(reportIds) as { matches: any[]; unmatchedList1: any[]; unmatchedList2: any[]; };
+            setMatchedReports(matches);
+            setUnmatchedList1(unmatchedList1);
+            setUnmatchedList2(unmatchedList2);
         } catch (error) {
-            console.error('Error generating reports:', error);
+            console.error('Error fetching reports:', error);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -142,7 +134,9 @@ const userConflicts = () => {
     }, [name, redirectToLogin]);
 
     useEffect(() => {
-        fetchReportsJSON();
+        if (reportIds.length > 0) {
+            fetchReportsJSON();
+        }
     }, [reportIds]);
 
     const renderReport = (report: any, isSelected: boolean) => (
@@ -198,28 +192,61 @@ const userConflicts = () => {
         console.log('Final Report:', updatedReport);
     };
 
+    const handleCloseSnackbar = () => {
+        setSnackbarOpen(false);
+    };
+
+
     const generateReport = async () => {
         try {
-          const token = localStorage.getItem('accessToken');
-          
-          const response = await axios.post(
-            '/api/uploads/generateReport',
-            { finalReport, name, type },    
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          );
-          console.log('Report generated successfully:', response.data);
+            const response = await generateReportRequest(finalReport, name, type);
+            console.log('Report generated successfully:', response);
+            setSnackbarOpen(true);
+
+            setTimeout(() => {
+                router.push('/evaluate');
+            }, 1500);
         } catch (error) {
-          console.error('Error generating report:', error);
+            console.error('Error generating report:', error);
         }
-      };
-    
+    };
+
+    if (loading) {
+        return (
+            <Box sx={{ 
+                ...mainContentStyles,
+                position: 'absolute', 
+                top: '50%', 
+                left: '57%', 
+                transform: 'translate(-50%, -50%)', 
+                display: 'flex', 
+                justifyContent: 'center', 
+                alignItems: 'center', 
+                width: '90%',
+                height: '100%', 
+                
+            }}>
+                <CircularProgress />
+            </Box>
+        );
+    }
 
     return (
+
         <ReportsContainer sx={mainContentStyles}>
+            <Snackbar
+                sx={{
+                    width: '100%',
+                    position: 'absolute',
+
+                }}
+                open={snackbarOpen}
+                autoHideDuration={1500}
+                onClose={handleCloseSnackbar}
+                message="Report generated successfully"
+                anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+            >
+            </Snackbar>
             <Box>
                 <Typography variant="h5" gutterBottom>Identified Similarities</Typography>
                 {matchedReports.map(([report1, report2]: [any, any], index: number) => (
@@ -298,12 +325,13 @@ const userConflicts = () => {
                 variant="contained"
                 color="primary"
                 onClick={generateReport}
-                sx={{ marginTop: 2 , marginBottom: 2, width: '100%' }}
+                sx={{ marginTop: 2, marginBottom: 2, width: '100%' }}
             >
                 Generate Report
             </Button>
+
         </ReportsContainer>
     );
 };
 
-export default userConflicts;
+export default UserConflicts;

@@ -20,6 +20,7 @@ import AssignVADialog from './dialogs/assignVADialog';
 import UnassignVADialog from './dialogs/unassignVADialog';
 import AssignClientDialog from './dialogs/assignClientDialog';
 import UnassignClientDialog from './dialogs/unassignClientDialog';
+import CloseIcon from '@mui/icons-material/Close'
 
 export type User = {
     user_id: string;
@@ -41,7 +42,12 @@ const UserList = () => {
     const [assignedClients, setAssignedClients] = useState<User[]>([]);
     const [assignedOrganizations, setAssignedOrganizations] = useState<Organization[]>([]);
     const [organizations, setOrganizations] = useState<Organization[]>([]);
-    const [alert, setAlert] = useState<{visible: boolean, message: string}>({visible: false, message: ''});
+    const [alert, setAlert] = useState<{ visible: boolean; message: string; type?: 'success' | 'error' }>({
+        visible: false,
+        message: '',
+        type: 'success',
+    });
+    
     const [accessToken, setAccessToken] = useState(localStorage.getItem('accessToken'));
     
 // New states for confirmation dialog
@@ -158,17 +164,34 @@ const handleAssignClient = async () => {
             await assignClient(user_id, clientToAssign, accessToken);
             setAlert({
                 visible: true,
-                message: `Successfully assigned ${clientToAssign} to ${user_id}.`
+                message: `Successfully assigned ${clientToAssign} to ${user_id}.`,
+                type: 'success', // Set type to success
             });
-            setClientToAssign(''); // Reset input
-            setAssignDialogOpen(false); // Close dialog
+            setClientToAssign('');
+            setAssignDialogOpen(false);
         } catch (error: any) {
             if (error.response?.status === 403) {
                 redirectToLogin();
+            } else if (error.response?.status === 409) {
+                setAlert({
+                    visible: true,
+                    message: `${clientToAssign} is already a client.`,
+                    type: 'error', // Set type to error
+                });
+                setAssignDialogOpen(false);
+            } else {
+                setAlert({
+                    visible: true,
+                    message: 'An error occurred while assigning the client.',
+                    type: 'error', // Set type to error
+                });
+                setAssignDialogOpen(false);
             }
         }
     }
 };
+
+
 
 const handleUnassignClient = async () => {
     if (user_id) {
@@ -453,15 +476,15 @@ const handleConfirmUnassignVA = async () => {
     }
 
     return (
-        <div style={{ height: 600, width: '100%' }}>
+        <div style={{ height: 600, width: '100%'}}>
             {alert.visible && (
-            <Alert
-                icon={<CheckIcon fontSize="inherit" />}
-                severity="success"
-                onClose={() => setAlert({visible: false, message: ''})}
-            >
-                {alert.message}
-            </Alert>
+                <Alert
+                    severity={alert.type} 
+                    icon={alert.type === 'error' ? <CloseIcon fontSize="inherit" /> : <CheckIcon fontSize="inherit" />}
+                    onClose={() => setAlert({ visible: false, message: '', type: 'success' })} 
+                >
+                    {alert.message}
+                </Alert>
             )}
             <DataGrid
                 rows={users}

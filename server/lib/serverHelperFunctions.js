@@ -20,7 +20,31 @@ async function isAdmin(pgClient, UserId){
     }
     return { isAdmin: true };
 }
+
+async function getOrganizationId(pgClient, UserId) {
+    const organizationIdResult = await pgClient.query('SELECT organization_id FROM users WHERE user_id = $1', [UserId]);
+    if (organizationIdResult.rows.length === 0) {
+        return { organizationId: null, error: 'Organization not found' };
+    }
+    return { organizationId: organizationIdResult.rows[0].organization_id };
+}
+
+async function getAllReportIds(pgClient, UserId) {
+    const organizationIdResult = await getOrganizationId(pgClient, UserId);
+    let reportIds;
+
+    if (organizationIdResult.organizationId === null) {
+        reportIds = await pgClient.query('SELECT report_id FROM user_reports WHERE user_id = $1', [UserId]);
+    } else {
+        reportIds = await pgClient.query('SELECT report_id FROM organization_reports WHERE organization_id = $1', [organizationIdResult.organizationId]);
+    }
+
+    return reportIds.rows.map(row => row.report_id);
+}
+
+
 module.exports = {
     isOwner,
-    isAdmin
+    isAdmin,
+    getAllReportIds
 };

@@ -17,7 +17,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { getUserRole } from '@/functions/requests';
 import { doSignOut } from '../functions/firebase/auth';
-
+import HelpDialog from './(pages)/help/helpDialog';
 
 const Sidebar: React.FC = () => {
   const router = useRouter();
@@ -25,6 +25,16 @@ const Sidebar: React.FC = () => {
   const theme = useTheme();
   const [role, setRole] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [isHelpDialogOpen, setHelpDialogOpen] = useState(false);
+
+  const handleOpenHelpDialog = () => {
+    setHelpDialogOpen(true);
+  };
+
+  const handleCloseHelpDialog = () => {
+    setHelpDialogOpen(false);
+  };
+
 
   const redirectToLogin = useCallback(() => {
     router.replace('/login');
@@ -203,25 +213,24 @@ const Sidebar: React.FC = () => {
           </Link>
         )}
 
-        <Link href='/help'>
-          <ListItem
-              sx={{
-                  ...sidebarItemStyles,
-                  backgroundColor: isActive('/help') ? theme.palette.primary.main : 'inherit',
-                  color: isActive('/help') ? 'white' : theme.palette.text.primary,
-                  borderRadius: '10px',
-                  '&:hover': {
-                  backgroundColor: theme.palette.action.hover,
-                  color: theme.palette.text.primary,
-                  },
-              }}
-              >
-              <ListItemIcon sx={{ ...iconStyles, color: isActive('/help') ? 'white' : theme.palette.text.primary }}>
-                  <HelpOutlineIcon />
-              </ListItemIcon>
-              <ListItemText primary="Help" />
-          </ListItem>
-        </Link>
+      <ListItem
+        onClick={handleOpenHelpDialog}
+        sx={{
+          ...sidebarItemStyles,
+          borderRadius: '10px',
+          '&:hover': {
+            backgroundColor: theme.palette.action.hover,
+            color: theme.palette.text.primary,
+          },
+        }}
+      >
+        <ListItemIcon>
+          <HelpOutlineIcon />
+        </ListItemIcon>
+        <ListItemText primary="Help" />
+      </ListItem>
+      <HelpDialog open={isHelpDialogOpen} onClose={handleCloseHelpDialog} />
+
       </List>
       <Button
         test-id="logoutButton"

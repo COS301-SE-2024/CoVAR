@@ -164,7 +164,7 @@ const handleAssignClient = async () => {
             await assignClient(user_id, clientToAssign, accessToken);
             setAlert({
                 visible: true,
-                message: `Successfully assigned ${clientToAssign} to ${user_id}.`,
+                message: `Successfully assigned ${clientToAssign} as a client.`,
                 type: 'success', // Set type to success
             });
             setClientToAssign('');
@@ -206,7 +206,7 @@ const handleUnassignClient = async () => {
             setAssignedOrganizations(assignedOrganizations.filter(org => org.name !== clientToUnassign));
             setAlert({
                 visible: true,
-                message: `Successfully unassigned ${clientToUnassign} from ${user_id}.`
+                message: `Successfully unassigned ${clientToUnassign} as a client.`
             });
             setClientToUnassign(''); // Reset input
             setUnassignDialogOpen(false); // Close dialog

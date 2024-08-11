@@ -52,7 +52,7 @@ const Dashboard: React.FC = () => {
             console.log(responseData);
             setResponseData(responseData);
 
-            const reports = responseData[0].content.reports.flat();
+            const reports = responseData[0].content.finalReport;
             calculateSeverityDistribution(reports);
             setTopVulnerabilities(reports.sort((a: VulnerabilityReport, b: VulnerabilityReport) => parseFloat(b.CVSS) - parseFloat(a.CVSS)).slice(0, 5));
             setAllReports(reports);

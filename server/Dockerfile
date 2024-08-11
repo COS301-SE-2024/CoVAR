@@ -13,4 +13,4 @@ RUN apt-get update && apt-get install -y \
   && rm -rf /var/lib/apt/lists/*
 COPY . .
 RUN npm rebuild canvas
-CMD ["npm", "run", "dev"]
+CMD ["npm", "run", "start"]

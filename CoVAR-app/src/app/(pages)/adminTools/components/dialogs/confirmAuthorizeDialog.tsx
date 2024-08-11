@@ -13,7 +13,7 @@ const ConfirmAuthorizeDialog: React.FC<ConfirmAuthorizeDialogProps> = ({ open, u
     return (
         <Dialog open={open} onClose={onClose} sx={dialogStyles}>
             <DialogTitle>Confirm Authorisation</DialogTitle>
-            <DialogContent sx={{ padding: '0 24px',  display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column' }}>
+            <DialogContent sx={{ padding: '0 24px',  display: 'flex', justifyContent: 'center', flexDirection: 'column' }}>
                 <Typography>
                     Are you sure you want to Authorise the user {username}?
                 </Typography>

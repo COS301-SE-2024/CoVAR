@@ -21,8 +21,6 @@ const Organisation = () => {
     const [confirmChangeOrganisationName, setConfirmChangeOrganisationName] = useState('');
     const [confirmDisbandOrganisationName, setConfirmDisbandOrganisationName] = useState('');
     const [confirmLeaveOrganisationName, setConfirmLeaveOrganisationName] = useState('');
-    const [deleteConfirmed, setDeleteConfirmed] = useState(false);
-    const [leaveConfirmed, setLeaveConfirmed] = useState(false);
     const [isOwner, setIsOwner] = useState(false);
     const [isInOrg, setIsInOrg] = useState<string | null>(null);
     const [username, setUsername] = useState<string | null>(null);
@@ -30,7 +28,8 @@ const Organisation = () => {
     const [addMemberMessage, setAddMemberMessage] = useState<string | null>(null);
     const [changeNameMessage, setChangeNameMessage] = useState<string | null>(null);
     const [disbandOrgMessage, setDisbandOrgMessage] = useState<string | null>(null);
-
+    const [createOrgErrorMessage, setCreateOrgErrorMessage] = useState<string | null>(null);
+    const [isChangeNameButtonDisabled, setIsChangeNameButtonDisabled] = useState(true);
 
     const router = useRouter();
     
@@ -96,6 +95,14 @@ const Organisation = () => {
         fetchUsersList();
     }, [isInOrg, fetchUsersList, fetchUserRole]);
 
+    useEffect(() => {
+        if (confirmLeaveOrganisationName === organisationName || confirmDisbandOrganisationName === organisationName) {
+            setIsChangeNameButtonDisabled(false);
+        } else {
+            setIsChangeNameButtonDisabled(true);
+        }
+    }, [confirmLeaveOrganisationName, confirmDisbandOrganisationName, organisationName]);
+
     const handleRemoveUser = async (user: User) => {
         try {
             const accessToken = localStorage.getItem('accessToken');
@@ -121,7 +128,6 @@ const Organisation = () => {
                 if (status === 200) {
                     setIsInOrg(null);
                     setOrganisationName('');
-                    setLeaveConfirmed(true);
                 }
             }
         } catch (error) {
@@ -192,21 +198,20 @@ const Organisation = () => {
                     setIsInOrg(null);
                     setOrganisationName('');
                     setConfirmDisbandOrganisationName('');
-                    setDeleteConfirmed(true);
                     setDisbandOrgMessage('Organisation disbanded successfully');
+                    setUsers([]); 
                     setTimeout(() => setDisbandOrgMessage(null), 10000);
                 }
             }
-
         } catch (error:any) {
             setDisbandOrgMessage('Error disbanding organisation.');
             setTimeout(() => setDisbandOrgMessage(null), 10000);
-            //console.error('Error changing organisation name:', error);
             if(error.response?.status === 403) {
                 redirectToLogin();
             }
         }
     };
+    
 
     const handleCreateNewOrganisation = async () => {
         try {
@@ -216,15 +221,24 @@ const Organisation = () => {
                 const orgData = await createOrganisation(organisationName, username, accessToken);
                 setIsInOrg(orgData.id);
                 setOrganisationName(orgData.name); // Set the organisation name
-
+                setConfirmDisbandOrganisationName(orgData.name); 
+                setCreateOrgErrorMessage(null); 
             }
-        } catch (error:any) {
-            //console.error('Error creating organisation:', error);
-            if(error.response?.status === 403) {
+        } catch (error: any) {
+            // Handle specific error for organization name already exists
+            if (error.response?.status === 409) { 
+                setCreateOrgErrorMessage('An organisation with this name already exists.');
+            } else if (error.response?.status === 403) {
                 redirectToLogin();
+            } else {
+                setCreateOrgErrorMessage('Error creating organisation.');
             }
+            console.error('Error creating organisation:', error);
+        } finally {
+            setLoading(false);
         }
-    };
+    }
+    
 
     const columns: GridColDef[] = [
         { field: 'email', headerName: 'Email', flex: 1, headerAlign: 'left', resizable: false },
@@ -300,6 +314,21 @@ const Organisation = () => {
                         >
                             Create Organisation
                         </Button>
+                        {createOrgErrorMessage && (
+                        <Typography
+                            variant="body2"
+                            color="error.main"
+                            sx={{ 
+                                display: 'inline-block',
+                                whiteSpace: 'nowrap',
+                                mb: 4,  
+                                textAlign: "center"
+                            }}
+                        >
+                            {createOrgErrorMessage}
+                        </Typography>
+                    )}
+
                     </CardContent>
                 </Card>
             </Box>
@@ -358,7 +387,7 @@ const Organisation = () => {
                             color: 'text.primary',
                         },
                         '& .MuiDataGrid-filler': {
-                            backgroundColor: 'background.paper',
+                            backgroundColor: 'background.default',
                             color: 'text.primary',
                         },
                         '& .MuiDataGrid-scrollbarFiller': {
@@ -483,11 +512,7 @@ const Organisation = () => {
                                     },
                                 }}
                                 onClick={handleDeleteOrganisation}
-                                disabled={
-                                    confirmDisbandOrganisationName === '' ||
-                                    confirmDisbandOrganisationName !== organisationName ||
-                                    deleteConfirmed
-                                }
+                                disabled={isChangeNameButtonDisabled}
                             >
                                 Delete Organisation
                             </Button>
@@ -543,11 +568,7 @@ const Organisation = () => {
                                     },
                                 }}
                                 onClick={handleLeaveOrganisation}
-                                disabled={
-                                    confirmLeaveOrganisationName === '' ||
-                                    confirmLeaveOrganisationName !== organisationName ||
-                                    leaveConfirmed
-                                }
+                                disabled={isChangeNameButtonDisabled}
                             >
                                 Leave Organisation
                             </Button>

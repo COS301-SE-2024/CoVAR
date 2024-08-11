@@ -156,26 +156,35 @@ router.patch('/users/:id/role', authenticateToken ,async (req, res) => {
 });
 
 // Assign a client to a VA
-router.post('/users/:id/assign', authenticateToken ,async (req, res) => {
+router.post('/users/:id/assign', authenticateToken, async (req, res) => {
     console.log('Assigning a client to a VA');
     const { id } = req.params; // VA id
     const { clientUsername } = req.body;
     console.log('clientUsername:', clientUsername);
-    if(!id || !clientUsername){
+    
+    if (!id || !clientUsername) {
         return res.status(400).send('User id and clientUsername are required');
     }
 
     try {
         const userId = req.user.user_id;
-        const adminResult =  await isAdmin(pgClient,userId);
-        if(!adminResult.isAdmin){
+        const adminResult = await isAdmin(pgClient, userId);
+        if (!adminResult.isAdmin) {
             return res.status(403).send('Not authorized as admin');
         }
+
         // Check if the clientUsername is an organization
         const organizationResult = await pgClient.query('SELECT organization_id FROM organizations WHERE name = $1', [clientUsername]);
         if (organizationResult.rows.length > 0) {
             const organizationId = organizationResult.rows[0].organization_id;
             console.log('Assigning an organization to the VA');
+
+            // Check if the organization is already assigned
+            const organizationCheck = await pgClient.query('SELECT * FROM assignment WHERE va = $1 AND organization = $2', [id, organizationId]);
+            if (organizationCheck.rows.length > 0) {
+                return res.status(409).send('Organization is already assigned to this VA');
+            }
+
             await pgClient.query('INSERT INTO assignment (va, organization) VALUES ($1, $2)', [id, organizationId]);
             return res.send('Organization assigned successfully');
         }
@@ -188,6 +197,13 @@ router.post('/users/:id/assign', authenticateToken ,async (req, res) => {
 
         const clientId = clientResult.rows[0].user_id;
         console.log('Assigning a normal client to the VA');
+
+        // Check if the client is already assigned
+        const clientCheck = await pgClient.query('SELECT * FROM assignment WHERE va = $1 AND client = $2', [id, clientId]);
+        if (clientCheck.rows.length > 0) {
+            return res.status(409).send('Client is already assigned to this VA');
+        }
+
         await pgClient.query('INSERT INTO assignment (va, client) VALUES ($1, $2)', [id, clientId]);
         res.send('Client assigned successfully');
     } catch (err) {
@@ -195,6 +211,7 @@ router.post('/users/:id/assign', authenticateToken ,async (req, res) => {
         res.status(500).send('Server Error');
     }
 });
+
 
 // Get all clients assigned to a VA
 router.get('/users/:id/assigned_clients' , authenticateToken ,async (req, res) => {

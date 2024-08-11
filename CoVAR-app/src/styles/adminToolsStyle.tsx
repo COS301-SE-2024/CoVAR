@@ -77,7 +77,7 @@ export const dialogStyles: SxProps<Theme> = {
         width: '45vw',
         height: '29vh',
         backgroundColor: (theme) => theme.palette.background.paper,
-        color: (theme) => theme.palette.text.secondary,
+        color: (theme) => theme.palette.text.primary,
         overflow: 'hidden',
     },
 };

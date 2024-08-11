@@ -1,9 +1,16 @@
 'use client'
-import React, { createContext, useState, useMemo, ReactNode } from 'react';
+import React, { createContext, useState, useMemo, ReactNode, useContext } from 'react';
 import { ThemeProvider } from '@mui/material/styles';
 import { lightTheme, darkTheme } from './themes';
 
-const ThemeContext = createContext({ toggleTheme: () => {} });
+// Define a type for the ThemeContext
+interface ThemeContextType {
+  toggleTheme: () => void;
+  isDarkMode: boolean;
+}
+
+// Create the context with the defined type
+const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 const CustomThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [isDarkMode, setIsDarkMode] = useState(() => {
@@ -25,7 +32,7 @@ const CustomThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const theme = useMemo(() => (isDarkMode ? darkTheme : lightTheme), [isDarkMode]);
 
   return (
-    <ThemeContext.Provider value={{ toggleTheme }}>
+    <ThemeContext.Provider value={{ toggleTheme, isDarkMode }}>
       <ThemeProvider theme={theme}>
         {children}
       </ThemeProvider>
@@ -33,4 +40,13 @@ const CustomThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   );
 };
 
-export { CustomThemeProvider, ThemeContext };
+// Create a custom hook for using the ThemeContext
+const useThemeContext = () => {
+  const context = useContext(ThemeContext);
+  if (!context) {
+    throw new Error('useThemeContext must be used within a CustomThemeProvider');
+  }
+  return context;
+};
+
+export { CustomThemeProvider, useThemeContext }; // Export the hook as well

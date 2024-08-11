@@ -10,7 +10,7 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import { Box, Button, List, ListItem, ListItemIcon, ListItemText, Typography, useTheme } from '@mui/material';
 import React, { useCallback, useContext, useEffect, useState } from 'react';
 
-import { ThemeContext } from '../styles/customThemeProvider';
+import { useThemeContext } from '../styles/customThemeProvider';
 import { iconStyles, logoStyles, logoutButtonStyles, sidebarItemStyles, sidebarStyles } from '../styles/sidebarStyle';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import { useRouter, usePathname } from 'next/navigation';
@@ -18,6 +18,9 @@ import Link from 'next/link';
 import { getUserRole } from '@/functions/requests';
 import { doSignOut } from '../functions/firebase/auth';
 import HelpDialog from './(pages)/help/helpDialog';
+import { Switch } from '@mui/material';
+import LightMode from '@mui/icons-material/LightMode';
+import DarkMode from '@mui/icons-material/DarkMode';
 
 const Sidebar: React.FC = () => {
   const router = useRouter();
@@ -74,21 +77,34 @@ const Sidebar: React.FC = () => {
     }
   };
 
+
   const ThemeToggleButton: React.FC = () => {
-    const { toggleTheme } = useContext(ThemeContext);
+    const { toggleTheme, isDarkMode } = useThemeContext(); 
     return (
-      <Button onClick={toggleTheme} color="inherit">
-        Toggle Theme
-      </Button>
+      <Box sx={{ display: 'flex', alignItems: 'center',   marginTop: 'auto', mb: 3 }}>
+        {isDarkMode ? (
+          <DarkMode sx={{ fontSize: '1.2rem' }} /> 
+        ) : (
+          <LightMode sx={{ fontSize: '1.2rem' }} /> 
+        )}
+        <Switch
+          checked={isDarkMode}
+          onChange={toggleTheme}
+          color="default"
+          size="small" 
+        />
+      </Box>
     );
   };
+  
+  
 
   const isActive = (path: string) => location === path;
 
   return (
     <Box sx={sidebarStyles}>
       <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', ...logoStyles }}>
-        <LockIcon sx={{ fontSize: 'inherit', marginRight: 1, color: theme.palette.primary.main }} /> CoVAR
+        <LockIcon sx={{ fontSize: '14', marginRight: 1, color: theme.palette.primary.main }} /> CoVAR
       </Typography>
       <List>
         <Link href='/dashboard'>
@@ -132,7 +148,7 @@ const Sidebar: React.FC = () => {
             </ListItem>
           </Link>
         )}
-        <Link href='/account'>
+        {/* <Link href='/account'>
           <ListItem
             sx={{
               ...sidebarItemStyles,
@@ -150,7 +166,7 @@ const Sidebar: React.FC = () => {
             </ListItemIcon>
             <ListItemText primary="Account" />
           </ListItem>
-        </Link>
+        </Link> */}
         <Link href='/organisation'>
           <ListItem
             test-id="organisationLink"
@@ -171,7 +187,7 @@ const Sidebar: React.FC = () => {
             <ListItemText primary="Organisation" />
           </ListItem>
         </Link>
-        <Link href='/settings'>
+        {/* <Link href='/settings'>
           <ListItem
             sx={{
               ...sidebarItemStyles,
@@ -189,7 +205,7 @@ const Sidebar: React.FC = () => {
             </ListItemIcon>
             <ListItemText primary="Settings" />
           </ListItem>
-        </Link>
+        </Link> */}
         {role === "admin" && (
           <Link href='/adminTools'>
             <ListItem
@@ -255,6 +271,9 @@ const Sidebar: React.FC = () => {
 
 
       </List>
+
+      <ThemeToggleButton />
+      
       <Button
         test-id="logoutButton"
         variant="contained"
@@ -267,7 +286,7 @@ const Sidebar: React.FC = () => {
         Logout
       </Button>
 
-      <ThemeToggleButton />
+
     </Box>
   );
 };

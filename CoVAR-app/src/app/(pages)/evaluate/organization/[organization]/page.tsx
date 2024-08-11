@@ -1,12 +1,32 @@
 'use client';
 import React, { useState, useEffect, useCallback } from 'react';
-import { Box, Typography, Paper, Container, List, ListItem, ListItemText, Button, Grid, Snackbar } from '@mui/material';
+import {
+  Box,
+  Typography,
+  Paper,
+  Container,
+  List,
+  ListItem,
+  ListItemText,
+  Button,
+  Grid,
+  Snackbar,
+} from '@mui/material';
 import { usePathname, useRouter } from 'next/navigation';
-import { mainContentStyles } from '../../../../../styles/evaluateStyle';
+import { mainContentStyles, buttonStyles } from '../../../../../styles/evaluateStyle'; 
 import FileUpload from '../../components/fileUpload';
 import { handleDownloadFile } from '../../../../../functions/requests';
 import ReportPreview from '../../components/reportPreview';
-import { fetchUploadsOrganization, fetchReports, handleRemoveFile, handleToggleReport } from '../../../../../functions/requests';
+import {
+  fetchUploadsOrganization,
+  fetchReports,
+  handleRemoveFile,
+  handleToggleReport,
+} from '../../../../../functions/requests';
+import DownloadIcon from '@mui/icons-material/Download';
+import DeleteIcon from '@mui/icons-material/Delete';
+import AddIcon from '@mui/icons-material/Add';
+import RemoveIcon from '@mui/icons-material/Remove';
 
 interface FileUpload {
   upload_id: number;
@@ -25,6 +45,7 @@ const OrganizationEvaluation: React.FC = () => {
   const redirectToLogin = useCallback(() => {
     router.replace('/login');
   }, [router]);
+
   const pathname = usePathname();
   const organizationName = pathname.split('/').pop();
 
@@ -43,7 +64,6 @@ const OrganizationEvaluation: React.FC = () => {
           setReportIds(inReportIds);
         }
       } catch (error: any) {
-        //console.error('Error fetching uploads:', error);
         if (error.response?.status === 403) {
           redirectToLogin();
         }
@@ -77,7 +97,6 @@ const OrganizationEvaluation: React.FC = () => {
         setReportIds(inReportIds);
       }
     } catch (error: any) {
-      //console.error('Error fetching uploads:', error);
       if (error.response?.status === 403) {
         redirectToLogin();
       }
@@ -90,7 +109,6 @@ const OrganizationEvaluation: React.FC = () => {
       setUploads(uploads.filter(upload => upload.upload_id !== upload_id));
       setReportIds(reportIds.filter(id => id !== upload_id));
     } catch (error: any) {
-      //console.error('Error removing upload:', error);
       if (error.response?.status === 403) {
         redirectToLogin();
       }
@@ -113,9 +131,11 @@ const OrganizationEvaluation: React.FC = () => {
       console.error('Error updating report status:', error);
     }
   };
+
   const handleCloseSnackbar = () => {
     setSnackbarOpen(false);
   };
+
   return (
     <Container maxWidth={false} sx={{ ...mainContentStyles, paddingTop: 8, width: '100vw' }}>
       <Snackbar
@@ -128,68 +148,97 @@ const OrganizationEvaluation: React.FC = () => {
         onClose={handleCloseSnackbar}
         message="Cannot add more than 2 report IDs"
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-      >
-      </Snackbar>
+      />
       <Grid container spacing={2}>
         <Grid item xs={6}>
-          <Paper sx={{ padding: 4, textAlign: 'center', overflowY: 'auto', maxHeight: '80vh' }}>
+          <Paper sx={{ padding: 4, textAlign: 'center', overflowY: 'auto', height: '40vh' }}>
             <Typography variant="h4" gutterBottom>
               Evaluate Organization
             </Typography>
             {organizationName && (
               <Typography variant="h6" gutterBottom>
-                Organization: {organizationName}
+                Organisation: {organizationName}
               </Typography>
             )}
             <FileUpload onFileSubmit={handleFileSubmit} organization={organizationName} />
-            <Box mt={4}>
-              <Typography variant="h6">Uploaded Files</Typography>
-              <List>
-                {uploads.map((upload) => (
-                  <ListItem key={upload.upload_id}>
-                    <ListItemText
-                      primary={`File Name: ${upload.filename}, Uploaded At: ${new Date(upload.created_at).toLocaleString()}`}
-                    />
-                    <Button
-                      variant="outlined"
-                      color="primary"
-                      onClick={() => handleDownloadFile(upload.loid, `${upload.filename}`)}
-                      sx={{ marginRight: 2 }}
-                    >
-                      Download
-                    </Button>
-                    <Button
-                      variant="outlined"
-                      color="secondary"
-                      onClick={() => handleRemove(upload.upload_id)}
-                    >
-                      Remove
-                    </Button>
-                    <Button
-                      variant="outlined"
-                      color="primary"
-                      onClick={() => handleToggle(upload.upload_id)}
-                      sx={{ marginLeft: 2 }}
-                    >
-                      {reportIds.includes(upload.upload_id) ? 'Remove from Report' : 'Add to Report'}
-                    </Button>
-                  </ListItem>
-                ))}
-              </List>
-            </Box>
+          </Paper>
+          <Box mt={2} /> {/* Gap between upload files and uploaded files */}
+          <Paper sx={{ padding: 4, textAlign: 'center', overflowY: 'auto', height: '40vh' }}>
+            <Typography variant="h6">Uploaded Files</Typography>
+            <List>
+              {uploads.map((upload) => (
+                <ListItem key={upload.upload_id}>
+                  <ListItemText
+                    primary={`File Name: ${upload.filename}, Uploaded At: ${new Date(upload.created_at).toLocaleString()}`}
+                  />
+                  <Button
+                    variant="outlined"
+                    sx={{
+                      backgroundColor: 'transparent',
+                      color: '#8B0000',
+                      borderColor: '#8B0000',
+                      '&:hover': {
+                        borderColor: '#A52A2A',
+                        color: '#A52A2A',
+                      },
+                      marginLeft: 1
+                    }}
+                    onClick={() => handleRemove(upload.upload_id)}
+                  >
+                    <DeleteIcon />
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    color="primary"
+                    onClick={() => handleDownloadFile(upload.loid, `${upload.filename}`)}
+                    sx={{ marginLeft: 1 }}
+                  >
+                    <DownloadIcon />
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    color="primary"
+                    onClick={() => handleToggle(upload.upload_id)}
+                    sx={{ marginLeft: 1 }}
+                  >
+                    {reportIds.includes(upload.upload_id) ? <RemoveIcon /> : <AddIcon />}
+                  </Button>
+                </ListItem>
+              ))}
+            </List>
           </Paper>
         </Grid>
         <Grid item xs={6}>
-          <Paper sx={{ textAlign: 'center', overflowY: 'scroll', maxHeight: '80vh' }}>
-            <ReportPreview reports={reports} reportIds={reportIds} client={organizationName ?? ''} />
+          <Paper sx={{ textAlign: 'center', overflowY: 'scroll', height: 'calc(80vh + 16px)' }}>
+            {reports.length === 0 ? (
+              <Typography variant="h6" style={{ textAlign: 'center', padding: '20px' }}>
+                No reports to display
+              </Typography>
+            ) : (
+              <ReportPreview reports={reports} reportIds={reportIds} client={organizationName ?? ''} />
+            )}
           </Paper>
-          <Button style={{
-            left: '45%', marginTop: 5, position: 'relative'
-          }} variant='outlined' color="primary" onClick={() => router.push(`/evaluate/conflicts/${organizationName}?type=org`)}>
-            Next
-          </Button>
         </Grid>
       </Grid>
+      <Box display="flex" justifyContent="center" mt={2}>
+        <Button
+          color="primary"
+          disabled={reports.length === 0}
+          onClick={() => router.push(`/evaluate/conflicts/${organizationName}?type=org`)}
+          sx={{
+            ...buttonStyles,
+            marginTop: '3vh',
+            width: '150px',
+            ...(reports.length === 0 && {
+              backgroundColor: 'lightgrey',
+              color: 'grey',
+              borderColor: 'grey',
+            }),
+          }}
+        >
+          Next
+        </Button>
+      </Box>
     </Container>
   );
 };

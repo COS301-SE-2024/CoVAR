@@ -487,6 +487,15 @@ export const TOPG = async (data:any) => {
     return await handleRequest(request);
 };
 
-
+export const unmatchedRecomendations = async (chain_prompt: string) => {
+    const token = localStorage.getItem('accessToken');
+    console.log('chain_prompt', chain_prompt);
+    const req = axios.post('/api/unmatchedRecomendations', { chain_prompt }, {
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+    });
+    return req.content;
+};
 
 

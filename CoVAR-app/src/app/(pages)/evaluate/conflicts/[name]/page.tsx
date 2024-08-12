@@ -1,5 +1,5 @@
 'use client';
-import { fetchAndMatchReports, fetchReports, fetchUploadsClient, fetchUploadsOrganization, generateReportRequest } from "@/functions/requests";
+import { fetchAndMatchReports, fetchReports, fetchUploadsClient, fetchUploadsOrganization, generateReportRequest, unmatchedRecomendations } from "@/functions/requests";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import axios from 'axios';
@@ -8,9 +8,9 @@ import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
-
 import { styled } from '@mui/system';
 import { mainContentStyles } from '../../../../../styles/evaluateStyle';
+import { Dialog, DialogTitle, DialogContent } from '@mui/material';
 
 interface FileUpload {
     upload_id: number;
@@ -36,12 +36,6 @@ const MatchedPair = styled(Box)(({ theme }) => ({
     marginBottom: theme.spacing(2),
 }));
 
-const ReportRow = styled(Box)(({ theme }) => ({
-    display: 'flex',
-    justifyContent: 'space-between',
-    width: '100%',
-}));
-
 const ReportCard = styled(Card)(({ theme }) => ({
     width: '48%',
 }));
@@ -54,6 +48,7 @@ const ButtonGroup = styled(Box)(({ theme }) => ({
     width: '10%',
     gap: theme.spacing(1),
 }));
+
 const UnmatchedButtonGroup = styled(Box)(({ theme }) => ({
     display: 'flex',
     justifyContent: 'center',
@@ -79,24 +74,22 @@ const UserConflicts = () => {
     const pathname = usePathname();
     const searchParams = useSearchParams();
 
-
     const type = searchParams.get('type');
-
     const name = pathname.split('/').pop();
-
 
     const [reportIds, setReportIds] = useState<number[]>([]);
     const [matchedReports, setMatchedReports] = useState<any[]>([]);
     const [unmatchedList1, setUnmatchedList1] = useState<any[]>([]);
     const [unmatchedList2, setUnmatchedList2] = useState<any[]>([]);
-    const [finalReport, setFinalReport] = useState<any[]>([]); // Initialize finalReport array
+    const [finalReport, setFinalReport] = useState<any[]>([]);
     const [selectedReports, setSelectedReports] = useState<{ left: number[], right: number[] }>({ left: [], right: [] });
     const [loading, setLoading] = useState(true);
-
+    const [insights, setInsights] = useState<{ [key: string]: string }>({});
     const [snackbarOpen, setSnackbarOpen] = useState(false);
+    const [dialogOpen, setDialogOpen] = useState(false);
+    const [currentInsight, setCurrentInsight] = useState<string | null>(null);
 
     const fetchUploadIDsForReport = async () => {
-
         try {
             if (name && type === 'client') {
                 const data = await fetchUploadsClient(name);
@@ -115,18 +108,37 @@ const UserConflicts = () => {
         }
     };
 
-    // Fetch and match reports
     const fetchReportsJSON = async () => {
         try {
             const { matches, unmatchedList1, unmatchedList2 } = await fetchAndMatchReports(reportIds) as { matches: any[]; unmatchedList1: any[]; unmatchedList2: any[]; };
             setMatchedReports(matches);
             setUnmatchedList1(unmatchedList1);
             setUnmatchedList2(unmatchedList2);
+            await Promise.all([fetchInsights(unmatchedList1), fetchInsights(unmatchedList2)]);
         } catch (error) {
             console.error('Error fetching reports:', error);
         } finally {
             setLoading(false);
         }
+    };
+
+    const fetchInsights = async (unmatchedReports: any[]) => {
+        const insightsMap: { [key: string]: string } = {};
+
+        for (const report of unmatchedReports) {
+            try {
+                const chainPrompt = report.nvtName;
+                const result = await unmatchedRecomendations(chainPrompt);
+                insightsMap[report.id] = result;
+            } catch (error) {
+                console.error('Error fetching insight for report:', report.id, error);
+            }
+        }
+
+        setInsights(prevInsights => ({
+            ...prevInsights,
+            ...insightsMap
+        }));
     };
 
     useEffect(() => {
@@ -166,7 +178,6 @@ const UserConflicts = () => {
             updatedSelectedReports.left.push(index);
             updatedSelectedReports.right.push(index);
         } else if (action === 'acceptNone') {
-            // Remove selected reports
             updatedReport = updatedReport.filter(
                 (report) => report !== matchedReports[index][0] && report !== matchedReports[index][1]
             );
@@ -179,157 +190,143 @@ const UserConflicts = () => {
         console.log('Final Report:', updatedReport);
     };
 
+    const handleOpenDialog = (reportId: string) => {
+        const insight = insights[reportId];
+        setCurrentInsight(insight || null);
+        setDialogOpen(true);
+    };
+
+    const handleCloseDialog = () => {
+        setDialogOpen(false);
+        setCurrentInsight(null);
+    };
+
+    const renderUnmatchedReport = (report: any, index: number) => {
+        const isSelected = finalReport.includes(report);
+        const reportId = report.id;
+        const insightAvailable = insights[reportId];
+
+        return (
+            <UnmatchedReportCard key={index} selected={isSelected} theme={undefined}>
+                <CardContent>
+                    {Object.entries(report).map(([key, value]) => (
+                        <Typography key={key} variant="body2">
+                            <strong>{key}:</strong> {value as React.ReactNode}
+                        </Typography>
+                    ))}
+                    <UnmatchedButtonGroup>
+                        <Button variant="contained" color="primary" onClick={() => handleUnmatchedReport('add', report)}>
+                            <CheckCircleIcon />
+                        </Button>
+                        <Button variant="contained" color="secondary" onClick={() => handleUnmatchedReport('remove', report)}>
+                            <CancelIcon />
+                        </Button>
+                        <Button variant="outlined" color="info" onClick={() => handleOpenDialog(reportId)}>
+                            {insightAvailable ? "Show Insight" : <CircularProgress size={20} />}
+                        </Button>
+                    </UnmatchedButtonGroup>
+                </CardContent>
+            </UnmatchedReportCard>
+        );
+    };
+
     const handleUnmatchedReport = (action: string, report: any) => {
         let updatedReport = [...finalReport];
 
         if (action === 'add') {
             updatedReport.push(report);
         } else if (action === 'remove') {
-            updatedReport = updatedReport.filter((r) => r !== report);
+            updatedReport = updatedReport.filter((r) => r.id !== report.id);
         }
 
         setFinalReport(updatedReport);
-        // console.log('Final Report:', updatedReport);
+        console.log('Final Report:', updatedReport);
     };
 
-    const handleCloseSnackbar = () => {
-        setSnackbarOpen(false);
-    };
-
-
-    const generateReport = async () => {
+    const saveFinalReport = async () => {
         try {
-            const response = await generateReportRequest(finalReport, name, type);
-            console.log('Report generated successfully:', response);
+            await generateReportRequest(finalReport);
             setSnackbarOpen(true);
-
-            setTimeout(() => {
-                router.push('/evaluate');
-            }, 1500);
         } catch (error) {
-            console.error('Error generating report:', error);
+            console.error('Error saving final report:', error);
         }
     };
 
-    if (loading) {
-        return (
-            <Box sx={{
-                ...mainContentStyles,
-                position: 'absolute',
-                top: '50%',
-                left: '57%',
-                transform: 'translate(-50%, -50%)',
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                width: '90%',
-                height: '100%',
-
-            }}>
-                <CircularProgress />
-            </Box>
-        );
-    }
-
     return (
-
         <ReportsContainer sx={mainContentStyles}>
-            <Snackbar
-                sx={{
-                    width: '100%',
-                    position: 'absolute',
-
-                }}
-                open={snackbarOpen}
-                autoHideDuration={1500}
-                onClose={handleCloseSnackbar}
-                message="Report generated successfully"
-                anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-            >
-            </Snackbar>
-            <Box>
-                <Typography variant="h5" gutterBottom>Identified Similarities</Typography>
-                {matchedReports.map(([report1, report2]: [any, any], index: number) => (
+            <Typography variant="h6">Conflicts</Typography>
+            <Grid container spacing={2}>
+                {matchedReports.map((match, index) => (
                     <MatchedPair key={index}>
-                        <Box display="flex" width="100%" justifyContent="space-between" alignItems="center">
-                            {renderReport(report1, selectedReports.left.includes(index))}
-                            <ButtonGroup>
-                                <Button variant="contained" color="primary" onClick={() => handleButtonClick('acceptRight', index)}>
-                                    <ArrowForwardIcon />
-                                </Button>
-                                <Button variant="contained" color="primary" onClick={() => handleButtonClick('acceptLeft', index)}>
-                                    <ArrowBackIcon />
-                                </Button>
-                                <Button variant="contained" color="primary" onClick={() => handleButtonClick('acceptBoth', index)}>
-                                    <CheckCircleIcon />
-                                </Button>
-                                <Button variant="contained" color="primary" onClick={() => handleButtonClick('acceptNone', index)}>
-                                    <CancelIcon />
-                                </Button>
-                            </ButtonGroup>
-                            {renderReport(report2, selectedReports.right.includes(index))}
-                        </Box>
+                        {renderReport(match[0], selectedReports.left.includes(index))}
+                        <ButtonGroup>
+                            <Button
+                                variant="contained"
+                                color="primary"
+                                onClick={() => handleButtonClick('acceptLeft', index)}
+                            >
+                                <ArrowBackIcon />
+                            </Button>
+                            <Button
+                                variant="contained"
+                                color="primary"
+                                onClick={() => handleButtonClick('acceptRight', index)}
+                            >
+                                <ArrowForwardIcon />
+                            </Button>
+                            <Button
+                                variant="contained"
+                                color="secondary"
+                                onClick={() => handleButtonClick('acceptBoth', index)}
+                            >
+                                Accept Both
+                            </Button>
+                            <Button
+                                variant="contained"
+                                color="secondary"
+                                onClick={() => handleButtonClick('acceptNone', index)}
+                            >
+                                Accept None
+                            </Button>
+                        </ButtonGroup>
+                        {renderReport(match[1], selectedReports.right.includes(index))}
                     </MatchedPair>
                 ))}
-            </Box>
-            <UnmatchedReports>
-                <Typography variant="h5" gutterBottom>Unmatched List 1</Typography>
-                {unmatchedList1.map((report: any, index: number) => {
-                    const isSelected = finalReport.includes(report);
-                    return (
-                        <UnmatchedReportCard key={index} selected={isSelected} theme={undefined}>
-                            <CardContent>
-                                {Object.entries(report).map(([key, value]) => (
-                                    <Typography key={key} variant="body2">
-                                        <strong>{key}:</strong> {value as React.ReactNode}
-                                    </Typography>
-                                ))}
-                                <UnmatchedButtonGroup>
-                                    <Button variant="contained" color="primary" onClick={() => handleUnmatchedReport('add', report)}>
-                                        <CheckCircleIcon />
-                                    </Button>
-                                    <Button variant="contained" color="secondary" onClick={() => handleUnmatchedReport('remove', report)}>
-                                        <CancelIcon />
-                                    </Button>
-                                </UnmatchedButtonGroup>
-                            </CardContent>
-                        </UnmatchedReportCard>
-                    );
-                })}
+            </Grid>
 
-                <Typography variant="h5" gutterBottom>Unmatched List 2</Typography>
-                {unmatchedList2.map((report: any, index: number) => {
-                    const isSelected = finalReport.includes(report);
-                    return (
-                        <UnmatchedReportCard key={index} selected={isSelected} theme={undefined}>
-                            <CardContent>
-                                {Object.entries(report).map(([key, value]) => (
-                                    <Typography key={key} variant="body2">
-                                        <strong>{key}:</strong> {value as React.ReactNode}
-                                    </Typography>
-                                ))}
-                                <UnmatchedButtonGroup>
-                                    <Button variant="contained" color="primary" onClick={() => handleUnmatchedReport('add', report)}>
-                                        <CheckCircleIcon />
-                                    </Button>
-                                    <Button variant="contained" color="secondary" onClick={() => handleUnmatchedReport('remove', report)}>
-                                        <CancelIcon />
-                                    </Button>
-                                </UnmatchedButtonGroup>
-                            </CardContent>
-                        </UnmatchedReportCard>
-                    );
-                })}
+            <UnmatchedReports>
+                <Typography variant="h6">Unmatched Reports</Typography>
+                {unmatchedList1.map((report, index) => renderUnmatchedReport(report, index))}
+                {unmatchedList2.map((report, index) => renderUnmatchedReport(report, index))}
             </UnmatchedReports>
+
             <Button
                 variant="contained"
                 color="primary"
-                onClick={generateReport}
-                sx={{ marginTop: 2, marginBottom: 2, width: '100%' }}
+                onClick={saveFinalReport}
+                sx={{ marginTop: 2 }}
             >
-                Generate Report
+                Save Final Report
             </Button>
 
+            <Snackbar
+                open={snackbarOpen}
+                autoHideDuration={6000}
+                onClose={() => setSnackbarOpen(false)}
+            >
+                <Alert onClose={() => setSnackbarOpen(false)} severity="success">
+                    Report saved successfully!
+                </Alert>
+            </Snackbar>
+
+            <Dialog open={dialogOpen} onClose={handleCloseDialog}>
+                <DialogTitle>Insight</DialogTitle>
+                <DialogContent>
+                    <Typography variant="body1">
+                        {currentInsight}
+                    </Typography>
+                </DialogContent>
+            </Dialog>
         </ReportsContainer>
     );
 };

@@ -59,7 +59,10 @@ describe('OrganizationEvaluation', () => {
       expect(screen.getByText(/File Name: file1.pdf, Uploaded At:/)).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByText('Remove'));
+    const removeButtons = screen.getAllByRole('button', { name: /delete/i });
+    expect(removeButtons.length).toBeGreaterThan(0);
+  
+    fireEvent.click(removeButtons[0]);
 
     await waitFor(() => {
       expect(screen.queryByText(/File Name: file1.pdf, Uploaded At:/)).not.toBeInTheDocument();

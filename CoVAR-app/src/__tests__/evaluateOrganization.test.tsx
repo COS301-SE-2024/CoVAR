@@ -58,8 +58,11 @@ describe('OrganizationEvaluation', () => {
     await waitFor(() => {
       expect(screen.getByText(/File Name: file1.pdf, Uploaded At:/)).toBeInTheDocument();
     });
-
-    fireEvent.click(screen.getByText('Remove'));
+  
+    const deleteButton = screen.getByTestId('delete-button');
+    expect(deleteButton).toBeInTheDocument();
+  
+    fireEvent.click(deleteButton);
 
     await waitFor(() => {
       expect(screen.queryByText(/File Name: file1.pdf, Uploaded At:/)).not.toBeInTheDocument();

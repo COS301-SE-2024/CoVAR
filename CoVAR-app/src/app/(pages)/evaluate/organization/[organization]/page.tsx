@@ -209,7 +209,7 @@ const OrganizationEvaluation: React.FC = () => {
           </Paper>
         </Grid>
         <Grid item xs={6}>
-          <Paper sx={{ textAlign: 'center', overflowY: 'scroll', height: 'calc(80vh + 16px)' }}>
+          <Paper sx={{overflowY: 'scroll', height: 'calc(80vh + 16px)' }}>
             {reports.length === 0 ? (
               <Typography variant="h6" style={{ textAlign: 'center', padding: '20px' }}>
                 No reports to display

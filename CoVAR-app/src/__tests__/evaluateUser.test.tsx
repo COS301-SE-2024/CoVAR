@@ -59,10 +59,10 @@ describe('UserEvaluation', () => {
       expect(screen.getByText(/File Name: file1.pdf, Uploaded At:/)).toBeInTheDocument();
     });
 
-    const removeButtons = screen.getAllByRole('button', { name: /delete/i });
-    expect(removeButtons.length).toBeGreaterThan(0);
+    const deleteButton = screen.getByTestId('delete-button');
+    expect(deleteButton).toBeInTheDocument();
   
-    fireEvent.click(removeButtons[0]);
+    fireEvent.click(deleteButton);
 
     await waitFor(() => {
       expect(screen.queryByText(/File Name: file1.pdf, Uploaded At:/)).not.toBeInTheDocument();

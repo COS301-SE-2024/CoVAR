@@ -157,6 +157,7 @@ const UserEvaluation: React.FC = () => {
                     primary={`File Name: ${upload.filename}, Uploaded At: ${new Date(upload.created_at).toLocaleString()}`}
                   />
                   <Button
+                    data-testid="delete-button" 
                     variant="outlined"
                     sx={{
                       backgroundColor: 'transparent',

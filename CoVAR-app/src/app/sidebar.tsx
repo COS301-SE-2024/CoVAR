@@ -9,6 +9,7 @@ import LockIcon from '@mui/icons-material/Lock';
 import SettingsIcon from '@mui/icons-material/Settings';
 import { Box, Button, List, ListItem, ListItemIcon, ListItemText, Typography, useTheme } from '@mui/material';
 import React, { useCallback, useContext, useEffect, useState } from 'react';
+import BubbleChartIcon from '@mui/icons-material/BubbleChart';
 
 import { useThemeContext } from '../styles/customThemeProvider';
 import { iconStyles, logoStyles, logoutButtonStyles, sidebarItemStyles, sidebarStyles } from '../styles/sidebarStyle';
@@ -126,6 +127,28 @@ const Sidebar: React.FC = () => {
             <ListItemText primary="Dashboard" />
           </ListItem>
         </Link>
+        {role === "client" && (
+          <Link href='/vendorGraph'>
+            <ListItem
+              test-id="vendorGraphLink"
+              sx={{
+                ...sidebarItemStyles,
+                backgroundColor: isActive('/vendorGraph') ? theme.palette.primary.main : 'inherit',
+                color: isActive('/vendorGraph') ? 'white' : theme.palette.text.primary,
+                borderRadius: '10px',
+                '&:hover': {
+                  backgroundColor: theme.palette.action.hover,
+                  color: theme.palette.text.primary,
+                },
+              }}
+            >
+              <ListItemIcon sx={{ ...iconStyles, color: isActive('/vendorGraph') ? 'white' : theme.palette.text.primary }}>
+                <BubbleChartIcon />
+              </ListItemIcon>
+              <ListItemText primary="Vendor Graph" />
+            </ListItem>
+          </Link>
+        )}
         {(role === "va" || role === "admin") && (
           <Link href='/evaluate'>
             <ListItem

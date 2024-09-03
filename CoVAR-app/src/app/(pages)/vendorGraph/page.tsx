@@ -5,9 +5,15 @@ import { mainContentStyles } from '../../../styles/sidebarStyle';
 import { getAllReports } from '@/functions/requests';
 import { VulnerabilityReport } from '../dashboard/page';
 import { chartContainerStyles } from '@/styles/dashboardStyle';
+import VendorGraphTree from './vendorGraphTree';
+import convertHashToTreeData from './dataFormatConverter';
+
+type cveCount = {
+	[cve: string]: number,
+}
 
 type versionCount = {
-	[version: string]: number,
+	[version: string]: cveCount,
 }
 
 type vendorFixes = {
@@ -15,7 +21,7 @@ type vendorFixes = {
 }
 
 const VendorGraph: React.FC = () => {
-	const [vendorFixes, setVendorFixes] = useState<vendorFixes>();
+	const [vendorFixes, setVendorFixes] = useState<any[]>([]);
 	const [reports, setReports] = useState<any[]>([]);
 	const [reportMap, setReportMap] = useState<any>({});
 	const [selectedReport, setSelectedReport] = useState('');
@@ -38,18 +44,40 @@ const VendorGraph: React.FC = () => {
 			}
 
 			const installedVersionMatch = vulnerability.specificResult.match(/Installed version:\s*([\d.]+)/);
+			let installedVersion = 'X.X';
 			if (installedVersionMatch) {
-				const installedVersion = installedVersionMatch[1];
-
-				if (!vendors[vendor][installedVersion]) {
-					vendors[vendor][installedVersion] = 1;
-				} else {
-					vendors[vendor][installedVersion]++;
-				}
+				installedVersion = installedVersionMatch[1];
 			}
+
+			const cves = vulnerability.CVEs.split(',');
+
+			if (!vendors[vendor][installedVersion]) {
+				vendors[vendor][installedVersion] = {};
+			}
+
+			console.log(cves);
+			if (cves.length != 0 && cves[0] == '') {
+				const cve = 'CVE-XXXX-XXXX';
+				if (!vendors[vendor][installedVersion][cve]) {
+					vendors[vendor][installedVersion][cve] = 1;
+				} else {
+					vendors[vendor][installedVersion][cve]++;
+				}
+			}else{
+				cves.forEach((cve) => {
+					if (!vendors[vendor][installedVersion][cve]) {
+						vendors[vendor][installedVersion][cve] = 1;
+					} else {
+						vendors[vendor][installedVersion][cve]++;
+					}
+				});
+			}
+			
 		}
 
-		setVendorFixes(vendors);
+		const treeDataFormat = convertHashToTreeData(vendors);
+		console.log(treeDataFormat);
+		setVendorFixes(treeDataFormat);
 	}
 
 	const changeReport = (reportDate: string) => {
@@ -122,7 +150,7 @@ const VendorGraph: React.FC = () => {
 				</Select>
 			</FormControl>
 			<Paper sx={chartContainerStyles}>
-				<Typography variant="h6">{JSON.stringify(vendorFixes, null, 2)}</Typography>
+				<VendorGraphTree data={vendorFixes}/>
 			</Paper>
 		</Box>
 	);

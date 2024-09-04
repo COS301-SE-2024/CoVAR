@@ -111,45 +111,41 @@ const VendorGraph: React.FC = () => {
 			return;
 		}
 		
-		let firstReport = '';
 		const reportMap: any = {};
 
 		reports.forEach((report, index) => {
 			const createDate = report.created_at;
 
 			if (index === 0) {
-				firstReport = createDate;
+				createVendorFixes(report);
+				setSelectedReport(createDate);
 			}
 
 			reportMap[createDate] = index;
 		});
 
 		setReportMap(reportMap);
-
-		// if (reportMap[firstReport] !== undefined) {
-		// changeReport(firstReport);
-		// }
-
 	}, [reports]);
 
 	return (
 		<Box sx={mainContentStyles}>
-			<FormControl fullWidth>
-				<InputLabel id="report-select-label">Select Report</InputLabel>
-				<Select
-				labelId="report-select-label"
-				value={selectedReport}
-				label="Select Report"
-				onChange={(e) => changeReport(e.target.value as string)}
-				>
-				{reportMap && Object.keys(reportMap).map((reportDate) => (
-					<MenuItem key={new Date(reportDate).toLocaleString()} value={reportDate}>
-						{new Date(reportDate).toLocaleString()}
-					</MenuItem>
-				))}
-				</Select>
-			</FormControl>
 			<Paper sx={chartContainerStyles}>
+				<FormControl fullWidth>
+					<InputLabel id="report-select-label">Select Report</InputLabel>
+					<Select
+					labelId="report-select-label"
+					value={selectedReport}
+					label="Select Report"
+					onChange={(e) => changeReport(e.target.value as string)}
+					>
+					{reportMap && Object.keys(reportMap).map((reportDate) => (
+						<MenuItem key={new Date(reportDate).toLocaleString()} value={reportDate}>
+							{new Date(reportDate).toLocaleString()}
+						</MenuItem>
+					))}
+					</Select>
+				</FormControl>
+
 				<VendorGraphTree data={vendorFixes}/>
 			</Paper>
 		</Box>

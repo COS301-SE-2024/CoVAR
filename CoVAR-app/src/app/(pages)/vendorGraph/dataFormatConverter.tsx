@@ -1,15 +1,25 @@
 type TreeNode = {
     name: string;
     children?: TreeNode[];
-    symbolSize?: number;
-    itemStyle?: { color: string };
+    symbolSize?: number[];
+    itemStyle?: { color: string, borderRadius?: number };
+    symbol?: string;
+    label?: {
+        show?: boolean,
+        position: string, 
+        verticalAlign: string,
+        align: string,
+        fontSize: number,
+    };
+    tooltip?: {
+        show: boolean,
+        formatter: string,
+    };
 };
 
 function calculateNodeColorAndSize(count: number, scale: number): { color: string; size: number } {
-    // Scale node size (you can adjust the multiplier as needed)
-    const size = Math.min(15 + count * 5, 50);
+    const size = Math.min(15 + count * 5, 40);
 
-    // Calculate the midpoint of the scale
     const midpoint = scale / 2;
 
     let red, green;
@@ -35,30 +45,61 @@ function convertHashToTreeData(inputHash: any): TreeNode[] {
     for (const [software, versions] of Object.entries(inputHash)) {
         const softwareNode: TreeNode = {
             name: software,
-            children: []
+            children: [],
+            symbol: 'rect',
+            label: {
+                show: true,
+                position: 'inside', 
+                verticalAlign: 'middle',
+                align: 'center',
+                fontSize: 12,
+            }
         };
 
         for (const [version, cves] of Object.entries(versions as object)) {
             const cveEntries = Object.entries(cves as object);
             const versionNode: TreeNode = {
                 name: version,
-                children: []
+                children: [],
+                symbol: 'rect',
+                label: {
+                    show: true,
+                    position: 'inside', 
+                    verticalAlign: 'middle',
+                    align: 'center',
+                    fontSize: 12,
+                },
+                tooltip: {
+                    show: true,
+                    formatter: `Click to expand/retract CVE's related to ${software}:${version}`
+                }
             };
 
             cveEntries.forEach(([cve, count]) => {
                 const { color, size } = calculateNodeColorAndSize(count as number, 7);
                 const cveNode: TreeNode = {
-                name: `${cve}\nCount: ${count}`,
-                symbolSize: size,
-                itemStyle: { color }
+                    name: `${cve}\nCount: ${count}`,
+                    symbolSize: [size, size],
+                    itemStyle: { color },
+                    label: {
+                        show: true,
+                        position: 'inside', 
+                        verticalAlign: 'middle',
+                        align: 'center',
+                        fontSize: 8,
+                    },
+                    tooltip: {
+                        show: true,
+                        formatter: `Click to view information about ${cve}`
+                    }
                 };
                 versionNode.children!.push(cveNode);
             });
 
             // Calculate size and color for the version node based on the number of children
             const { color: versionColor, size: versionSize } = calculateNodeColorAndSize(versionNode.children!.length, 40);
-            versionNode.symbolSize = versionSize;
-            versionNode.itemStyle = { color: versionColor };
+            versionNode.symbolSize = [(versionNode.name.length * 8) + versionSize/4, versionSize];
+            versionNode.itemStyle = { color: versionColor, borderRadius: 15 };
 
             softwareNode.children!.push(versionNode);
         }
@@ -70,8 +111,8 @@ function convertHashToTreeData(inputHash: any): TreeNode[] {
           
         const { color: softwareColor, size: softwareSize } = calculateNodeColorAndSize(leafCount, 35);
 
-        softwareNode.symbolSize = softwareSize;
-        softwareNode.itemStyle = { color: softwareColor };
+        softwareNode.symbolSize = [(softwareNode.name.length * 8) + softwareSize/4, softwareSize];
+        softwareNode.itemStyle = { color: softwareColor, borderRadius: 20 };
 
         result.push(softwareNode);
     }
@@ -80,8 +121,15 @@ function convertHashToTreeData(inputHash: any): TreeNode[] {
     const rootNode: TreeNode = {
         name: "Vendor Issues",
         itemStyle: { color: 'green' },
-        symbolSize: 50,
-        children: result
+        symbolSize: [90, 40],
+        children: result,
+        label: {
+            show: true,
+            position: 'inside', 
+            verticalAlign: 'middle',
+            align: 'center',
+            fontSize: 12,
+        }
     };
 
     const modifiedResult: TreeNode[] = [];

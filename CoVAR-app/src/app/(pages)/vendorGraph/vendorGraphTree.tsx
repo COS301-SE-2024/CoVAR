@@ -20,29 +20,20 @@ const VendorGraphTree: React.FC<VendorGraphTreeProps> = ({ data }) => {
             type: 'tree',
             data: data,
             top: '5%',
-            left: '7%',
+            left: '1%',
             bottom: '5%',
-            right: '15%',
+            right: '1%',
             symbol: 'circle',
             symbolSize: 30,
             layout: 'orthogonal',
             orient: 'TB',
-            label: {
-              position: 'top',
-              verticalAlign: 'middle',
-              align: 'center',
-              fontSize: 12,
-            },
-            leaves: {
-              label: {
-                position: 'top',
-                verticalAlign: 'middle',
-                align: 'center',
-              },
-            },
             expandAndCollapse: true,
             initialTreeDepth: 2,
             animationDurationUpdate: 750,
+            lineStyle: {
+              width: 1.5,
+              curveness: 0,
+            },
           },
         ],
         tooltip: {
@@ -52,6 +43,15 @@ const VendorGraphTree: React.FC<VendorGraphTreeProps> = ({ data }) => {
       };
 
       chartInstance.setOption(option);
+
+      chartInstance.on('click', function (params) {
+        const nodeData = params?.data as { children?: any[]; name: string };
+        if (!nodeData?.children) {
+          const cveName = nodeData.name.split('\n')[0];
+          const url = `https://www.cvedetails.com/cve/${cveName}/`;
+          window.open(url, '_blank');
+        }
+      });
     }
 
     return () => {

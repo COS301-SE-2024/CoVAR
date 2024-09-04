@@ -105,7 +105,7 @@ const Sidebar: React.FC = () => {
   return (
     <Box sx={sidebarStyles}>
       <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', ...logoStyles }}>
-        <LockIcon sx={{ fontSize: '14', marginRight: 1, color: theme.palette.primary.main }} /> CoVAR
+        <LockIcon sx={{ fontSize: '20', marginRight: 1, color: theme.palette.primary.main }} /> CoVAR
       </Typography>
       <List>
         <Link href='/dashboard'>

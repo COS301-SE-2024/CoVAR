@@ -76,10 +76,6 @@ router.delete('/uploads/:upload_id', authenticateToken, async (req, res) => {
     }
 });
 
-//For greenbone
-// Generate a report from a single CSV file content in raw_uploads table and return as JSON
-
-//Todo : Add every header from both greenbone and nessus and only display if its not empty ""
 router.get('/uploads/generateSingleReport/:upload_id', authenticateToken, async (req, res) => {
     const { upload_id } = req.params;
 
@@ -102,79 +98,86 @@ router.get('/uploads/generateSingleReport/:upload_id', authenticateToken, async 
 
         const fileSignature = fileContent.toString('utf8', 0, 100).trim();
 
+        // .NESSUS FILE
         if (fileSignature.startsWith('<?xml')) {
-            xml2js.parseString(fileContent, { explicitArray: false }, (err, result) => {
-                if (err) {
-                    console.error('Error parsing XML:', err);
-                    return res.status(500).send('Error processing XML');
+
+            const parser = new xml2js.Parser({ explicitArray: false, mergeAttrs: true });
+
+            try {
+                const result = await parser.parseStringPromise(fileContent);
+                const records = [];
+
+                const report = result.NessusClientData_v2.Report;
+                if (!report) {
+                    throw new Error("Invalid XML format: Missing <Report> root element.");
                 }
 
-                // Extract ReportItem elements
-                const allItems = findAllReportItems(result);
+                const reportHosts = Array.isArray(report.ReportHost) ? report.ReportHost : [report.ReportHost];
 
-                // Filter out ReportItems where risk_factor is "None"
-                const filteredItems = allItems.filter(item => item.risk_factor && item.risk_factor.toLowerCase() !== 'none');
+                for (const host of reportHosts) {
+                    const ip = host.name;
 
-                // Rename fields in the filtered items
-                const renamedItems = filteredItems.map(item => {
-                    const {
-                        $: {
+
+                    let reportItems = host.ReportItem;
+                    if (!reportItems) continue;
+
+                    //if single item, put in array
+                    if (!Array.isArray(reportItems)) {
+                        reportItems = [reportItems];
+                    }
+
+                    for (const item of reportItems) {
+                        //left is field name in xml
+                        const {
                             port: Port,
-                            // svc_name: svc_name,
                             protocol: portProtocol,
-                            // pluginID: pluginID,
                             pluginName: nvtName,
-                            // pluginFamily: PluginFamily
-                        },
-                        cve: CVEs = '',
-                        // cvss3_base_score: CVSS3BaseScore,
-                        // cvss3_vector: CVSS3Vector,
-                        cvss_base_score: CVSS,
-                        // cvss_vector: CVSSVector,
-                        description: specificResult,
-                        // fname: FileName,
-                        // plugin_modification_date: PluginModificationDate,
-                        // plugin_publication_date: PluginPublicationDate,
-                        // plugin_type: PluginType,
-                        risk_factor: Severity,
-                        // script_version: ScriptVersion,
-                        // see_also: SeeAlso,
-                        solution: Solution,
-                        // synopsis: Synopsis,
-                        // plugin_output: PluginOutput
-                    } = item;
-                    const IP = "";
-                    const Summary = "";
-                    const nvtOid = "";
-                    const taskId = "";
-                    const taskName = "";
-                    const Timestamp = "";
-                    const resultId = "";
-                    const Impact = "";
-                    const affectedSoftwareOs = "";
-                    const vulnerabilityInsight = "";
-                    const vulnerabilityDetectionMethod = "";
-                    const productDetectionResult = "";
-                    const BIDs = "";
-                    const CERTs = "";
-                    const otherReferences = "";
-                    const Hostname = "";
-                    const solutionType = "";
+                            cvss_base_score: CVSS,
+                            description: specificResult,
+                            risk_factor: Severity,
+                            solution: Solution,
+                        } = item;
+                        const IP = ip;
+                        const Summary = "";
+                        const nvtOid = "";
+                        const taskId = "";
+                        const taskName = "";
+                        const Timestamp = "";
+                        const resultId = "";
+                        const Impact = "";
+                        const affectedSoftwareOs = "";
+                        const vulnerabilityInsight = "";
+                        const vulnerabilityDetectionMethod = "";
+                        const productDetectionResult = "";
+                        const BIDs = "";
+                        const CERTs = "";
+                        const otherReferences = "";
+                        const Hostname = "";
+                        const solutionType = "";
+                        const CVEs = "";
 
-                    return {
-                        IP, Hostname, Port, portProtocol, CVSS, Severity, solutionType, nvtName,
-                        Summary, specificResult, nvtOid, CVEs, taskId, taskName, Timestamp,
-                        resultId, Impact, Solution, affectedSoftwareOs, vulnerabilityInsight,
-                        vulnerabilityDetectionMethod, productDetectionResult, BIDs, CERTs, otherReferences
-                    };
-                });
+                        if (Severity && Severity !== 'None') {
+                            records.push({
+                                IP, Hostname, Port, portProtocol, CVSS, Severity, solutionType, nvtName,
+                                Summary, specificResult, nvtOid, CVEs, taskId, taskName, Timestamp,
+                                resultId, Impact, Solution, affectedSoftwareOs, vulnerabilityInsight,
+                                vulnerabilityDetectionMethod, productDetectionResult, BIDs, CERTs, otherReferences
+                            });
+                        }
 
-                // Respond with the filtered and renamed JSON data
-                return res.json(renamedItems);
-            });
+                    }
+                }
 
-        } else {
-            // Handle CSV file
+                res.json(records);
+
+
+            } catch (error) {
+                console.error("Error parsing XML:", error);
+                throw error;
+            }
+
+
+        } else {  // Handle either nessus or greenbone CSV file
             const records = [];
             const parser = parse({
                 columns: true,
@@ -188,7 +191,7 @@ router.get('/uploads/generateSingleReport/:upload_id', authenticateToken, async 
             parser.on('readable', function () {
                 let record;
                 while ((record = parser.read()) !== null) {
-                    // Process record based on expected headers
+                    //NESSUS CSV
                     if (record['Plugin ID']) {
                         const {
                             // 'Plugin ID': pluginID,
@@ -232,6 +235,7 @@ router.get('/uploads/generateSingleReport/:upload_id', authenticateToken, async 
                             });
                         }
                     } else {
+                        //GREENBONE CSV
                         const {
                             IP, Hostname, Port, 'Port Protocol': portProtocol, CVSS, Severity, 'Solution Type': solutionType,
                             'NVT Name': nvtName, Summary, 'Specific Result': specificResult, 'NVT OID': nvtOid,
@@ -407,7 +411,7 @@ router.get('/uploads/client/:clientName', authenticateToken, async (req, res) =>
 // Endpoint to generate report
 router.post('/uploads/generateReport', authenticateToken, async (req, res) => {
     const { finalReport, name, type } = req.body;
-    
+
     if (!finalReport || finalReport.length === 0) {
         return res.status(400).json({ error: 'Reports or report IDs are missing' });
     }

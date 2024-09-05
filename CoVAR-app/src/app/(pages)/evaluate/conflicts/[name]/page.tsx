@@ -8,7 +8,7 @@ import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
-import { ReportsContainer, MatchedPair, ReportCard, ButtonGroup, UnmatchedReports, UnmatchedButtonGroup, UnmatchedReportCard } from '../../../../../styles/conflictStyle';
+import { Loader, ReportsContainer, MatchedPair, ReportCard, ButtonGroup, UnmatchedReports, UnmatchedButtonGroup, UnmatchedReportCard } from '../../../../../styles/conflictStyle';
 
 import { mainContentStyles } from '../../../../../styles/evaluateStyle';
 
@@ -82,7 +82,11 @@ const UserConflicts = () => {
         } catch (error) {
             console.error('Error fetching reports:', error);
         } finally {
-            setLoading(false);
+
+            setTimeout(() => {
+                setLoading(false);
+            }, 2000);
+
         }
     };
 
@@ -125,45 +129,64 @@ const UserConflicts = () => {
     ));
 
 
-    const isUnmatchedReportSelected = (index: number, listType: "list1" | "list2") => {
+    const isUnmatchedReportSelected = useCallback((index: number, listType: 'list1' | 'list2') => {
         return selectedUnmatchedReports[listType].includes(index);
-    };
+    }, [selectedUnmatchedReports]);
 
 
-    const unmatchedReportsList1 = useMemo(
-        () =>
-            unmatchedList1.map((vulnerability, index) => {
-                const isSelected = isUnmatchedReportSelected(index, 'list1');
-                return (
-                    <MemoizedUnmatchedReportCard
-                        key={index}
-                        vulnerability={vulnerability}
-                        isSelected={isSelected}
-                        handleAdd={() => handleUnmatchedReport('add', index, 'list1')}
-                        handleRemove={() => handleUnmatchedReport('remove', index, 'list1')}
-                    />
-                );
-            }),
-        [unmatchedList1, selectedUnmatchedReports.list1, finalReport]
+    const handleUnmatchedReport = useCallback((action: string, index: number, listType: 'list1' | 'list2') => {
+        setFinalReport((prevFinalReport) => {
+            const updatedReport = [...prevFinalReport];
+            const reportToUpdate = listType === 'list1' ? unmatchedList1[index] : unmatchedList2[index];
+
+            if (action === 'add') {
+                updatedReport.push(reportToUpdate);
+            } else if (action === 'remove') {
+                return updatedReport.filter((r) => r !== reportToUpdate);
+            }
+            return updatedReport;
+        });
+
+        setSelectedUnmatchedReports((prevSelectedReports) => {
+            const updatedSelectedReports = { ...prevSelectedReports };
+
+            if (action === 'add') {
+                updatedSelectedReports[listType] = [...updatedSelectedReports[listType], index];
+            } else if (action === 'remove') {
+                updatedSelectedReports[listType] = updatedSelectedReports[listType].filter((i: any) => i !== index);
+            }
+            return updatedSelectedReports;
+        });
+        console.log('Final Report:', finalReport);
+    }, [unmatchedList1, unmatchedList2]);
+
+
+    const unmatchedReportsList1 = useMemo(() =>
+        unmatchedList1.map((vulnerability, index) => (
+            <MemoizedUnmatchedReportCard
+                key={index}
+                vulnerability={vulnerability}
+                isSelected={isUnmatchedReportSelected(index, 'list1')}
+                handleAdd={() => handleUnmatchedReport('add', index, 'list1')}
+                handleRemove={() => handleUnmatchedReport('remove', index, 'list1')}
+            />
+        )),
+        [unmatchedList1, isUnmatchedReportSelected, handleUnmatchedReport]
     );
 
-    const unmatchedReportsList2 = useMemo(
-        () =>
-            unmatchedList2.map((vuln, index) => {
-                const isSelected = isUnmatchedReportSelected(index, 'list2');
-                return (
-                    <MemoizedUnmatchedReportCard
-                        key={index}
-                        vulnerability={vuln}
-                        isSelected={isSelected}
-                        handleAdd={() => handleUnmatchedReport('add', index, 'list2')}
-                        handleRemove={() => handleUnmatchedReport('remove', index, 'list2')}
-                    />
-                );
-            }),
-        [unmatchedList2, selectedUnmatchedReports.list2, finalReport]
+    // Memoized unmatched reports for List 2
+    const unmatchedReportsList2 = useMemo(() =>
+        unmatchedList2.map((vuln, index) => (
+            <MemoizedUnmatchedReportCard
+                key={index}
+                vulnerability={vuln}
+                isSelected={isUnmatchedReportSelected(index, 'list2')}
+                handleAdd={() => handleUnmatchedReport('add', index, 'list2')}
+                handleRemove={() => handleUnmatchedReport('remove', index, 'list2')}
+            />
+        )),
+        [unmatchedList2, isUnmatchedReportSelected, handleUnmatchedReport]
     );
-
 
     const MemoizedReportCard = memo(({ report, isSelected }: { report: any; isSelected: boolean }) => (
         <ReportCard sx={{ border: isSelected ? '4px solid #4caf50' : 'none' }}>
@@ -261,23 +284,7 @@ const UserConflicts = () => {
     );
 
 
-    const handleUnmatchedReport = (action: string, index: number, listType: "list1" | "list2") => {
-        let updatedReport = new Set(finalReport);
-        let updatedSelectedUnmatchedReports = { ...selectedUnmatchedReports };
 
-        if (action === 'add') {
-            updatedReport.add(listType === "list1" ? unmatchedList1[index] : unmatchedList2[index]);
-            updatedSelectedUnmatchedReports[listType].push(index);
-        } else if (action === 'remove') {
-            const reportToRemove = listType === "list1" ? unmatchedList1[index] : unmatchedList2[index];
-            updatedReport.delete(reportToRemove);
-            updatedSelectedUnmatchedReports[listType] = updatedSelectedUnmatchedReports[listType].filter((i) => i !== index);
-        }
-
-        setFinalReport(Array.from(updatedReport));
-        setSelectedUnmatchedReports(updatedSelectedUnmatchedReports);
-        console.log('Final Report:', Array.from(updatedReport));
-    };
 
 
 
@@ -306,16 +313,19 @@ const UserConflicts = () => {
                 ...mainContentStyles,
                 position: 'absolute',
                 top: '50%',
-                left: '57%',
+                left: '50%',
                 transform: 'translate(-50%, -50%)',
                 display: 'flex',
                 justifyContent: 'center',
                 alignItems: 'center',
-                width: '90%',
+                width: '100%',
                 height: '100%',
 
             }}>
-                <CircularProgress />
+
+                {/* <Typography sx={mainContentStyles} variant="h6" gutterBottom>Analyzing Reports...</Typography> */}
+
+                <Loader />
             </Box>
         );
     }

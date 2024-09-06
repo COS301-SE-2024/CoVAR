@@ -1,9 +1,8 @@
 'use client';
-import { fetchAndMatchReports, fetchReports, fetchUploadsClient, fetchUploadsOrganization, generateReportRequest } from "@/functions/requests";
+import { fetchAndMatchReports, fetchUploadsClient, fetchUploadsOrganization, generateReportRequest } from "@/functions/requests";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
-import axios from 'axios';
-import { Card, CardContent, Typography, Box, Grid, Button, Snackbar, Alert, CircularProgress } from '@mui/material';
+import { CardContent, Typography, Box, Button, CircularProgress, Backdrop } from '@mui/material';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
@@ -48,10 +47,11 @@ const UserConflicts = () => {
     const [finalReport, setFinalReport] = useState<any[]>([]); // Initialize finalReport array
     const [selectedReports, setSelectedReports] = useState<{ left: number[], right: number[] }>({ left: [], right: [] });
     const [loading, setLoading] = useState(true);
+    const [generatingReport, setGeneratingReport] = useState(false);
+    const [success, setSuccess] = useState(false);
 
     const [selectedUnmatchedReports, setSelectedUnmatchedReports] = useState<{ list1: number[], list2: number[] }>({ list1: [], list2: [] });
 
-    const [snackbarOpen, setSnackbarOpen] = useState(false);
 
     const fetchUploadIDsForReport = async () => {
 
@@ -133,32 +133,26 @@ const UserConflicts = () => {
         return selectedUnmatchedReports[listType].includes(index);
     }, [selectedUnmatchedReports]);
 
-
-    const handleUnmatchedReport = useCallback((action: string, index: number, listType: 'list1' | 'list2') => {
-        setFinalReport((prevFinalReport) => {
-            const updatedReport = [...prevFinalReport];
-            const reportToUpdate = listType === 'list1' ? unmatchedList1[index] : unmatchedList2[index];
-
-            if (action === 'add') {
-                updatedReport.push(reportToUpdate);
-            } else if (action === 'remove') {
-                return updatedReport.filter((r) => r !== reportToUpdate);
-            }
-            return updatedReport;
-        });
-
-        setSelectedUnmatchedReports((prevSelectedReports) => {
-            const updatedSelectedReports = { ...prevSelectedReports };
-
-            if (action === 'add') {
-                updatedSelectedReports[listType] = [...updatedSelectedReports[listType], index];
-            } else if (action === 'remove') {
-                updatedSelectedReports[listType] = updatedSelectedReports[listType].filter((i: any) => i !== index);
-            }
-            return updatedSelectedReports;
-        });
+    useEffect(() => {
         console.log('Final Report:', finalReport);
-    }, [unmatchedList1, unmatchedList2]);
+    }, [finalReport]);
+
+    const handleUnmatchedReport = (action: string, index: number, listType: 'list1' | 'list2') => {
+
+        const updatedReportSet = new Set(finalReport);
+        const updatedSelectedUnmatchedReports = { ...selectedUnmatchedReports };
+
+        if (action === 'add') {
+            updatedReportSet.add(listType === 'list1' ? unmatchedList1[index] : unmatchedList2[index]);
+            updatedSelectedUnmatchedReports[listType].push(index);
+        } else if (action === 'remove') {
+            updatedReportSet.delete(listType === 'list1' ? unmatchedList1[index] : unmatchedList2[index]);
+            updatedSelectedUnmatchedReports[listType] = updatedSelectedUnmatchedReports[listType].filter((i) => i !== index);
+        }
+
+        setFinalReport(Array.from(updatedReportSet));
+        setSelectedUnmatchedReports(updatedSelectedUnmatchedReports);
+    };
 
 
     const unmatchedReportsList1 = useMemo(() =>
@@ -286,22 +280,20 @@ const UserConflicts = () => {
 
 
 
-
-
-    const handleCloseSnackbar = () => {
-        setSnackbarOpen(false);
-    };
-
-
     const generateReport = async () => {
         try {
+            setGeneratingReport(true);
             const response = await generateReportRequest(finalReport, name, type);
             console.log('Report generated successfully:', response);
-            setSnackbarOpen(true);
+
+
+            setTimeout(() => {
+                setSuccess(true);
+            }, 1000);
 
             setTimeout(() => {
                 router.push('/evaluate');
-            }, 1500);
+            }, 1000);
         } catch (error) {
             console.error('Error generating report:', error);
         }
@@ -323,29 +315,17 @@ const UserConflicts = () => {
 
             }}>
 
-                {/* <Typography sx={mainContentStyles} variant="h6" gutterBottom>Analyzing Reports...</Typography> */}
-
                 <Loader />
             </Box>
         );
     }
 
+
+
     return (
 
         <ReportsContainer sx={mainContentStyles}>
-            <Snackbar
-                sx={{
-                    width: '100%',
-                    position: 'absolute',
 
-                }}
-                open={snackbarOpen}
-                autoHideDuration={1500}
-                onClose={handleCloseSnackbar}
-                message="Report generated successfully"
-                anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-            >
-            </Snackbar>
             <Box>
                 <Typography variant="h4" gutterBottom>Matched Reports</Typography>
                 {renderedMatchedReports}
@@ -365,6 +345,13 @@ const UserConflicts = () => {
             >
                 Generate Report
             </Button>
+
+
+            <Backdrop open={generatingReport} sx={{ zIndex: (theme) => theme.zIndex.drawer + 1, color: '#fff' }}>
+
+                {success ? <Typography variant="h6">Generated Successfully!</Typography> : <Loader />}
+            </Backdrop>
+
 
         </ReportsContainer>
     );

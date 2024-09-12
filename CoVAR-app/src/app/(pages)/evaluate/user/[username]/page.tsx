@@ -30,7 +30,7 @@ const UserEvaluation: React.FC = () => {
   const redirectToLogin = useCallback(() => {
     router.replace('/login');
   }, [router]);
-  
+
   const pathname = usePathname();
   const username = pathname.split('/').pop();
 
@@ -38,10 +38,12 @@ const UserEvaluation: React.FC = () => {
   const [reportIds, setReportIds] = useState<number[]>([]);
   const [reports, setReports] = useState<any[][]>([]);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [reportNames, setReportNames] = useState<string[]>([]);
 
   useEffect(() => {
     const fetchInitialUploads = async () => {
       try {
+
         if (username) {
           const data = await fetchUploadsClient(username);
           setUploads(data);
@@ -88,9 +90,10 @@ const UserEvaluation: React.FC = () => {
     }
   };
 
-  const handleRemove = async (upload_id: number) => {
+  const handleRemove = async (upload_id: number, fileName: string) => {
     try {
       await handleRemoveFile(upload_id);
+      setReportNames(reportNames.filter(name => name !== fileName));
       setUploads(uploads.filter(upload => upload.upload_id !== upload_id));
       setReportIds(reportIds.filter(id => id !== upload_id));
     } catch (error: any) {
@@ -100,13 +103,17 @@ const UserEvaluation: React.FC = () => {
     }
   };
 
-  const handleToggle = async (upload_id: number) => {
+  const handleToggle = async (upload_id: number, fileName: string) => {
     try {
-      await handleToggleReport(upload_id);
+
       if (reportIds.includes(upload_id)) {
+        await handleToggleReport(upload_id);
+        setReportNames(reportNames.filter(name => name !== fileName));
         setReportIds(reportIds.filter(id => id !== upload_id));
       } else {
         if (reportIds.length < 2) {
+          await handleToggleReport(upload_id);
+          setReportNames([...reportNames, fileName]);
           setReportIds([...reportIds, upload_id]);
         } else {
           setSnackbarOpen(true);
@@ -121,6 +128,7 @@ const UserEvaluation: React.FC = () => {
     setSnackbarOpen(false);
   };
 
+
   return (
     <Container maxWidth={false} sx={{ ...mainContentStyles, paddingTop: 8, width: '100vw' }}>
       <Snackbar
@@ -131,7 +139,7 @@ const UserEvaluation: React.FC = () => {
         open={snackbarOpen}
         autoHideDuration={1000}
         onClose={handleCloseSnackbar}
-        message="Cannot add more than 2 report IDs"
+        message="Cannot add more than 2 reports"
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
       />
       <Grid container spacing={2}>
@@ -157,7 +165,7 @@ const UserEvaluation: React.FC = () => {
                     primary={`File Name: ${upload.filename}, Uploaded At: ${new Date(upload.created_at).toLocaleString()}`}
                   />
                   <Button
-                    data-testid="delete-button" 
+                    data-testid="delete-button"
                     variant="outlined"
                     sx={{
                       backgroundColor: 'transparent',
@@ -169,7 +177,7 @@ const UserEvaluation: React.FC = () => {
                       },
                       marginLeft: 1
                     }}
-                    onClick={() => handleRemove(upload.upload_id)}
+                    onClick={() => handleRemove(upload.upload_id, upload.filename)}
                   >
                     <DeleteIcon />
                   </Button>
@@ -184,7 +192,7 @@ const UserEvaluation: React.FC = () => {
                   <Button
                     variant="outlined"
                     color="primary"
-                    onClick={() => handleToggle(upload.upload_id)}
+                    onClick={() => handleToggle(upload.upload_id, upload.filename)}
                     sx={{ marginLeft: 1 }}
                   >
                     {reportIds.includes(upload.upload_id) ? <RemoveIcon /> : <AddIcon />}
@@ -195,14 +203,10 @@ const UserEvaluation: React.FC = () => {
           </Paper>
         </Grid>
         <Grid item xs={6}>
-          <Paper sx={{overflowY: 'scroll', height: 'calc(80vh + 16px)' }}>
-            {reports.length === 0 ? (
-              <Typography variant="h6" style={{ textAlign: 'center', padding: '20px' }}>
-                No reports to display
-              </Typography>
-            ) : (
-              <ReportPreview reports={reports} reportIds={reportIds} client={username ?? ''} />
-            )}
+          <Paper sx={{ overflowY: 'scroll', height: 'calc(80vh + 16px)' }}>
+
+            <ReportPreview reports={reports} reportIds={reportIds} client={username ?? ''} reportNames={reportNames} />
+
           </Paper>
         </Grid>
       </Grid>

@@ -155,32 +155,40 @@ const UserConflicts = () => {
     };
 
 
-    const unmatchedReportsList1 = useMemo(() =>
-        unmatchedList1.map((vulnerability, index) => (
-            <MemoizedUnmatchedReportCard
-                key={index}
-                vulnerability={vulnerability}
-                isSelected={isUnmatchedReportSelected(index, 'list1')}
-                handleAdd={() => handleUnmatchedReport('add', index, 'list1')}
-                handleRemove={() => handleUnmatchedReport('remove', index, 'list1')}
-            />
-        )),
-        [unmatchedList1, isUnmatchedReportSelected, handleUnmatchedReport]
-    );
+    const unmatchedReportsList1 = useMemo(() => (
+        <>
+            <Typography variant="h5" gutterBottom>Unmatched List 1</Typography>
+            <Button onClick={() => selectAllReports('unmatched1')}>Select All</Button>
+            <Button onClick={() => deselectAllReports('unmatched1')}>Deselect All</Button>
+            {unmatchedList1.map((vulnerability, index) => (
+                <MemoizedUnmatchedReportCard
+                    key={index}
+                    vulnerability={vulnerability}
+                    isSelected={isUnmatchedReportSelected(index, 'list1')}
+                    handleAdd={() => handleUnmatchedReport('add', index, 'list1')}
+                    handleRemove={() => handleUnmatchedReport('remove', index, 'list1')}
+                />
+            ))}
+        </>
+    ), [unmatchedList1, isUnmatchedReportSelected, handleUnmatchedReport]);
 
-    // Memoized unmatched reports for List 2
-    const unmatchedReportsList2 = useMemo(() =>
-        unmatchedList2.map((vuln, index) => (
-            <MemoizedUnmatchedReportCard
-                key={index}
-                vulnerability={vuln}
-                isSelected={isUnmatchedReportSelected(index, 'list2')}
-                handleAdd={() => handleUnmatchedReport('add', index, 'list2')}
-                handleRemove={() => handleUnmatchedReport('remove', index, 'list2')}
-            />
-        )),
-        [unmatchedList2, isUnmatchedReportSelected, handleUnmatchedReport]
-    );
+
+    const unmatchedReportsList2 = useMemo(() => (
+        <>
+            <Typography variant="h5" gutterBottom>Unmatched List 2</Typography>
+            <Button onClick={() => selectAllReports('unmatched2')}>Select All</Button>
+            <Button onClick={() => deselectAllReports('unmatched2')}>Deselect All</Button>
+            {unmatchedList2.map((vuln, index) => (
+                <MemoizedUnmatchedReportCard
+                    key={index}
+                    vulnerability={vuln}
+                    isSelected={isUnmatchedReportSelected(index, 'list2')}
+                    handleAdd={() => handleUnmatchedReport('add', index, 'list2')}
+                    handleRemove={() => handleUnmatchedReport('remove', index, 'list2')}
+                />
+            ))}
+        </>
+    ), [unmatchedList2, isUnmatchedReportSelected, handleUnmatchedReport]);
 
     const MemoizedReportCard = memo(({ report, isSelected }: { report: any; isSelected: boolean }) => (
         <ReportCard sx={{ border: isSelected ? '4px solid #4caf50' : 'none' }}>
@@ -194,7 +202,7 @@ const UserConflicts = () => {
         </ReportCard>
     ));
 
-    // Memoized render function using useMemo
+
     const renderReport = useMemo(
         () => {
             return (report: any, isSelected: boolean) => (
@@ -227,54 +235,138 @@ const UserConflicts = () => {
             updatedSelectedReports.right = updatedSelectedReports.right.filter((i) => i !== index);
         }
 
-        setFinalReport(Array.from(updatedReportSet)); // Convert Set back to array
+        setFinalReport(Array.from(updatedReportSet));
         setSelectedReports(updatedSelectedReports);
         console.log('Final Report:', Array.from(updatedReportSet));
     };
 
+    const selectAllReports = (listType: 'matchedLeft' | 'matchedRight' | 'unmatched1' | 'unmatched2') => {
+        const updatedFinalReport = new Set(finalReport);
+        const updatedSelectedReports = { ...selectedReports };
+        const updatedSelectedUnmatchedReports = { ...selectedUnmatchedReports };
 
+        if (listType === 'matchedLeft') {
+            matchedReports.forEach(([leftReport], index) => {
+                if (!updatedFinalReport.has(leftReport)) {
+                    updatedFinalReport.add(leftReport);
+                    updatedSelectedReports.left.push(index);
+                }
+            });
+        } else if (listType === 'matchedRight') {
+            matchedReports.forEach(([, rightReport], index) => {
+                if (!updatedFinalReport.has(rightReport)) {
+                    updatedFinalReport.add(rightReport);
+                    updatedSelectedReports.right.push(index);
+                }
+            });
+        } else if (listType === 'unmatched1') {
+            unmatchedList1.forEach((report, index) => {
+                if (!updatedFinalReport.has(report)) {
+                    updatedFinalReport.add(report);
+                    updatedSelectedUnmatchedReports.list1.push(index);
+                }
+            });
+        } else if (listType === 'unmatched2') {
+            unmatchedList2.forEach((report, index) => {
+                if (!updatedFinalReport.has(report)) {
+                    updatedFinalReport.add(report);
+                    updatedSelectedUnmatchedReports.list2.push(index);
+                }
+            });
+        }
+
+        setFinalReport(Array.from(updatedFinalReport));
+        setSelectedReports(updatedSelectedReports);
+        setSelectedUnmatchedReports(updatedSelectedUnmatchedReports);
+    };
+
+    const deselectAllReports = (listType: 'matchedLeft' | 'matchedRight' | 'unmatched1' | 'unmatched2') => {
+        const updatedFinalReport = new Set(finalReport);
+        const updatedSelectedReports = { ...selectedReports };
+        const updatedSelectedUnmatchedReports = { ...selectedUnmatchedReports };
+
+        if (listType === 'matchedLeft') {
+            matchedReports.forEach(([leftReport], index) => {
+                updatedFinalReport.delete(leftReport);
+                updatedSelectedReports.left = updatedSelectedReports.left.filter((i) => i !== index);
+            });
+        } else if (listType === 'matchedRight') {
+            matchedReports.forEach(([, rightReport], index) => {
+                updatedFinalReport.delete(rightReport);
+                updatedSelectedReports.right = updatedSelectedReports.right.filter((i) => i !== index);
+            });
+        } else if (listType === 'unmatched1') {
+            unmatchedList1.forEach((report, index) => {
+                updatedFinalReport.delete(report);
+                updatedSelectedUnmatchedReports.list1 = updatedSelectedUnmatchedReports.list1.filter((i) => i !== index);
+            });
+        } else if (listType === 'unmatched2') {
+            unmatchedList2.forEach((report, index) => {
+                updatedFinalReport.delete(report);
+                updatedSelectedUnmatchedReports.list2 = updatedSelectedUnmatchedReports.list2.filter((i) => i !== index);
+            });
+        }
+
+        setFinalReport(Array.from(updatedFinalReport));
+        setSelectedReports(updatedSelectedReports);
+        setSelectedUnmatchedReports(updatedSelectedUnmatchedReports);
+    };
 
     const renderedMatchedReports = useMemo(
-        () =>
-            matchedReports.map(([report1, report2], index) => (
-                <MatchedPair key={index}>
-                    <Box display="flex" width="100%" justifyContent="space-between" alignItems="center">
-                        {renderReport(report1, selectedReports.left.includes(index))}
-                        <ButtonGroup>
-                            <Button
-                                variant="contained"
-                                color="primary"
-                                onClick={() => handleButtonClick('acceptRight', index)}
-                            >
-                                <ArrowForwardIcon />
-                            </Button>
-                            <Button
-                                variant="contained"
-                                color="primary"
-                                onClick={() => handleButtonClick('acceptLeft', index)}
-                            >
-                                <ArrowBackIcon />
-                            </Button>
-                            <Button
-                                variant="contained"
-                                color="primary"
-                                onClick={() => handleButtonClick('acceptBoth', index)}
-                            >
-                                <CheckCircleIcon />
-                            </Button>
-                            <Button
-                                variant="contained"
-                                color="primary"
-                                onClick={() => handleButtonClick('acceptNone', index)}
-                            >
-                                <CancelIcon />
-                            </Button>
-                        </ButtonGroup>
-                        {renderReport(report2, selectedReports.right.includes(index))}
+        () => (
+            <>
+                <Typography variant="h4" gutterBottom>Matched Reports</Typography>
+                <Box display="flex" justifyContent="space-between" width="100%">
+                    <Box display="flex" gap={2} justifyContent="flex-start">
+                        <Button onClick={() => selectAllReports('matchedLeft')}>Select All Left</Button>
+                        <Button onClick={() => deselectAllReports('matchedLeft')}>Deselect All Left</Button>
                     </Box>
-                </MatchedPair>
-            )),
-        [matchedReports, selectedReports, renderReport] // Dependencies to trigger re-render
+                    <Box display="flex" gap={2} justifyContent="center">
+                        <Button onClick={() => selectAllReports('matchedRight')}>Select All Right</Button>
+                        <Button onClick={() => deselectAllReports('matchedRight')}>Deselect All Right</Button>
+                    </Box>
+                </Box>
+                {matchedReports.map(([report1, report2], index) => (
+                    <MatchedPair key={index}>
+                        <Box display="flex" width="100%" justifyContent="space-between" alignItems="center">
+                            {renderReport(report1, selectedReports.left.includes(index))}
+                            <ButtonGroup>
+                                <Button
+                                    variant="contained"
+                                    color="primary"
+                                    onClick={() => handleButtonClick('acceptRight', index)}
+                                >
+                                    <ArrowForwardIcon />
+                                </Button>
+                                <Button
+                                    variant="contained"
+                                    color="primary"
+                                    onClick={() => handleButtonClick('acceptLeft', index)}
+                                >
+                                    <ArrowBackIcon />
+                                </Button>
+                                <Button
+                                    variant="contained"
+                                    color="primary"
+                                    onClick={() => handleButtonClick('acceptBoth', index)}
+                                >
+                                    <CheckCircleIcon />
+                                </Button>
+                                <Button
+                                    variant="contained"
+                                    color="primary"
+                                    onClick={() => handleButtonClick('acceptNone', index)}
+                                >
+                                    <CancelIcon />
+                                </Button>
+                            </ButtonGroup>
+                            {renderReport(report2, selectedReports.right.includes(index))}
+                        </Box>
+                    </MatchedPair>
+                ))}
+            </>
+        ),
+        [matchedReports, selectedReports, renderReport]
     );
 
 
@@ -314,7 +406,6 @@ const UserConflicts = () => {
                 height: '100%',
 
             }}>
-
                 <Loader />
             </Box>
         );
@@ -325,17 +416,18 @@ const UserConflicts = () => {
     return (
 
         <ReportsContainer sx={mainContentStyles}>
-
-            <Box>
-                <Typography variant="h4" gutterBottom>Matched Reports</Typography>
-                {renderedMatchedReports}
-            </Box>
+            {matchedReports.length > 0 && (
+                <Box>
+                    {renderedMatchedReports}
+                </Box>
+            )}
             <UnmatchedReports>
-                <Typography variant="h5" gutterBottom>Unmatched List 1</Typography>
-                {unmatchedReportsList1}
-
-                <Typography variant="h5" gutterBottom>Unmatched List 2</Typography>
-                {unmatchedReportsList2}
+                {unmatchedList1.length > 0 && (
+                    unmatchedReportsList1
+                )}
+                {unmatchedList2.length > 0 && (
+                    unmatchedReportsList2
+                )}
             </UnmatchedReports>
             <Button
                 variant="contained"
@@ -345,14 +437,9 @@ const UserConflicts = () => {
             >
                 Generate Report
             </Button>
-
-
             <Backdrop open={generatingReport} sx={{ zIndex: (theme) => theme.zIndex.drawer + 1, color: '#fff' }}>
-
                 {success ? <Typography variant="h6">Generated Successfully!</Typography> : <Loader />}
             </Backdrop>
-
-
         </ReportsContainer>
     );
 };

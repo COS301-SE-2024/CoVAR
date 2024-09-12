@@ -50,6 +50,8 @@ const UserConflicts = () => {
     const [generatingReport, setGeneratingReport] = useState(false);
     const [success, setSuccess] = useState(false);
 
+    const [reportType1, setReportType1] = useState<string>('');
+    const [reportType2, setReportType2] = useState<string>('');
     const [selectedUnmatchedReports, setSelectedUnmatchedReports] = useState<{ list1: number[], list2: number[] }>({ list1: [], list2: [] });
 
 
@@ -73,12 +75,21 @@ const UserConflicts = () => {
         }
     };
 
+
+
+
     const fetchReportsJSON = async () => {
         try {
             const { matches, unmatchedList1, unmatchedList2 } = await fetchAndMatchReports(reportIds) as { matches: any[]; unmatchedList1: any[]; unmatchedList2: any[]; };
             setMatchedReports(matches);
             setUnmatchedList1(unmatchedList1);
             setUnmatchedList2(unmatchedList2);
+            if (unmatchedList1.length > 0) {
+                setReportType1(unmatchedList1[0].type);
+            }
+            if (unmatchedList2.length > 0) {
+                setReportType2(unmatchedList2[0].type);
+            }
         } catch (error) {
             console.error('Error fetching reports:', error);
         } finally {
@@ -157,7 +168,7 @@ const UserConflicts = () => {
 
     const unmatchedReportsList1 = useMemo(() => (
         <>
-            <Typography variant="h5" gutterBottom>Unmatched List 1</Typography>
+            <Typography variant="h5" gutterBottom>{reportType1} Report </Typography>
             <Button onClick={() => selectAllReports('unmatched1')}>Select All</Button>
             <Button onClick={() => deselectAllReports('unmatched1')}>Deselect All</Button>
             {unmatchedList1.map((vulnerability, index) => (
@@ -173,9 +184,12 @@ const UserConflicts = () => {
     ), [unmatchedList1, isUnmatchedReportSelected, handleUnmatchedReport]);
 
 
+
+
     const unmatchedReportsList2 = useMemo(() => (
         <>
-            <Typography variant="h5" gutterBottom>Unmatched List 2</Typography>
+            <Typography variant="h5" gutterBottom>{reportType2} Report </Typography>
+
             <Button onClick={() => selectAllReports('unmatched2')}>Select All</Button>
             <Button onClick={() => deselectAllReports('unmatched2')}>Deselect All</Button>
             {unmatchedList2.map((vuln, index) => (

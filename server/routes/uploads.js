@@ -113,10 +113,10 @@ router.get('/uploads/generateSingleReport/:upload_id', authenticateToken, async 
                 }
 
                 const reportHosts = Array.isArray(report.ReportHost) ? report.ReportHost : [report.ReportHost];
-
+                
                 for (const host of reportHosts) {
                     const ip = host.name;
-
+                
 
                     let reportItems = host.ReportItem;
                     if (!reportItems) continue;
@@ -136,6 +136,7 @@ router.get('/uploads/generateSingleReport/:upload_id', authenticateToken, async 
                             description: specificResult,
                             risk_factor: Severity,
                             solution: Solution,
+                            
                         } = item;
                         const IP = ip;
                         const Summary = "";
@@ -155,13 +156,14 @@ router.get('/uploads/generateSingleReport/:upload_id', authenticateToken, async 
                         const Hostname = "";
                         const solutionType = "";
                         const CVEs = "";
+                        const type = "Nessus";
 
                         if (Severity && Severity !== 'None') {
                             records.push({
                                 IP, Hostname, Port, portProtocol, CVSS, Severity, solutionType, nvtName,
                                 Summary, specificResult, nvtOid, CVEs, taskId, taskName, Timestamp,
                                 resultId, Impact, Solution, affectedSoftwareOs, vulnerabilityInsight,
-                                vulnerabilityDetectionMethod, productDetectionResult, BIDs, CERTs, otherReferences
+                                vulnerabilityDetectionMethod, productDetectionResult, BIDs, CERTs, otherReferences, type
                             });
                         }
 
@@ -225,13 +227,14 @@ router.get('/uploads/generateSingleReport/:upload_id', authenticateToken, async 
                         const otherReferences = "";
                         const Hostname = "";
                         const solutionType = "";
+                        const type = "Nessus";
 
                         if (Severity && Severity !== 'None') {
                             records.push({
                                 IP, Hostname, Port, portProtocol, CVSS, Severity, solutionType, nvtName,
                                 Summary, specificResult, nvtOid, CVEs, taskId, taskName, Timestamp,
                                 resultId, Impact, Solution, affectedSoftwareOs, vulnerabilityInsight,
-                                vulnerabilityDetectionMethod, productDetectionResult, BIDs, CERTs, otherReferences
+                                vulnerabilityDetectionMethod, productDetectionResult, BIDs, CERTs, otherReferences, type
                             });
                         }
                     } else {
@@ -244,13 +247,14 @@ router.get('/uploads/generateSingleReport/:upload_id', authenticateToken, async 
                             'Vulnerability Detection Method': vulnerabilityDetectionMethod, 'Product Detection Result': productDetectionResult,
                             BIDs, CERTs, 'Other References': otherReferences
                         } = record;
+                        const type = "OpenVAS";
 
                         if (IP || Hostname || Port) {
                             records.push({
                                 IP, Hostname, Port, portProtocol, CVSS, Severity, solutionType, nvtName,
                                 Summary, specificResult, nvtOid, CVEs, taskId, taskName, Timestamp,
                                 resultId, Impact, Solution, affectedSoftwareOs, vulnerabilityInsight,
-                                vulnerabilityDetectionMethod, productDetectionResult, BIDs, CERTs, otherReferences
+                                vulnerabilityDetectionMethod, productDetectionResult, BIDs, CERTs, otherReferences, type
                             });
                         }
                     }

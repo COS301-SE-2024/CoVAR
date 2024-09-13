@@ -82,7 +82,7 @@ const darkTheme = createTheme({
       paper: '#2D3E44',
     },
     text: {
-      primary: '#CAD2C5',
+      primary: '#EDEDED',
       secondary: '#84A98C',
     },
     action: {

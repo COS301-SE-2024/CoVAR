@@ -139,6 +139,7 @@ const UserConflicts = () => {
         </UnmatchedReportCard>
     ));
 
+    MemoizedUnmatchedReportCard.displayName = "MemoizedUnmatchedReportCard";
 
     const isUnmatchedReportSelected = useCallback((index: number, listType: 'list1' | 'list2') => {
         return selectedUnmatchedReports[listType].includes(index);
@@ -216,15 +217,16 @@ const UserConflicts = () => {
         </ReportCard>
     ));
 
+    MemoizedReportCard.displayName = "MemoizedReportCard";
 
-    const renderReport = useMemo(
-        () => {
-            return (report: any, isSelected: boolean) => (
-                <MemoizedReportCard report={report} isSelected={isSelected} />
-            );
-        },
-        []
-    );
+    const renderReport = useMemo(() => {
+        const render = (report: any, isSelected: boolean) => (
+            <MemoizedReportCard report={report} isSelected={isSelected} />
+        );
+        render.displayName = "renderReportFunction";
+        return render;
+    }, []);
+
 
     const handleButtonClick = (action: string, index: number) => {
         const updatedReportSet = new Set(finalReport);

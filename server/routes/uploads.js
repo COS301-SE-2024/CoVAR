@@ -279,31 +279,6 @@ router.get('/uploads/generateSingleReport/:upload_id', authenticateToken, async 
     }
 });
 
-// Helper function to find all ReportItem elements in the parsed JSON
-function findAllReportItems(obj) {
-    let items = [];
-
-    function recurse(current) {
-        if (Array.isArray(current)) {
-            current.forEach(recurse);
-        } else if (current && typeof current === 'object') {
-            Object.keys(current).forEach(key => {
-                if (key === 'ReportItem') {
-                    if (Array.isArray(current[key])) {
-                        items = items.concat(current[key]);
-                    } else {
-                        items.push(current[key]);
-                    }
-                } else {
-                    recurse(current[key]);
-                }
-            });
-        }
-    }
-
-    recurse(obj);
-    return items;
-}
 
 
 // Toggle the value in_report to true/false for a specific file

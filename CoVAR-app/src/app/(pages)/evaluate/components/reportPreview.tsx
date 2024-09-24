@@ -27,11 +27,11 @@ const ReportCard = ({ report, index }: { report: any[], index: number }) => {
 
     <Box sx={{ ...mainContentStyles, overflow: 'hidden' }}>
       {report.map((item, idx) => (
-        <Box key={idx} sx={{ marginTop: '10px' }}>
-          <Typography variant="h6" sx={{ ...styles.header }}>
+        <Box key={idx} sx={{ marginTop: '0.8vh' }}>
+          <Paper sx={{ padding: '1vh' }}>
+          <Typography variant="h6" style={{ textAlign: 'center', padding: '1vh' }}>
             Upload {idx + 1}
           </Typography>
-          <Paper sx={{ padding: '16px' }}>
             <Typography variant="body2"><strong>IP:</strong> {item.IP}</Typography>
             <Typography variant="body2"><strong>Hostname:</strong> {item.Hostname}</Typography>
             <Typography variant="body2"><strong>Port:</strong> {item.Port}</Typography>

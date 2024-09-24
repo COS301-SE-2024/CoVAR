@@ -74,13 +74,13 @@ const Evaluate: React.FC = () => {
   return (
     <Box sx={evaluateLaunchStyles}>
       <Typography variant="h6" sx={{ marginTop: 4 }}>
-        Assigned Clients and Organizations
+        Assigned Clients and Organisations
       </Typography>
       <Paper elevation={3} sx={{ padding: 2, marginTop: 2 }}>
         {loading ? (
           <Typography>Loading...</Typography>
         ) : users.length === 0 && organizations.length === 0 ? (
-          <Typography>No assigned clients or organizations found.</Typography>
+          <Typography>No assigned clients or organisations found.</Typography>
         ) : (
           <List>
             {users.map(user => (
@@ -98,7 +98,7 @@ const Evaluate: React.FC = () => {
             ))}
             {organizations.map(org => (
               <ListItem key={org.organization_id} sx={{ marginBottom: 1, padding: 1, borderRadius: 1, boxShadow: 1 }}>
-                <ListItemText primary={`Organization: ${org.name}`} />
+                <ListItemText primary={`Organisation: ${org.name}`} />
                 <ListItemSecondaryAction>
                   <Button
                     variant="contained"

@@ -43,6 +43,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileSubmit, client, organizat
             },
           });
           onFileSubmit();
+          setSelectedFile(null); // Reset file after successful upload
         } catch (err) {
           console.error('Error uploading file:', err);
         }
@@ -52,23 +53,31 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileSubmit, client, organizat
     };
   };
 
+  const handleCancelUpload = () => {
+    setSelectedFile(null); // Reset selected file
+  };
+
   return (
     <Paper sx={uploadBoxStyles}>
-      <Typography variant="h6">
-        Upload a Vulnerability Assessment
-      </Typography>
-      <input
-        type="file"
-        accept=".pdf,.csv,.xml,.nessus" 
-        onChange={handleFileChange}
-        style={{ display: 'none' }}
-        id="file-upload"
-      />
-      <label htmlFor="file-upload">
-        <Button variant="contained" component="span" sx={uploadButtonStyles}>
-          Upload File
-        </Button>
-      </label>
+      {!selectedFile && (
+        <>
+          <Typography variant="h6">
+            Upload a Vulnerability Assessment
+          </Typography>
+          <input
+            type="file"
+            accept=".pdf,.csv,.xml,.nessus" 
+            onChange={handleFileChange}
+            style={{ display: 'none' }}
+            id="file-upload"
+          />
+          <label htmlFor="file-upload">
+            <Button variant="contained" component="span" sx={uploadButtonStyles}>
+              Upload File
+            </Button>
+          </label>
+        </>
+      )}
       {selectedFile && (
         <>
           <Typography variant="body2">
@@ -80,6 +89,14 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileSubmit, client, organizat
             onClick={handleSubmitFile}
           >
             Submit File
+          </Button>
+          <Button
+            variant="outlined"
+            color="secondary"
+            onClick={handleCancelUpload}
+            sx={{ marginTop: 2 }}
+          >
+            Cancel Upload
           </Button>
         </>
       )}

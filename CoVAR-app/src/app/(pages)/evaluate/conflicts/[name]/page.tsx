@@ -44,7 +44,7 @@ const UserConflicts = () => {
     const [matchedReports, setMatchedReports] = useState<any[]>([]);
     const [unmatchedList1, setUnmatchedList1] = useState<any[]>([]);
     const [unmatchedList2, setUnmatchedList2] = useState<any[]>([]);
-    const [finalReport, setFinalReport] = useState<any[]>([]); // Initialize finalReport array
+    const [finalReport, setFinalReport] = useState<any[]>([]); 
     const [selectedReports, setSelectedReports] = useState<{ left: number[], right: number[] }>({ left: [], right: [] });
     const [loading, setLoading] = useState(true);
     const [generatingReport, setGeneratingReport] = useState(false);
@@ -53,6 +53,8 @@ const UserConflicts = () => {
     const [reportType1, setReportType1] = useState<string>('');
     const [reportType2, setReportType2] = useState<string>('');
     const [selectedUnmatchedReports, setSelectedUnmatchedReports] = useState<{ list1: number[], list2: number[] }>({ list1: [], list2: [] });
+
+    const [canGenerteReport, setCanGenerateReport] = useState(false);
 
 
     const fetchUploadIDsForReport = async () => {
@@ -110,6 +112,14 @@ const UserConflicts = () => {
             fetchReportsJSON();
         }
     }, [reportIds]);
+
+    useEffect(() => {
+        if (finalReport.length > 0) {
+            setCanGenerateReport(true);
+        } else {
+            setCanGenerateReport(false);
+        }
+    }, [finalReport]);
 
 
     type UnmatchedReportCardProps = {
@@ -450,6 +460,7 @@ const UserConflicts = () => {
                 color="primary"
                 onClick={generateReport}
                 sx={{ marginTop: 2, marginBottom: 2, width: '100%' }}
+                disabled={!canGenerteReport}
             >
                 Generate Report
             </Button>

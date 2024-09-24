@@ -44,7 +44,7 @@ const UserConflicts = () => {
     const [matchedReports, setMatchedReports] = useState<any[]>([]);
     const [unmatchedList1, setUnmatchedList1] = useState<any[]>([]);
     const [unmatchedList2, setUnmatchedList2] = useState<any[]>([]);
-    const [finalReport, setFinalReport] = useState<any[]>([]); 
+    const [finalReport, setFinalReport] = useState<any[]>([]);
     const [selectedReports, setSelectedReports] = useState<{ left: number[], right: number[] }>({ left: [], right: [] });
     const [loading, setLoading] = useState(true);
     const [generatingReport, setGeneratingReport] = useState(false);
@@ -155,9 +155,7 @@ const UserConflicts = () => {
         return selectedUnmatchedReports[listType].includes(index);
     }, [selectedUnmatchedReports]);
 
-    useEffect(() => {
-        console.log('Final Report:', finalReport);
-    }, [finalReport]);
+    
 
     const handleUnmatchedReport = (action: string, index: number, listType: 'list1' | 'list2') => {
 
@@ -263,7 +261,7 @@ const UserConflicts = () => {
 
         setFinalReport(Array.from(updatedReportSet));
         setSelectedReports(updatedSelectedReports);
-        console.log('Final Report:', Array.from(updatedReportSet));
+       
     };
 
     const selectAllReports = (listType: 'matchedLeft' | 'matchedRight' | 'unmatched1' | 'unmatched2') => {
@@ -402,7 +400,7 @@ const UserConflicts = () => {
         try {
             setGeneratingReport(true);
             const response = await generateReportRequest(finalReport, name, type);
-            console.log('Report generated successfully:', response);
+            
 
 
             setTimeout(() => {

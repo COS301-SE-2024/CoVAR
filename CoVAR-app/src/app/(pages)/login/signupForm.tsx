@@ -45,7 +45,7 @@ const addUserToFirestore = async (user: User) => {
 };
 
 interface SignupProps {
-  toggleForm: () => void;
+  toggleForm: (formType: 'login' | 'signup' | 'forgotPassword') => void;
 }
 
 const Signup: React.FC<SignupProps> = ({ toggleForm }) => {
@@ -190,142 +190,111 @@ const Signup: React.FC<SignupProps> = ({ toggleForm }) => {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <Container maxWidth="xl" sx={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-        <Box sx={{ textAlign: 'center', margin: '20px auto', width: '100%' }}>
+      <Container maxWidth="xl" sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <Box sx={{ textAlign: 'center', marginRight: 'auto', marginLeft: 'auto', width: '100vw', height: '30vh' }}>
           <Typography variant="h1" color="textPrimary" fontWeight={550} gutterBottom>
             CoVAR
           </Typography>
-          <LockOutlinedIcon sx={{ fontSize: 150, color: theme.palette.secondary.main }} />
+          <LockOutlinedIcon sx={{ fontSize: '15vh', color: theme.palette.secondary.main }} />
         </Box>
-        <Card sx={{ backgroundColor: theme.palette.background.paper, padding: 4, borderRadius: 1, borderStyle: 'solid', borderWidth: 1, borderColor: theme.palette.divider, maxWidth: '550px' }}>
+        <Card sx={{ backgroundColor: theme.palette.background.paper, padding: '5vh', borderRadius: 1, borderStyle: 'solid', borderWidth: 1, borderColor: theme.palette.divider, width: '50vw' }}>
           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <Typography variant="h4" component="h2" fontWeight={550} gutterBottom>
               Sign Up
             </Typography>
-            <Box component="form" onSubmit={handleSubmit} sx={{ width: '100%', mt: 1 }}>
-            <TextField
-              margin="normal"
-              required
-              fullWidth
-              id="email"
-              label="Email Address"
-              name="email"
-              autoComplete="email"
-              autoFocus
-              value={email}
-              onChange={handleEmailChange}
-              InputLabelProps={{ style: { color: theme.palette.text.primary } }}
-              error={!!emailError}
-              helperText={emailError}
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  '& fieldset': { borderColor: theme.palette.divider },
-                  '&:hover fieldset': { borderColor: theme.palette.divider },
-                  '&.Mui-focused fieldset': { borderColor: theme.palette.primary.main },
-                },
-                '& .MuiFormHelperText-root': {
-                  position: 'absolute',
-                  bottom: '-25px',
-                  left: 0,
-                  color: theme.palette.error.main,
-                  marginTop: 0,
-                },
-                marginBottom: 3, 
-              }}
-            />
-
-            <TextField
-              margin="normal"
-              required
-              fullWidth
-              name="password"
-              label="Password"
-              type={showPassword ? 'text' : 'password'}
-              id="password"
-              autoComplete="current-password"
-              value={password}
-              onChange={handlePasswordChange}
-              InputLabelProps={{ style: { color: theme.palette.text.primary } }}
-              error={!isValidPassword}
-              helperText={!isValidPassword && "Password must be at least 8 characters and include letters, numbers, and symbols."}
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  '& fieldset': { borderColor: !isValidPassword ? theme.palette.error.main : theme.palette.divider },
-                  '&:hover fieldset': { borderColor: !isValidPassword ? theme.palette.error.main : theme.palette.divider },
-                  '&.Mui-focused fieldset': { borderColor: isValidPassword ? theme.palette.primary.main : theme.palette.error.main },
-                },
-                '& .MuiFormHelperText-root': {
-                  position: 'absolute',
-                  bottom: '-25px',
-                  left: 0,
-                  color: theme.palette.error.main,
-                  marginTop: 0,
-                },
-                marginBottom: 3, 
-              }}
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton
-                      aria-label="toggle password visibility"
-                      onClick={handleClickShowPassword}
-                      edge="end"
-                    >
-                      {showPassword ? <Visibility /> : <VisibilityOff />}
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              }}
-            />
-
-            <TextField
-              margin="normal"
-              required
-              fullWidth
-              name="passwordConfirm"
-              label="Confirm Password"
-              type={showPasswordConfirm ? 'text' : 'password'}
-              id="passwordConfirm"
-              autoComplete="current-password"
-              value={passwordConfirm}
-              onChange={handlePasswordConfirmChange}
-              InputLabelProps={{ style: { color: theme.palette.text.primary } }}
-              error={!doPasswordsMatch}
-              helperText={!doPasswordsMatch && "Passwords do not match."}
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  '& fieldset': { borderColor: !doPasswordsMatch ? theme.palette.error.main : theme.palette.divider },
-                  '&:hover fieldset': { borderColor: !doPasswordsMatch ? theme.palette.error.main : theme.palette.divider },
-                  '&.Mui-focused fieldset': { borderColor: doPasswordsMatch ? theme.palette.primary.main : theme.palette.error.main },
-                },
-                '& .MuiFormHelperText-root': {
-                  position: 'absolute',
-                  bottom: '-25px',
-                  left: 0,
-                  color: theme.palette.error.main,
-                  marginTop: 0,
-                },
-                marginBottom: 3, 
-              }}
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton
-                      aria-label="toggle confirm password visibility"
-                      onClick={handleClickShowPasswordConfirm}
-                      edge="end"
-                    >
-                      {showPasswordConfirm ? <Visibility /> : <VisibilityOff />}
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              }}
-            />
+            <Box component="form" onSubmit={handleSubmit} sx={{ width: '100%', mt: '2vh' }}>
+              <TextField
+                margin="normal"
+                required
+                fullWidth
+                id="email"
+                label="Email Address"
+                name="email"
+                autoComplete="email"
+                autoFocus
+                value={email}
+                onChange={handleEmailChange}
+                InputLabelProps={{ style: { color: theme.palette.text.primary } }}
+                error={!!emailError}
+                helperText={emailError}
+                sx={{
+                  marginBottom: '2vh',
+                  '& .MuiOutlinedInput-root': {
+                    '& fieldset': { borderColor: theme.palette.divider },
+                    '&:hover fieldset': { borderColor: theme.palette.divider },
+                    '&.Mui-focused fieldset': { borderColor: theme.palette.primary.main },
+                  },
+                }}
+              />
+              <TextField
+                margin="normal"
+                required
+                fullWidth
+                name="password"
+                label="Password"
+                type={showPassword ? 'text' : 'password'}
+                id="password"
+                autoComplete="current-password"
+                value={password}
+                onChange={handlePasswordChange}
+                InputLabelProps={{ style: { color: theme.palette.text.primary } }}
+                error={!isValidPassword}
+                helperText={!isValidPassword && "Password must be at least 8 characters and include letters, numbers, and symbols."}
+                sx={{
+                  marginBottom: '2vh',
+                  '& .MuiOutlinedInput-root': {
+                    '& fieldset': { borderColor: !isValidPassword ? theme.palette.error.main : theme.palette.divider },
+                    '&:hover fieldset': { borderColor: !isValidPassword ? theme.palette.error.main : theme.palette.divider },
+                    '&.Mui-focused fieldset': { borderColor: isValidPassword ? theme.palette.primary.main : theme.palette.error.main },
+                  },
+                }}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton aria-label="toggle password visibility" onClick={handleClickShowPassword} edge="end">
+                        {showPassword ? <Visibility /> : <VisibilityOff />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+              />
+              <TextField
+                margin="normal"
+                required
+                fullWidth
+                name="passwordConfirm"
+                label="Confirm Password"
+                type={showPasswordConfirm ? 'text' : 'password'}
+                id="passwordConfirm"
+                autoComplete="current-password"
+                value={passwordConfirm}
+                onChange={handlePasswordConfirmChange}
+                InputLabelProps={{ style: { color: theme.palette.text.primary } }}
+                error={!doPasswordsMatch}
+                helperText={!doPasswordsMatch && "Passwords do not match."}
+                sx={{
+                  marginBottom: '2vh',
+                  '& .MuiOutlinedInput-root': {
+                    '& fieldset': { borderColor: !doPasswordsMatch ? theme.palette.error.main : theme.palette.divider },
+                    '&:hover fieldset': { borderColor: !doPasswordsMatch ? theme.palette.error.main : theme.palette.divider },
+                    '&.Mui-focused fieldset': { borderColor: doPasswordsMatch ? theme.palette.primary.main : theme.palette.error.main },
+                  },
+                }}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton aria-label="toggle confirm password visibility" onClick={handleClickShowPasswordConfirm} edge="end">
+                        {showPasswordConfirm ? <Visibility /> : <VisibilityOff />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+              />
               <Button
                 type="submit"
                 fullWidth
                 variant="contained"
-                sx={{ mt: 3, mb: 3, backgroundColor: theme.palette.primary.main }}
+                sx={{ mt: '2vh', mb: '2vh', backgroundColor: theme.palette.primary.main }}
                 disabled={!isValidPassword || !doPasswordsMatch || !!emailError}
               >
                 Sign Up
@@ -335,28 +304,22 @@ const Signup: React.FC<SignupProps> = ({ toggleForm }) => {
                 variant="contained"
                 color="secondary"
                 startIcon={<GoogleIcon />}
-                sx={{ mt: 1, mb: 3 }}
+                sx={{ mt: '1vh', mb: '2vh' }}
                 onClick={signInWithGoogle}
               >
                 Sign Up with Google
               </Button>
-              <Box display="flex" justifyContent="center" alignItems="center" mt={2} mb = {2}>
+              <Box display="flex" justifyContent="center" alignItems="center" mt="2vh" mb="2vh">
                 <Typography variant="body2" sx={{ color: theme.palette.text.primary }}>
                   Already have an account?
                 </Typography>
-                <Link href="#" variant="body2" id="link" onClick={toggleForm} sx={{ cursor: 'pointer', ml: 1 }}>
+                <Link href="#" variant="body2" id="link" onClick={() => toggleForm('login')} sx={{ cursor: 'pointer', ml: 1 }}>
                   Sign In
                 </Link>
               </Box>
               <Box sx={{ position: 'relative', width: '100%' }}>
                 {error && (
-                  <Box 
-                    display="flex" 
-                    justifyContent="center" 
-                    alignItems="center" 
-                    width="100%" 
-                    sx={{ position: 'absolute', top: '110%', left: 0 }} 
-                  >
+                  <Box display="flex" justifyContent="center" alignItems="center" width="100%" sx={{ position: 'absolute', top: '110%', left: 0 }}>
                     <Typography variant="body2" color="error" textAlign="center">
                       {error}
                     </Typography>
@@ -368,7 +331,8 @@ const Signup: React.FC<SignupProps> = ({ toggleForm }) => {
         </Card>
       </Container>
     </ThemeProvider>
-  );
+);
+
 };
 
 export default Signup;

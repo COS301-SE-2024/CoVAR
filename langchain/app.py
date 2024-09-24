@@ -135,7 +135,7 @@ def run_test():
     print(chain_prompt)
     modified_prompt, ip_address = extract_ips(chain_prompt)
     print(f"modified_prompt: {modified_prompt}")
-    template = """Vulnerability {chain_prompt}\nYou are a cyber security specialist. Give an insight into which of these vulnerabilities is the most concerning. Keep it short and concise."""
+    template = """Vulnerability {chain_prompt}\nYou are a cyber security specialist. Give an insight into why this is a so concerning and a relate it to the correlating cvss score. Keep it short and concise."""
     prompt = ChatPromptTemplate.from_template(template)
 
     try:

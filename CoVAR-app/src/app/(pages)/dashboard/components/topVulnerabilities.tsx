@@ -4,72 +4,75 @@ import { Box, Typography, Paper, List, ListItem, ListItemText, CircularProgress,
 import { VulnerabilityReport } from '../page';
 import { ResponsiveContainer } from 'recharts';
 import { TOPG } from '@/functions/requests';
+import { marked } from 'marked';
 
 interface TopVulnerabilitiesProps {
     vulnerabilities: VulnerabilityReport[];
 }
 
 const TopVulnerabilities: React.FC<TopVulnerabilitiesProps> = ({ vulnerabilities }) => {
-    const [theG, setTheG] = useState<{ result: string } | null>(null);
+    const [insights, setInsights] = useState<{ [key: string]: string }>({});
     const [loading, setLoading] = useState(true);
-    const [open, setOpen] = useState(false);
-
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                // Format vulnerabilities into a single string for the chain_prompt
-                const chainPrompt = vulnerabilities
-                    .map(vulnerability => 
-                        `${vulnerability.nvtName} (Severity: ${vulnerability.Severity}, IP: ${vulnerability.IP}, Port: ${vulnerability.Port}, CVSS: ${vulnerability.CVSS})`
-                    )
-                    .join('; ');
-
-                // Send the formatted vulnerabilities as the chain_prompt
-                const result = await TOPG({ chain_prompt: chainPrompt });
-                console.log('TOPG:', result);
-                setTheG(result);
-            } catch (error) {
-                console.error('Error fetching TOPG:', error);
-            } finally {
-                setLoading(false);
-            }
-        };
-        
-        fetchData();
-    }, [vulnerabilities]); // Include vulnerabilities as a dependency
-
-    const handleClickOpen = () => {
-        setOpen(true);
+    const [open, setOpen] = useState<{ [key: string]: boolean }>({});
+    
+    const fetchInsightForVulnerability = async (vulnerability: VulnerabilityReport) => {
+        const chainPrompt = `${vulnerability.nvtName} (Severity: ${vulnerability.Severity}, IP: ${vulnerability.IP}, Port: ${vulnerability.Port}, CVSS: ${vulnerability.CVSS})`;
+        const result = await TOPG({ chain_prompt: chainPrompt });
+        return result?.result || 'No insight available';
     };
 
-    const handleClose = () => {
-        setOpen(false);
+    useEffect(() => {
+        const fetchAllInsights = async () => {
+            const newInsights: { [key: string]: string } = {};
+            for (const vulnerability of vulnerabilities) {
+                try {
+                    const result = await fetchInsightForVulnerability(vulnerability);
+                    newInsights[vulnerability.nvtOid] = result; // Use a unique ID like nvtOid for key
+                } catch (error) {
+                    console.error('Error fetching insight for vulnerability:', error);
+                }
+            }
+            setInsights(newInsights);
+            setLoading(false);
+        };
+
+        fetchAllInsights();
+    }, [vulnerabilities]);
+
+    const handleClickOpen = (vulnerabilityId: string) => {
+        setOpen(prevState => ({ ...prevState, [vulnerabilityId]: true }));
+    };
+
+    const handleClose = (vulnerabilityId: string) => {
+        setOpen(prevState => ({ ...prevState, [vulnerabilityId]: false }));
     };
 
     return (
         <ResponsiveContainer width="100%" height={400}>
             <List>
                 {vulnerabilities.map((vulnerability, index) => (
-                    <ListItem key={index}>
+                    <ListItem key={vulnerability.nvtOid}>
                         <ListItemText
                             primary={
                                 loading
-                                    ? index === 0 && <CircularProgress size={20} />
+                                    ? <CircularProgress size={20} />
                                     : `${vulnerability.nvtName} (${vulnerability.Severity})`
                             }
                             secondary={`IP: ${vulnerability.IP}, Port: ${vulnerability.Port}, CVSS: ${vulnerability.CVSS}`}
                         />
-                        {index === 0 && theG && !loading && (
+                        {!loading && insights[vulnerability.nvtOid] && (
                             <Box mt={2}>
-                                <Button variant="outlined" color="primary" onClick={handleClickOpen}>
+                                <Button variant="outlined" color="primary" onClick={() => handleClickOpen(vulnerability.nvtOid)}>
                                     View Insight
                                 </Button>
-                                <Dialog open={open} onClose={handleClose}>
-                                    <DialogTitle>Insight</DialogTitle>
+                                <Dialog open={open[vulnerability.nvtOid]} onClose={() => handleClose(vulnerability.nvtOid)}>
+                                    <DialogTitle>Insight for {vulnerability.nvtName}</DialogTitle>
                                     <DialogContent>
-                                        <Typography variant="body2">
-                                            {theG.result}
-                                        </Typography>
+                                        <Typography
+                                            variant="body2"
+                                            component="div"
+                                            dangerouslySetInnerHTML={{ __html: marked(insights[vulnerability.nvtOid]) }}
+                                        />
                                     </DialogContent>
                                 </Dialog>
                             </Box>

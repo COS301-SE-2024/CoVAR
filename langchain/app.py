@@ -107,7 +107,7 @@ def unmatched_recommendation():
 
 @app.route('/topVulChain', methods=['POST'])
 def run_test():
-    test_jwt()
+    #test_jwt()
     # Extract token from the Authorization header
     auth_header = request.headers.get('Authorization')
     if not auth_header:

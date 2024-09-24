@@ -1,14 +1,14 @@
 'use client';
-import { fetchAndMatchReports, fetchReports, fetchUploadsClient, fetchUploadsOrganization, generateReportRequest, unmatchedRecomendations } from "@/functions/requests";
+import { fetchAndMatchReports, fetchUploadsClient, fetchUploadsOrganization, generateReportRequest } from "@/functions/requests";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
-import axios from 'axios';
-import { Card, CardContent, Typography, Box, Grid, Button, Snackbar, Alert, CircularProgress } from '@mui/material';
+import { memo, useCallback, useEffect, useMemo, useState } from "react";
+import { CardContent, Typography, Box, Button, CircularProgress, Backdrop } from '@mui/material';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
-import { styled } from '@mui/system';
+import { Loader, ReportsContainer, MatchedPair, ReportCard, ButtonGroup, UnmatchedReports, UnmatchedButtonGroup, UnmatchedReportCard } from '../../../../../styles/conflictStyle';
+
 import { mainContentStyles } from '../../../../../styles/evaluateStyle';
 import { Dialog, DialogTitle, DialogContent } from '@mui/material';
 
@@ -24,46 +24,7 @@ interface FileUpload {
     in_report?: boolean;
 }
 
-const ReportsContainer = styled(Box)(({ theme }) => ({
-    padding: theme.spacing(3),
-    overflow: 'auto',
-}));
 
-const MatchedPair = styled(Box)(({ theme }) => ({
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: theme.spacing(2),
-}));
-
-const ReportCard = styled(Card)(({ theme }) => ({
-    width: '48%',
-}));
-
-const ButtonGroup = styled(Box)(({ theme }) => ({
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    margin: theme.spacing(2, 0),
-    width: '10%',
-    gap: theme.spacing(1),
-}));
-
-const UnmatchedButtonGroup = styled(Box)(({ theme }) => ({
-    display: 'flex',
-    justifyContent: 'center',
-    marginTop: theme.spacing(2),
-    gap: theme.spacing(1),
-}));
-
-const UnmatchedReports = styled(Box)(({ theme }) => ({
-    marginTop: theme.spacing(4),
-}));
-
-const UnmatchedReportCard = styled(Card)(({ theme, selected }: { theme: any; selected: boolean }) => ({
-    marginBottom: theme.spacing(2),
-    border: selected ? `4px solid ${theme.palette.success.main}` : 'none',
-}));
 
 const UserConflicts = () => {
     const router = useRouter();
@@ -84,10 +45,15 @@ const UserConflicts = () => {
     const [finalReport, setFinalReport] = useState<any[]>([]);
     const [selectedReports, setSelectedReports] = useState<{ left: number[], right: number[] }>({ left: [], right: [] });
     const [loading, setLoading] = useState(true);
-    const [insights, setInsights] = useState<{ [key: string]: string }>({});
-    const [snackbarOpen, setSnackbarOpen] = useState(false);
-    const [dialogOpen, setDialogOpen] = useState(false);
-    const [currentInsight, setCurrentInsight] = useState<string | null>(null);
+    const [generatingReport, setGeneratingReport] = useState(false);
+    const [success, setSuccess] = useState(false);
+
+    const [reportType1, setReportType1] = useState<string>('');
+    const [reportType2, setReportType2] = useState<string>('');
+    const [selectedUnmatchedReports, setSelectedUnmatchedReports] = useState<{ list1: number[], list2: number[] }>({ list1: [], list2: [] });
+
+    const [canGenerteReport, setCanGenerateReport] = useState(false);
+
 
     const fetchUploadIDsForReport = async () => {
         try {
@@ -108,37 +74,30 @@ const UserConflicts = () => {
         }
     };
 
+
+
+
     const fetchReportsJSON = async () => {
         try {
             const { matches, unmatchedList1, unmatchedList2 } = await fetchAndMatchReports(reportIds) as { matches: any[]; unmatchedList1: any[]; unmatchedList2: any[]; };
             setMatchedReports(matches);
             setUnmatchedList1(unmatchedList1);
             setUnmatchedList2(unmatchedList2);
-            await Promise.all([fetchInsights(unmatchedList1), fetchInsights(unmatchedList2)]);
+            if (unmatchedList1.length > 0) {
+                setReportType1(unmatchedList1[0].type);
+            }
+            if (unmatchedList2.length > 0) {
+                setReportType2(unmatchedList2[0].type);
+            }
         } catch (error) {
             console.error('Error fetching reports:', error);
         } finally {
-            setLoading(false);
+
+            setTimeout(() => {
+                setLoading(false);
+            }, 2000);
+
         }
-    };
-
-    const fetchInsights = async (unmatchedReports: any[]) => {
-        const insightsMap: { [key: string]: string } = {};
-
-        for (const report of unmatchedReports) {
-            try {
-                const chainPrompt = report.nvtName;
-                const result = await unmatchedRecomendations(chainPrompt);
-                insightsMap[report.id] = result;
-            } catch (error) {
-                console.error('Error fetching insight for report:', report.id, error);
-            }
-        }
-
-        setInsights(prevInsights => ({
-            ...prevInsights,
-            ...insightsMap
-        }));
     };
 
     useEffect(() => {
@@ -151,7 +110,107 @@ const UserConflicts = () => {
         }
     }, [reportIds]);
 
-    const renderReport = (report: any, isSelected: boolean) => (
+    useEffect(() => {
+        if (finalReport.length > 0) {
+            setCanGenerateReport(true);
+        } else {
+            setCanGenerateReport(false);
+        }
+    }, [finalReport]);
+
+
+    type UnmatchedReportCardProps = {
+        vulnerability: any;
+        isSelected: boolean;
+        handleAdd: () => void;
+        handleRemove: () => void;
+    };
+
+    const MemoizedUnmatchedReportCard = memo(({ vulnerability, isSelected, handleAdd, handleRemove }: UnmatchedReportCardProps) => (
+        <UnmatchedReportCard selected={isSelected} theme={undefined}>
+            <CardContent>
+                {Object.entries(vulnerability).map(([key, value]) => (
+                    <Typography key={key} variant="body2">
+                        <strong>{key}:</strong> {value as React.ReactNode}
+                    </Typography>
+                ))}
+                <UnmatchedButtonGroup>
+                    <Button variant="contained" color="primary" onClick={handleAdd}>
+                        <CheckCircleIcon />
+                    </Button>
+                    <Button variant="contained" color="secondary" onClick={handleRemove}>
+                        <CancelIcon />
+                    </Button>
+                </UnmatchedButtonGroup>
+            </CardContent>
+        </UnmatchedReportCard>
+    ));
+
+    MemoizedUnmatchedReportCard.displayName = "MemoizedUnmatchedReportCard";
+
+    const isUnmatchedReportSelected = useCallback((index: number, listType: 'list1' | 'list2') => {
+        return selectedUnmatchedReports[listType].includes(index);
+    }, [selectedUnmatchedReports]);
+
+    
+
+    const handleUnmatchedReport = (action: string, index: number, listType: 'list1' | 'list2') => {
+
+        const updatedReportSet = new Set(finalReport);
+        const updatedSelectedUnmatchedReports = { ...selectedUnmatchedReports };
+
+        if (action === 'add') {
+            updatedReportSet.add(listType === 'list1' ? unmatchedList1[index] : unmatchedList2[index]);
+            updatedSelectedUnmatchedReports[listType].push(index);
+        } else if (action === 'remove') {
+            updatedReportSet.delete(listType === 'list1' ? unmatchedList1[index] : unmatchedList2[index]);
+            updatedSelectedUnmatchedReports[listType] = updatedSelectedUnmatchedReports[listType].filter((i) => i !== index);
+        }
+
+        setFinalReport(Array.from(updatedReportSet));
+        setSelectedUnmatchedReports(updatedSelectedUnmatchedReports);
+    };
+
+
+    const unmatchedReportsList1 = useMemo(() => (
+        <>
+            <Typography variant="h5" gutterBottom>{reportType1} Report </Typography>
+            <Button onClick={() => selectAllReports('unmatched1')}>Select All</Button>
+            <Button onClick={() => deselectAllReports('unmatched1')}>Deselect All</Button>
+            {unmatchedList1.map((vulnerability, index) => (
+                <MemoizedUnmatchedReportCard
+                    key={index}
+                    vulnerability={vulnerability}
+                    isSelected={isUnmatchedReportSelected(index, 'list1')}
+                    handleAdd={() => handleUnmatchedReport('add', index, 'list1')}
+                    handleRemove={() => handleUnmatchedReport('remove', index, 'list1')}
+                />
+            ))}
+        </>
+    ), [unmatchedList1, isUnmatchedReportSelected, handleUnmatchedReport]);
+
+
+
+
+    const unmatchedReportsList2 = useMemo(() => (
+        <>
+            <Typography variant="h5" gutterBottom>{reportType2} Report </Typography>
+
+            <Button onClick={() => selectAllReports('unmatched2')}>Select All</Button>
+            <Button onClick={() => deselectAllReports('unmatched2')}>Deselect All</Button>
+            {unmatchedList2.map((vuln, index) => (
+                <MemoizedUnmatchedReportCard
+                    key={index}
+                    vulnerability={vuln}
+                    isSelected={isUnmatchedReportSelected(index, 'list2')}
+                    handleAdd={() => handleUnmatchedReport('add', index, 'list2')}
+                    handleRemove={() => handleUnmatchedReport('remove', index, 'list2')}
+                />
+            ))}
+        </>
+    ), [unmatchedList2, isUnmatchedReportSelected, handleUnmatchedReport]);
+
+    const MemoizedReportCard = memo(({ report, isSelected }: { report: any; isSelected: boolean }) => (
         <ReportCard sx={{ border: isSelected ? '4px solid #4caf50' : 'none' }}>
             <CardContent>
                 {Object.entries(report).map(([key, value]) => (
@@ -161,172 +220,249 @@ const UserConflicts = () => {
                 ))}
             </CardContent>
         </ReportCard>
-    );
+    ));
+
+    MemoizedReportCard.displayName = "MemoizedReportCard";
+
+    const renderReport = useMemo(() => {
+        const render = (report: any, isSelected: boolean) => (
+            <MemoizedReportCard report={report} isSelected={isSelected} />
+        );
+        render.displayName = "renderReportFunction";
+        return render;
+    }, []);
+
 
     const handleButtonClick = (action: string, index: number) => {
-        let updatedReport = [...finalReport];
-        let updatedSelectedReports = { ...selectedReports };
+        const updatedReportSet = new Set(finalReport);
+        const updatedSelectedReports = { ...selectedReports };
 
         if (action === 'acceptLeft') {
-            updatedReport.push(matchedReports[index][0]);
+            updatedReportSet.add(matchedReports[index][0]);
             updatedSelectedReports.left.push(index);
         } else if (action === 'acceptRight') {
-            updatedReport.push(matchedReports[index][1]);
+            updatedReportSet.add(matchedReports[index][1]);
             updatedSelectedReports.right.push(index);
         } else if (action === 'acceptBoth') {
-            updatedReport.push(matchedReports[index][0], matchedReports[index][1]);
+            updatedReportSet.add(matchedReports[index][0]);
+            updatedReportSet.add(matchedReports[index][1]);
             updatedSelectedReports.left.push(index);
             updatedSelectedReports.right.push(index);
         } else if (action === 'acceptNone') {
-            updatedReport = updatedReport.filter(
-                (report) => report !== matchedReports[index][0] && report !== matchedReports[index][1]
-            );
+
+            updatedReportSet.delete(matchedReports[index][0]);
+            updatedReportSet.delete(matchedReports[index][1]);
             updatedSelectedReports.left = updatedSelectedReports.left.filter((i) => i !== index);
             updatedSelectedReports.right = updatedSelectedReports.right.filter((i) => i !== index);
         }
 
-        setFinalReport(updatedReport);
+        setFinalReport(Array.from(updatedReportSet));
         setSelectedReports(updatedSelectedReports);
-        console.log('Final Report:', updatedReport);
+       
     };
 
-    const handleOpenDialog = (reportId: string) => {
-        const insight = insights[reportId];
-        setCurrentInsight(insight || null);
-        setDialogOpen(true);
-    };
+    const selectAllReports = (listType: 'matchedLeft' | 'matchedRight' | 'unmatched1' | 'unmatched2') => {
+        const updatedFinalReport = new Set(finalReport);
+        const updatedSelectedReports = { ...selectedReports };
+        const updatedSelectedUnmatchedReports = { ...selectedUnmatchedReports };
 
-    const handleCloseDialog = () => {
-        setDialogOpen(false);
-        setCurrentInsight(null);
-    };
-
-    const renderUnmatchedReport = (report: any, index: number) => {
-        const isSelected = finalReport.includes(report);
-        const reportId = report.id;
-        const insightAvailable = insights[reportId];
-
-        return (
-            <UnmatchedReportCard key={index} selected={isSelected} theme={undefined}>
-                <CardContent>
-                    {Object.entries(report).map(([key, value]) => (
-                        <Typography key={key} variant="body2">
-                            <strong>{key}:</strong> {value as React.ReactNode}
-                        </Typography>
-                    ))}
-                    <UnmatchedButtonGroup>
-                        <Button variant="contained" color="primary" onClick={() => handleUnmatchedReport('add', report)}>
-                            <CheckCircleIcon />
-                        </Button>
-                        <Button variant="contained" color="secondary" onClick={() => handleUnmatchedReport('remove', report)}>
-                            <CancelIcon />
-                        </Button>
-                        <Button variant="outlined" color="info" onClick={() => handleOpenDialog(reportId)}>
-                            {insightAvailable ? "Show Insight" : <CircularProgress size={20} />}
-                        </Button>
-                    </UnmatchedButtonGroup>
-                </CardContent>
-            </UnmatchedReportCard>
-        );
-    };
-
-    const handleUnmatchedReport = (action: string, report: any) => {
-        let updatedReport = [...finalReport];
-
-        if (action === 'add') {
-            updatedReport.push(report);
-        } else if (action === 'remove') {
-            updatedReport = updatedReport.filter((r) => r.id !== report.id);
+        if (listType === 'matchedLeft') {
+            matchedReports.forEach(([leftReport], index) => {
+                if (!updatedFinalReport.has(leftReport)) {
+                    updatedFinalReport.add(leftReport);
+                    updatedSelectedReports.left.push(index);
+                }
+            });
+        } else if (listType === 'matchedRight') {
+            matchedReports.forEach(([, rightReport], index) => {
+                if (!updatedFinalReport.has(rightReport)) {
+                    updatedFinalReport.add(rightReport);
+                    updatedSelectedReports.right.push(index);
+                }
+            });
+        } else if (listType === 'unmatched1') {
+            unmatchedList1.forEach((report, index) => {
+                if (!updatedFinalReport.has(report)) {
+                    updatedFinalReport.add(report);
+                    updatedSelectedUnmatchedReports.list1.push(index);
+                }
+            });
+        } else if (listType === 'unmatched2') {
+            unmatchedList2.forEach((report, index) => {
+                if (!updatedFinalReport.has(report)) {
+                    updatedFinalReport.add(report);
+                    updatedSelectedUnmatchedReports.list2.push(index);
+                }
+            });
         }
 
-        setFinalReport(updatedReport);
-        console.log('Final Report:', updatedReport);
+        setFinalReport(Array.from(updatedFinalReport));
+        setSelectedReports(updatedSelectedReports);
+        setSelectedUnmatchedReports(updatedSelectedUnmatchedReports);
     };
 
-    const saveFinalReport = async () => {
-        try {
-            await generateReportRequest(finalReport);
-            setSnackbarOpen(true);
-        } catch (error) {
-            console.error('Error saving final report:', error);
+    const deselectAllReports = (listType: 'matchedLeft' | 'matchedRight' | 'unmatched1' | 'unmatched2') => {
+        const updatedFinalReport = new Set(finalReport);
+        const updatedSelectedReports = { ...selectedReports };
+        const updatedSelectedUnmatchedReports = { ...selectedUnmatchedReports };
+
+        if (listType === 'matchedLeft') {
+            matchedReports.forEach(([leftReport], index) => {
+                updatedFinalReport.delete(leftReport);
+                updatedSelectedReports.left = updatedSelectedReports.left.filter((i) => i !== index);
+            });
+        } else if (listType === 'matchedRight') {
+            matchedReports.forEach(([, rightReport], index) => {
+                updatedFinalReport.delete(rightReport);
+                updatedSelectedReports.right = updatedSelectedReports.right.filter((i) => i !== index);
+            });
+        } else if (listType === 'unmatched1') {
+            unmatchedList1.forEach((report, index) => {
+                updatedFinalReport.delete(report);
+                updatedSelectedUnmatchedReports.list1 = updatedSelectedUnmatchedReports.list1.filter((i) => i !== index);
+            });
+        } else if (listType === 'unmatched2') {
+            unmatchedList2.forEach((report, index) => {
+                updatedFinalReport.delete(report);
+                updatedSelectedUnmatchedReports.list2 = updatedSelectedUnmatchedReports.list2.filter((i) => i !== index);
+            });
         }
+
+        setFinalReport(Array.from(updatedFinalReport));
+        setSelectedReports(updatedSelectedReports);
+        setSelectedUnmatchedReports(updatedSelectedUnmatchedReports);
     };
 
-    return (
-        <ReportsContainer sx={mainContentStyles}>
-            <Typography variant="h6">Conflicts</Typography>
-            <Grid container spacing={2}>
-                {matchedReports.map((match, index) => (
+    const renderedMatchedReports = useMemo(
+        () => (
+            <>
+                <Typography variant="h4" gutterBottom>Matched Reports</Typography>
+                <Box display="flex" justifyContent="space-between" width="100%">
+                    <Box display="flex" gap={2} justifyContent="flex-start">
+                        <Button onClick={() => selectAllReports('matchedLeft')}>Select All Left</Button>
+                        <Button onClick={() => deselectAllReports('matchedLeft')}>Deselect All Left</Button>
+                    </Box>
+                    <Box display="flex" gap={2} justifyContent="center">
+                        <Button onClick={() => selectAllReports('matchedRight')}>Select All Right</Button>
+                        <Button onClick={() => deselectAllReports('matchedRight')}>Deselect All Right</Button>
+                    </Box>
+                </Box>
+                {matchedReports.map(([report1, report2], index) => (
                     <MatchedPair key={index}>
-                        {renderReport(match[0], selectedReports.left.includes(index))}
-                        <ButtonGroup>
-                            <Button
-                                variant="contained"
-                                color="primary"
-                                onClick={() => handleButtonClick('acceptLeft', index)}
-                            >
-                                <ArrowBackIcon />
-                            </Button>
-                            <Button
-                                variant="contained"
-                                color="primary"
-                                onClick={() => handleButtonClick('acceptRight', index)}
-                            >
-                                <ArrowForwardIcon />
-                            </Button>
-                            <Button
-                                variant="contained"
-                                color="secondary"
-                                onClick={() => handleButtonClick('acceptBoth', index)}
-                            >
-                                Accept Both
-                            </Button>
-                            <Button
-                                variant="contained"
-                                color="secondary"
-                                onClick={() => handleButtonClick('acceptNone', index)}
-                            >
-                                Accept None
-                            </Button>
-                        </ButtonGroup>
-                        {renderReport(match[1], selectedReports.right.includes(index))}
+                        <Box display="flex" width="100%" justifyContent="space-between" alignItems="center">
+                            {renderReport(report1, selectedReports.left.includes(index))}
+                            <ButtonGroup>
+                                <Button
+                                    variant="contained"
+                                    color="primary"
+                                    onClick={() => handleButtonClick('acceptRight', index)}
+                                >
+                                    <ArrowForwardIcon />
+                                </Button>
+                                <Button
+                                    variant="contained"
+                                    color="primary"
+                                    onClick={() => handleButtonClick('acceptLeft', index)}
+                                >
+                                    <ArrowBackIcon />
+                                </Button>
+                                <Button
+                                    variant="contained"
+                                    color="primary"
+                                    onClick={() => handleButtonClick('acceptBoth', index)}
+                                >
+                                    <CheckCircleIcon />
+                                </Button>
+                                <Button
+                                    variant="contained"
+                                    color="primary"
+                                    onClick={() => handleButtonClick('acceptNone', index)}
+                                >
+                                    <CancelIcon />
+                                </Button>
+                            </ButtonGroup>
+                            {renderReport(report2, selectedReports.right.includes(index))}
+                        </Box>
                     </MatchedPair>
                 ))}
-            </Grid>
+            </>
+        ),
+        [matchedReports, selectedReports, renderReport]
+    );
 
+
+
+
+    const generateReport = async () => {
+        try {
+            setGeneratingReport(true);
+            const response = await generateReportRequest(finalReport, name, type);
+            
+
+
+            setTimeout(() => {
+                setSuccess(true);
+            }, 1000);
+
+            setTimeout(() => {
+                router.push('/evaluate');
+            }, 1000);
+        } catch (error) {
+            console.error('Error generating report:', error);
+        }
+    };
+
+    if (loading) {
+        return (
+            <Box sx={{
+                ...mainContentStyles,
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                width: '100%',
+                height: '100%',
+
+            }}>
+                <Loader />
+            </Box>
+        );
+    }
+
+
+
+    return (
+
+        <ReportsContainer sx={mainContentStyles}>
+            {matchedReports.length > 0 && (
+                <Box>
+                    {renderedMatchedReports}
+                </Box>
+            )}
             <UnmatchedReports>
-                <Typography variant="h6">Unmatched Reports</Typography>
-                {unmatchedList1.map((report, index) => renderUnmatchedReport(report, index))}
-                {unmatchedList2.map((report, index) => renderUnmatchedReport(report, index))}
+                {unmatchedList1.length > 0 && (
+                    unmatchedReportsList1
+                )}
+                {unmatchedList2.length > 0 && (
+                    unmatchedReportsList2
+                )}
             </UnmatchedReports>
 
             <Button
                 variant="contained"
                 color="primary"
-                onClick={saveFinalReport}
-                sx={{ marginTop: 2 }}
+                onClick={generateReport}
+                sx={{ marginTop: 2, marginBottom: 2, width: '100%' }}
+                disabled={!canGenerteReport}
             >
                 Save Final Report
             </Button>
-
-            <Snackbar
-                open={snackbarOpen}
-                autoHideDuration={6000}
-                onClose={() => setSnackbarOpen(false)}
-            >
-                <Alert onClose={() => setSnackbarOpen(false)} severity="success">
-                    Report saved successfully!
-                </Alert>
-            </Snackbar>
-
-            <Dialog open={dialogOpen} onClose={handleCloseDialog}>
-                <DialogTitle>Insight</DialogTitle>
-                <DialogContent>
-                    <Typography variant="body1">
-                        {currentInsight}
-                    </Typography>
-                </DialogContent>
-            </Dialog>
+            <Backdrop open={generatingReport} sx={{ zIndex: (theme) => theme.zIndex.drawer + 1, color: '#fff' }}>
+                {success ? <Typography variant="h6">Generated Successfully!</Typography> : <Loader />}
+            </Backdrop>
         </ReportsContainer>
     );
 };

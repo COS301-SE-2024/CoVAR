@@ -13,7 +13,7 @@ import {
   Snackbar,
 } from '@mui/material';
 import { usePathname, useRouter } from 'next/navigation';
-import { mainContentStyles, buttonStyles } from '../../../../../styles/evaluateStyle'; 
+import { mainContentStyles, buttonStyles } from '../../../../../styles/evaluateStyle';
 import FileUpload from '../../components/fileUpload';
 import { handleDownloadFile } from '../../../../../functions/requests';
 import ReportPreview from '../../components/reportPreview';
@@ -53,6 +53,7 @@ const OrganizationEvaluation: React.FC = () => {
   const [reportIds, setReportIds] = useState<number[]>([]);
   const [reports, setReports] = useState<any[][]>([]);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [reportNames, setReportNames] = useState<string[]>([]);
 
   useEffect(() => {
     const fetchInitialUploads = async () => {
@@ -103,9 +104,10 @@ const OrganizationEvaluation: React.FC = () => {
     }
   };
 
-  const handleRemove = async (upload_id: number) => {
+  const handleRemove = async (upload_id: number, fileName: string) => {
     try {
       await handleRemoveFile(upload_id);
+      setReportNames(reportNames.filter(name => name !== fileName));
       setUploads(uploads.filter(upload => upload.upload_id !== upload_id));
       setReportIds(reportIds.filter(id => id !== upload_id));
     } catch (error: any) {
@@ -115,13 +117,16 @@ const OrganizationEvaluation: React.FC = () => {
     }
   };
 
-  const handleToggle = async (upload_id: number) => {
+  const handleToggle = async (upload_id: number, fileName: string) => {
     try {
-      await handleToggleReport(upload_id);
       if (reportIds.includes(upload_id)) {
+        await handleToggleReport(upload_id);
+        setReportNames(reportNames.filter(name => name !== fileName));
         setReportIds(reportIds.filter(id => id !== upload_id));
       } else {
         if (reportIds.length < 2) {
+          await handleToggleReport(upload_id);
+          setReportNames(reportNames.filter(name => name !== fileName));
           setReportIds([...reportIds, upload_id]);
         } else {
           setSnackbarOpen(true);
@@ -146,7 +151,7 @@ const OrganizationEvaluation: React.FC = () => {
         open={snackbarOpen}
         autoHideDuration={1000}
         onClose={handleCloseSnackbar}
-        message="Cannot add more than 2 report IDs"
+        message="Cannot add more than 2 reports"
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
       />
       <Grid container spacing={2}>
@@ -172,7 +177,7 @@ const OrganizationEvaluation: React.FC = () => {
                     primary={`File Name: ${upload.filename}, Uploaded At: ${new Date(upload.created_at).toLocaleString()}`}
                   />
                   <Button
-                   data-testid="delete-button" 
+                    data-testid="delete-button"
                     variant="outlined"
                     sx={{
                       backgroundColor: 'transparent',
@@ -184,7 +189,7 @@ const OrganizationEvaluation: React.FC = () => {
                       },
                       marginLeft: 1
                     }}
-                    onClick={() => handleRemove(upload.upload_id)}
+                    onClick={() => handleRemove(upload.upload_id, upload.filename)}
                   >
                     <DeleteIcon />
                   </Button>
@@ -199,7 +204,7 @@ const OrganizationEvaluation: React.FC = () => {
                   <Button
                     variant="outlined"
                     color="primary"
-                    onClick={() => handleToggle(upload.upload_id)}
+                    onClick={() => handleToggle(upload.upload_id, upload.filename)}
                     sx={{ marginLeft: 1 }}
                   >
                     {reportIds.includes(upload.upload_id) ? <RemoveIcon /> : <AddIcon />}
@@ -210,14 +215,10 @@ const OrganizationEvaluation: React.FC = () => {
           </Paper>
         </Grid>
         <Grid item xs={6}>
-          <Paper sx={{overflowY: 'scroll', height: 'calc(80vh + 16px)' }}>
-            {reports.length === 0 ? (
-              <Typography variant="h6" style={{ textAlign: 'center', padding: '20px' }}>
-                No reports to display
-              </Typography>
-            ) : (
-              <ReportPreview reports={reports} reportIds={reportIds} client={organizationName ?? ''} />
-            )}
+          <Paper sx={{ overflowY: 'scroll', height: 'calc(80vh + 16px)' }}>
+
+            <ReportPreview reports={reports.slice(0, 3)} reportIds={reportIds} client={organizationName ?? ''} reportNames={reportNames} />
+
           </Paper>
         </Grid>
       </Grid>

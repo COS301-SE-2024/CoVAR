@@ -8,6 +8,7 @@ import jwt
 import traceback
 import os
 import openai
+import re
 
 app = Flask(__name__)
 
@@ -43,6 +44,22 @@ def test_jwt():
     decoded = verify_jwt(token)
     return jsonify({"token": token, "decoded": decoded})
 
+def extract_ips(chain_prompt):
+    # Regular expression to match all IP addresses in the chain_prompt
+    ip_pattern = r'\b(?:\d{1,3}\.){3}\d{1,3}\b'
+    
+    # Find all IP addresses in the chain_prompt
+    ips = re.findall(ip_pattern, chain_prompt)
+    
+    modified_prompt = re.sub(ip_pattern, "[IP_ADDRESS]", chain_prompt)
+    
+    return modified_prompt, ips  
+# Function to reinsert all IPs into the result
+def reinsert_ips(result, ips):
+    # Replace the "[IP_ADDRESS]" placeholder with each IP in order
+    for ip in ips:
+        result = result.replace("[IP_ADDRESS]", ip, 1)  
+    return result
 
 @app.route('/unmatchedRecomendations', methods=['POST'])
 def unmatched_recommendation():
@@ -115,6 +132,9 @@ def run_test():
         return jsonify({'error': 'chain_prompt is required'}), 400
 
     print("Running test")
+    print(chain_prompt)
+    modified_prompt, ip_address = extract_ips(chain_prompt)
+    print(f"modified_prompt: {modified_prompt}")
     template = """Vulnerability {chain_prompt}\nYou are a cyber security specialist. Give an insight into which of these vulnerabilities is the most concerning. Keep it short and concise."""
     prompt = ChatPromptTemplate.from_template(template)
 
@@ -138,9 +158,11 @@ def run_test():
             raise ValueError(f"Invalid model type: {model_type}")
         
         chain = prompt | model
-        result = chain.invoke({"chain_prompt": chain_prompt})
+        result = chain.invoke({"chain_prompt": modified_prompt})
         print(f"Model invocation result: {result}")
-        return jsonify({'result': result.content})
+        
+        final_result = reinsert_ips(result.content, ip_address)
+        return jsonify({'result': final_result})
     
     except Exception as e:
         print(f"Error invoking model: {e}")

@@ -20,7 +20,6 @@ router.get('/reports/all', authenticateToken, async (req, res) => {
 
 // Route to get the last report date for each client or organization
 router.get('/reports/last_report_dates', authenticateToken, async (req, res) => {
-    const userId = req.user.user_id;
 
     try {
         // Query to get last report date for assigned clients

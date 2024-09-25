@@ -32,6 +32,7 @@ const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({ toggleForm }) =
       setError('');
   
       setTimeout(() => {
+        toggleForm('login'); // Redirect to login form
         setSuccessMessage('');
       }, 10000);
     } catch (error: any) {

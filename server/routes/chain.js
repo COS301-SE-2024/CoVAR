@@ -1,16 +1,15 @@
 const express = require('express');
 const { authenticateToken } = require('../lib/securityFunctions');
 const axios = require('axios');
-
 const router = express.Router();
-router.post('/unmatchedRecomendations', authenticateToken, async (req, res) => {
+router.post('/unmatchedRecommendations', authenticateToken, async (req, res) => {
     // Log the entire request body to verify what is being sent
     console.log('Request Body:', req.body);
     
     // Extract the chain_prompt directly from the request body
-    const { chain_prompt } = req.body;
+    const { chain_prompt_1} = req.body;
 
-    if (!chain_prompt) {
+    if (!chain_prompt_1) {
         return res.status(400).json({ error: 'chain_prompt is required' });
     }
 
@@ -20,14 +19,14 @@ router.post('/unmatchedRecomendations', authenticateToken, async (req, res) => {
 
         // Make sure chain_prompt is correctly passed in the request to langchain server
         const response = await axios.post('http://langchain:6000/unmatchedRecomendations', 
-            { chain_prompt }, 
+            { chain_prompt_1 }, 
             { headers: { Authorization: token } }
         );
 
         res.status(200).json(response.data);
     } catch (error) {
         console.error('Error occurred during /unmatchedRecomendations POST request:');
-        console.error(`Request Data: ${JSON.stringify({ chain_prompt })}`);
+        console.error(`Request Data: ${JSON.stringify({ chain_prompt_1 })}`);
 
         if (error.response) {
             // Server responded with a status other than 2xx

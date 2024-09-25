@@ -490,10 +490,41 @@ export const TOPG = async (data:any) => {
 export const unmatchedRecomendations = async (data: any) => {
     const token = localStorage.getItem('accessToken');
     console.log('chain_prompt', data);
+    const chain_prompt_1 = {
+        IP: data.IP,
+        Hostname: data.Hostname,
+        Port: data.Port,
+        portProtocol: data.portProtocol,
+        CVSS: data.CVSS,
+        Severity: data.Severity,
+        solutionType: data.solutionType,
+        nvtName: data.nvtName,
+        Summary: data.Summary,
+        specificResult: data.specificResult,
+        nvtOid: data.nvtOid,
+        CVEs: data.CVEs,
+        taskId: data.taskId,
+        taskName: data.taskName,
+        Timestamp: data.Timestamp,
+        resultId: data.resultId,
+        Impact: data.Impact,
+        Solution: data.Solution,
+        affectedSoftwareOs: data.affectedSoftwareOs,
+        vulnerabilityInsight: data.vulnerabilityInsight,
+        vulnerabilityDetectionMethod: data.vulnerabilityDetectionMethod,
+        productDetectionResult: data.productDetectionResult,
+        BIDs: data.BIDs,
+        CERTs: data.CERTs,
+        otherReferences: data.otherReferences,
+        type: data.type
+    };
+    const chain_prompt_1_stringified = JSON.stringify(chain_prompt_1);
     const request: AxiosRequestConfig = {
         method: 'post',
-        url: 'api/unmatchedRecomendations',
-        data,
+        url: 'http://localhost:3050/api/unmatchedRecommendations',
+        data: {
+            chain_prompt_1: chain_prompt_1_stringified,
+        },
         headers: { Authorization: `Bearer ${token}` },
     };
     return await handleRequest(request);

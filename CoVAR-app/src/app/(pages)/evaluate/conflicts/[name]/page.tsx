@@ -8,7 +8,7 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
 import { Loader, ReportsContainer, MatchedPair, ReportCard, ButtonGroup, UnmatchedReports, UnmatchedButtonGroup, UnmatchedReportCard } from '../../../../../styles/conflictStyle';
-import { matchedRecomendations } from '@/functions/requests';
+import { matchedRecomendations,unmatchedRecomendations } from '@/functions/requests';
 import { mainContentStyles } from '../../../../../styles/evaluateStyle';
 import { Dialog, DialogTitle, DialogContent } from '@mui/material';
 
@@ -23,7 +23,6 @@ interface FileUpload {
     filename: string;
     in_report?: boolean;
 }
-
 
 
 const UserConflicts = () => {
@@ -69,12 +68,13 @@ const UserConflicts = () => {
         if (aiInsight) {
             const fetchAllRecommendations = async () => {
                 try {
+                    // Process matched reports first
                     for (const [index, report] of matchedReports.entries()) {
                         try {
                             const result = await matchedRecomendations(report);
     
                             // Log the result to verify it's in the expected format
-                            console.log("Recommendation result for report:", result);
+                            console.log("Recommendation result for matched report:", result);
     
                             // Check if the result has the 'result' property and if it's a string
                             if (result && typeof result.result === 'string') {
@@ -95,16 +95,61 @@ const UserConflicts = () => {
                                 }
                             } else {
                                 // Handle cases where result is not in the expected format
-                                console.warn("Unexpected result format:", result);
+                                console.warn("Unexpected result format for matched report:", result);
                                 handleButtonClick('acceptNone', index);
                             }
                         } catch (error) {
-                            console.error("Error fetching recommendation for report:", report, error);
+                            console.error("Error fetching recommendation for matched report:", report, error);
                         }
     
-                        // Introduce a 3-second delay between each request
-                        await sleep(300);
+                        await sleep(200);
                     }
+    
+                    // After completing the matched reports, process the unmatched ones
+                    for (const [index, report] of unmatchedList1.entries()) {
+                        try {
+                            const result = await unmatchedRecomendations(report);
+    
+                            // Log the result to verify it's in the expected format
+                            console.log("Recommendation result for unmatched report:", result);
+    
+                            // Check if the result has the 'result' property and if it's a string
+                            if (result && typeof result.result === 'string') {
+                                const recommendation = result.result;
+    
+                                // Handle the recommendation for unmatched reports (customize as needed)
+                                handleButtonClick('acceptUnmatched', index);  // You can customize logic here
+                            } else {
+                                // Handle cases where result is not in the expected format
+                                console.warn("Unexpected result format for unmatched report:", result);
+                                handleButtonClick('acceptNone', index);
+                            }
+                        } catch (error) {
+                            console.error("Error fetching recommendation for unmatched report:", report, error);
+                        }
+    
+                        
+                        await sleep(200);
+                    }
+                    
+                    // Process the second unmatched list, unmatchedList2 (if required)
+                    for (const [index, report] of unmatchedList2.entries()) {
+                        try {
+                            const result = await unmatchedRecomendations(report);
+    
+                            // Log the result to verify it's in the expected format
+                            console.log("Recommendation result for unmatched report 2:", result);
+    
+                            // Handle the recommendation for unmatched reports (customize as needed)
+                            handleButtonClick('acceptUnmatched', index);  // You can customize logic here
+                        } catch (error) {
+                            console.error("Error fetching recommendation for unmatched report 2:", report, error);
+                        }
+    
+                       
+                        await sleep(200);
+                    }
+    
                 } catch (error) {
                     console.error("Error during fetching recommendations:", error);
                 } finally {
@@ -114,7 +159,7 @@ const UserConflicts = () => {
     
             fetchAllRecommendations(); // Call the function
         }
-    }, [aiInsight, matchedReports]);
+    }, [aiInsight, matchedReports, unmatchedList1, unmatchedList2]);
     
     
     

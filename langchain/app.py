@@ -139,11 +139,18 @@ def unmatched_recommendation():
         return jsonify({'error': 'No data received'}), 400
 
     # Retrieve the first available key-value pair from data
-    key, value = next(iter(data.items()))
-    chain_prompt = value
-
+    data = request.json
+    chain_prompt_1 = data.get('chain_prompt_1', '')
+    modified_prompt_1, ip_address_1 = extract_ips(chain_prompt_1)
+    
+    if not chain_prompt_1:
+        return jsonify({'error': 'Both chain_prompt_1 and chain_prompt_2 are required'}), 400
     print("Running unmatched recommendation")
-    template = """Vulnerability {chain_prompt}\nYou are a cyber security specialist. Give an insight to if this is a valid concern for the system. Keep it short and concise."""
+
+    template = """Vulnerability {chain_prompt}\nYou are a cyber security specialist.
+    Given this vulnerability determine wether it is a truly a concern or simply an anomaly brought on by another issue. If it is a valid vulnerability
+    Respond with the word "Keep" followed by a newline and your concise reasoning if its not a valid issue simply respond with "Not" followed by a newline and your 
+    concise reasoning"""
     prompt = ChatPromptTemplate.from_template(template)
 
     try:
@@ -166,7 +173,8 @@ def unmatched_recommendation():
             raise ValueError(f"Invalid model type: {model_type}")
         
         chain = prompt | model
-        result = chain.invoke({"chain_prompt": chain_prompt})
+        result = chain.invoke({"chain_prompt": modified_prompt_1})
+        final_result = reinsert_ips(result.content, ip_address_1)
         print(f"Model invocation result: {result}")
         return jsonify({'result': result.content})
     

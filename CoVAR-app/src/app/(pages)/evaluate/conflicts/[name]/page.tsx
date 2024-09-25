@@ -103,7 +103,7 @@ const UserConflicts = () => {
                         }
     
                         // Introduce a 3-second delay between each request
-                        await sleep(3000);
+                        await sleep(300);
                     }
                 } catch (error) {
                     console.error("Error during fetching recommendations:", error);
@@ -318,7 +318,6 @@ const UserConflicts = () => {
             updatedSelectedReports.left = updatedSelectedReports.left.filter((i) => i !== index);
             updatedSelectedReports.right = updatedSelectedReports.right.filter((i) => i !== index);
         }
-
         setFinalReport(Array.from(updatedReportSet));
         setSelectedReports(updatedSelectedReports);
        

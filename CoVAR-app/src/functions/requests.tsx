@@ -176,6 +176,20 @@ export const fetchAssignedOrganisations = async (userId: string, accessToken: st
     return await handleRequest(request);
 };
 
+export const fetchLastReportDates = async (token: string) => {
+    try {
+        const response = await axios.get('/api/reports/last_report_dates', {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching last report dates:', error);
+        throw error;
+    }
+};
+
 export const assignClient = async (userId: string, clientUsername: string, accessToken: string) => {
     const request = {
         method: 'post',

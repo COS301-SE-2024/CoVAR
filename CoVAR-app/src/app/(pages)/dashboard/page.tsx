@@ -1,5 +1,5 @@
 'use client';
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Box, Grid, Paper, Typography, Button, List, ListItem, ListItemText, ListItemSecondaryAction } from '@mui/material';
 import { mainContentStyles } from '../../../styles/sidebarStyle';
 import { chartContainerStyles } from '../../../styles/dashboardStyle';
@@ -7,13 +7,12 @@ import SeverityDistribution from './components/severityDistribution';
 import VulnerabilityLineChart from './components/lineChart';
 import ReportsList from './components/reportsList';
 import TopVulnerabilities from './components/topVulnerabilities';
-import { getAllReports, getUserRole, fetchAssignedClients } from '@/functions/requests';
-import { useRouter, usePathname } from 'next/navigation';
+import { fetchLastReportDates, getAllReports, getUserRole, fetchAssignedClients } from '@/functions/requests';
+import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import { evaluateLaunchStyles } from '../../../styles/evaluateStyle';
 import { fetchReportsPerClient } from '@/functions/requests';
 import ReportsPerClient from './components/reportsPerClient';
-
 
 interface VulnerabilityReport {
     IP: string;
@@ -60,6 +59,15 @@ interface ClientReport {
     report_count: number;
 }
 
+interface LastReportDate {
+    client_name: string;
+    last_report_date: string;
+}
+
+interface LastReportDateOrganization {
+    organization_name: string;
+    last_report_date: string;
+}
 
 const Dashboard: React.FC = () => {
     const [severityDistribution, setSeverityDistribution] = useState<{ name: string; value: number }[]>([]);
@@ -74,10 +82,10 @@ const Dashboard: React.FC = () => {
     const [organizations, setOrganizations] = useState<Organization[]>([]);
     const [loading, setLoading] = useState(true);
     const [reportsPerClient, setReportsPerClient] = useState<any[]>([]);
-
+    const [lastReportDatesClients, setLastReportDatesClients] = useState<LastReportDate[]>([]);
+    const [lastReportDatesOrgs, setLastReportDatesOrgs] = useState<LastReportDateOrganization[]>([]);
 
     const router = useRouter();
-    const location = usePathname();
 
     const fetchUserRole = async () => {
         try {
@@ -107,34 +115,22 @@ const Dashboard: React.FC = () => {
         }
     };
 
-    const fetchAssignedUsers = async () => {
+    const fetchAssignedUsersAndOrgs = async () => {
         try {
             const token = localStorage.getItem('accessToken');
-            const response = await axios.get('/api/users/assigned_clients', {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            });
-            setUsers(response.data);
-            setLoading(false);
-        } catch (err) {
-            console.error('Error fetching assigned users:', err);
-            setLoading(false);
-        }
-    };
+            const [usersResponse, orgsResponse, reportDates] = await Promise.all([
+                axios.get('/api/users/assigned_clients', { headers: { Authorization: `Bearer ${token}` } }),
+                axios.get('/api/users/assigned_organizations', { headers: { Authorization: `Bearer ${token}` } }),
+                fetchLastReportDates(token as string)
+            ]);
 
-    const fetchAssignedOrganizations = async () => {
-        try {
-            const token = localStorage.getItem('accessToken');
-            const response = await axios.get('/api/users/assigned_organizations', {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            });
-            setOrganizations(response.data);
+            setUsers(usersResponse.data);
+            setOrganizations(orgsResponse.data);
+            setLastReportDatesClients(reportDates.clients);
+            setLastReportDatesOrgs(reportDates.organizations);
             setLoading(false);
-        } catch (err) {
-            console.error('Error fetching assigned organizations:', err);
+        } catch (error) {
+            console.error('Error fetching data:', error);
             setLoading(false);
         }
     };
@@ -188,7 +184,6 @@ const Dashboard: React.FC = () => {
     const getReportsPerClient = async () => {
         try {
             const data: ClientReport[] = await fetchReportsPerClient();
-            console.log('Reports Per Client:', data);  // Check the structure here
             const formattedData = data.map((client: ClientReport) => ({
                 client_name: client.client_name,
                 report_count: client.report_count
@@ -198,24 +193,18 @@ const Dashboard: React.FC = () => {
             console.error('Error fetching reports per client:', error);
         }
     };
-    
 
-    // Fetch role on initial mount
     useEffect(() => {
         fetchUserRole();
     }, []);
 
-    // Role-based action
     useEffect(() => {
         if (role === 'client') {
             fetchReports();
         }
 
         if (role === 'va') {
-            fetchAssignedUsers();
-            fetchAssignedOrganizations();
-
-            // Fetch reports per client
+            fetchAssignedUsersAndOrgs();
             getReportsPerClient();
         }
     }, [role]);
@@ -273,22 +262,28 @@ const Dashboard: React.FC = () => {
 
     if (role === 'va') {
         const noReportsAvailable = reportsPerClient.length === 0 || reportsPerClient.every((client) => client.report_count == 0);
-    
+
         return (
             <Box sx={evaluateLaunchStyles}>
-                <Typography variant="h6" sx={{ marginTop: 4 }}>
-                    Clients and Organisations Assigned to You
-                </Typography>
-                <Paper elevation={3} sx={{ padding: 2, marginTop: 2 }}>
-                    {loading ? (
-                        <Typography>Loading...</Typography>
-                    ) : users.length === 0 && organizations.length === 0 ? (
+                <Typography variant="h6">Assigned Clients and Organisations</Typography>
+                <Paper elevation={3} sx={{ padding: 2, marginBottom: 2, marginTop: 2 }}>
+                    {noReportsAvailable ? (
+                        <Typography>No reports data available.</Typography>
+                    ) : (
+                        <ReportsPerClient reportsPerClient={reportsPerClient} />
+                    )}
+                </Paper>
+                <Paper elevation={3} sx={{ padding: 2, marginBottom: 2 }}>
+                    {users.length === 0 && organizations.length === 0 ? (
                         <Typography>No assigned clients or organisations found.</Typography>
                     ) : (
                         <List>
                             {users.map((user) => (
                                 <ListItem key={user.user_id} sx={{ marginBottom: 1, padding: 1, borderRadius: 1, boxShadow: 1 }}>
-                                    <ListItemText primary={`User: ${user.username}`} />
+                                    <ListItemText
+                                        primary={`User: ${user.username}`}
+                                        secondary={`Last Report: ${lastReportDatesClients.find(c => c.client_name === user.username)?.last_report_date || 'No report'}`}
+                                    />
                                     <ListItemSecondaryAction>
                                         <Button variant="contained" onClick={() => handleUserButtonClick(user)}>
                                             Evaluate
@@ -298,7 +293,10 @@ const Dashboard: React.FC = () => {
                             ))}
                             {organizations.map((org) => (
                                 <ListItem key={org.organization_id} sx={{ marginBottom: 1, padding: 1, borderRadius: 1, boxShadow: 1 }}>
-                                    <ListItemText primary={`Organisation: ${org.name}`} />
+                                    <ListItemText
+                                        primary={`Organisation: ${org.name}`}
+                                        secondary={`Last Report: ${lastReportDatesOrgs.find(o => o.organization_name === org.name)?.last_report_date || 'No report'}`}
+                                    />
                                     <ListItemSecondaryAction>
                                         <Button variant="contained" onClick={() => handleOrganizationButtonClick(org)}>
                                             Evaluate
@@ -309,19 +307,9 @@ const Dashboard: React.FC = () => {
                         </List>
                     )}
                 </Paper>
-                <Paper sx={{ padding: 2, marginTop: 4 }}>
-                    <Typography variant="h6">Reports Per Client</Typography>
-                    {noReportsAvailable ? (
-                        <Typography>No reports available for clients.</Typography>
-                    ) : (
-                        <ReportsPerClient reportsPerClient={reportsPerClient} />
-                    )}
-                </Paper>
             </Box>
         );
     }
-    
-    
 
     return null;
 };

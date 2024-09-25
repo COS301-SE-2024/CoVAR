@@ -107,6 +107,17 @@ const handleRequest = async (request: AxiosRequestConfig) => {
     }
 };
 
+export const fetchReportsPerClient = async () => {
+    const accessToken = localStorage.getItem('accessToken');
+    const request: AxiosRequestConfig = {
+        method: 'post',
+        url: '/api/reports/getReportsPerClient',
+        headers: { Authorization: `Bearer ${accessToken}` },
+    };
+    return await handleRequest(request);
+};
+
+
 // Exported functions remain unchanged
 export const checkToken = async (accessToken: string) => {
     const request = {
@@ -125,6 +136,8 @@ export const fetchUsers = async (accessToken: string) => {
     };
     return await handleRequest(request);
 };
+
+
 
 export const fetchOrganisations = async (accessToken: string) => {
     const request = {
@@ -161,6 +174,20 @@ export const fetchAssignedOrganisations = async (userId: string, accessToken: st
         headers: { Authorization: `Bearer ${accessToken}` },
     };
     return await handleRequest(request);
+};
+
+export const fetchLastReportDates = async (token: string) => {
+    try {
+        const response = await axios.get('/api/reports/last_report_dates', {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching last report dates:', error);
+        throw error;
+    }
 };
 
 export const assignClient = async (userId: string, clientUsername: string, accessToken: string) => {
@@ -299,6 +326,8 @@ export const leaveOrganisation = async (orgId: string, username: string, accessT
     };
     return await handleRequest(request);
 };
+
+
 
 export const handleDownloadFile = async (loid: number, fileName: string) => {
     try {

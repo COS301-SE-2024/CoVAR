@@ -183,6 +183,16 @@ export const unassignClient = async (userId: string, clientUsername: string, acc
     return await handleRequest(request);
 };
 
+export const checkEmailExists = async (email: string) => {
+    const request = {
+        method: 'post',
+        url: '/api/users/checkEmailExists',
+        data: { email },
+    };
+    return await handleRequest(request);
+};
+
+
 export const getUserRole = async (accessToken: string) => {
     const request = {
         method: 'post',

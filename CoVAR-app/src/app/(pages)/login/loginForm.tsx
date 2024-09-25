@@ -230,7 +230,7 @@ const Login: React.FC<LoginProps> = ({ toggleForm }) => {
         <Card 
           sx={{ 
             backgroundColor: theme.palette.background.paper, 
-            padding: '5vh', 
+            padding: '3vh', 
             borderRadius: 1, 
             borderStyle: 'solid', 
             borderWidth: 1, 
@@ -343,19 +343,22 @@ const Login: React.FC<LoginProps> = ({ toggleForm }) => {
                   Sign up
                 </Link>
               </Box>
-              {error && (
-                <Box 
-                  display="flex" 
-                  justifyContent="center" 
-                  alignItems="center" 
-                  width="100%" 
-                  sx={{ position: 'relative', mt: '2vh' }}
-                >
-                  <Typography variant="body2" color="error" textAlign="center">
-                    {error}
-                  </Typography>
-                </Box>
-              )}
+              
+              <Box 
+                display="flex" 
+                justifyContent="center" 
+                alignItems="center" 
+                width="100%" 
+                sx={{ position: 'relative', mt: '2vh', minHeight: '2vh' }} 
+              >
+                {error && (
+                <Typography variant="body2" color="error" textAlign="center">
+                  {error}
+                </Typography>
+                  )}
+              </Box>
+          
+
             </Box>
           </Box>
         </Card>

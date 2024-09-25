@@ -4,6 +4,7 @@ import { TextField, Button, Box, Typography, Card, Container, CssBaseline, Link 
 import { useTheme, ThemeProvider } from '@mui/material/styles';
 import { doPasswordReset } from '../../../functions/firebase/auth';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
+import {checkEmailExists} from '../../../functions/requests';
 
 interface ForgotPasswordFormProps {
     toggleForm: (formType: 'login' | 'signup' | 'forgotPassword') => void;
@@ -17,18 +18,30 @@ const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({ toggleForm }) =
 
   const handlePasswordReset = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+  
+    if (!email) {
+      setError('Please enter a valid email address.');
+      return;
+    }
+
     try {
+      await checkEmailExists(email);
+  
       await doPasswordReset(email);
       setSuccessMessage('A password reset link has been sent to your email.');
       setError('');
-      // Clear success message after 10 seconds
+  
       setTimeout(() => {
         setSuccessMessage('');
       }, 10000);
-    } catch (error) {
-      setError('Failed to send password reset email.');
+    } catch (error: any) {
+      if (error.response && error.response.status === 404) {
+        setError('No account found with this email address.');
+      } else {
+        setError('Failed to send password reset email. Please try again.');
+      }
       setSuccessMessage('');
-      // Clear error message after 10 seconds
+  
       setTimeout(() => {
         setError('');
       }, 10000);
@@ -64,7 +77,7 @@ const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({ toggleForm }) =
         <Card 
           sx={{ 
             backgroundColor: theme.palette.background.paper, 
-            padding: '5vh', 
+            padding: '3vh', 
             borderRadius: 1, 
             borderStyle: 'solid', 
             borderWidth: 1, 
@@ -116,14 +129,13 @@ const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({ toggleForm }) =
                 Reset Password
               </Button>
 
-              <Box sx={{ textAlign: 'center', width: '100%', mt: '1vh', mb: '2vh' }}>
+              <Box sx={{ textAlign: 'center', width: '100%', mt: '1vh', mb: '1vh' }}>
                 <Link href="#" variant="body2" sx={{ color: theme.palette.text.secondary }} onClick={() => toggleForm('login')}>
                   Back to Login
                 </Link>
               </Box>
               
-              {/* Displaying error and success messages */}
-              <Box sx={{ width: '100%', mt: '2vh' }}>
+              <Box sx={{ width: '100%', minHeight: '2vh' }}>
                 {error && (
                   <Typography variant="body2" color="error" textAlign="center">
                     {error}

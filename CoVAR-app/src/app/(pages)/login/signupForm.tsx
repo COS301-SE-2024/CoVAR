@@ -197,7 +197,7 @@ const Signup: React.FC<SignupProps> = ({ toggleForm }) => {
           </Typography>
           <LockOutlinedIcon sx={{ fontSize: '15vh', color: theme.palette.secondary.main }} />
         </Box>
-        <Card sx={{ backgroundColor: theme.palette.background.paper, padding: '5vh', borderRadius: 1, borderStyle: 'solid', borderWidth: 1, borderColor: theme.palette.divider, width: '50vw' }}>
+        <Card sx={{ backgroundColor: theme.palette.background.paper, padding: '3vh', borderRadius: 1, borderStyle: 'solid', borderWidth: 1, borderColor: theme.palette.divider, width: '50vw' }}>
           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <Typography variant="h4" component="h2" fontWeight={550} gutterBottom>
               Sign Up
@@ -218,14 +218,28 @@ const Signup: React.FC<SignupProps> = ({ toggleForm }) => {
                 error={!!emailError}
                 helperText={emailError}
                 sx={{
-                  marginBottom: '2vh',
                   '& .MuiOutlinedInput-root': {
-                    '& fieldset': { borderColor: theme.palette.divider },
-                    '&:hover fieldset': { borderColor: theme.palette.divider },
-                    '&.Mui-focused fieldset': { borderColor: theme.palette.primary.main },
+                    '& fieldset': { 
+                      borderColor: theme.palette.divider 
+                    },
+                    '&:hover fieldset': { 
+                      borderColor: theme.palette.divider 
+                    },
+                    '&.Mui-focused fieldset': { 
+                      borderColor: theme.palette.primary.main 
+                    },
                   },
+                  '& .MuiFormHelperText-root': {
+                    position: 'absolute',
+                    bottom: '-2.31vh',
+                    left: 0,
+                    color: theme.palette.error.main,
+                    marginTop: 0,
+                  },
+                  marginBottom: 4, 
                 }}
               />
+  
               <TextField
                 margin="normal"
                 required
@@ -237,27 +251,47 @@ const Signup: React.FC<SignupProps> = ({ toggleForm }) => {
                 autoComplete="current-password"
                 value={password}
                 onChange={handlePasswordChange}
-                InputLabelProps={{ style: { color: theme.palette.text.primary } }}
+                InputLabelProps={{ 
+                  style: { color: theme.palette.text.primary } 
+                }}
                 error={!isValidPassword}
                 helperText={!isValidPassword && "Password must be at least 8 characters and include letters, numbers, and symbols."}
                 sx={{
-                  marginBottom: '2vh',
                   '& .MuiOutlinedInput-root': {
-                    '& fieldset': { borderColor: !isValidPassword ? theme.palette.error.main : theme.palette.divider },
-                    '&:hover fieldset': { borderColor: !isValidPassword ? theme.palette.error.main : theme.palette.divider },
-                    '&.Mui-focused fieldset': { borderColor: isValidPassword ? theme.palette.primary.main : theme.palette.error.main },
+                    '& fieldset': { 
+                      borderColor: !isValidPassword ? theme.palette.error.main : theme.palette.divider 
+                    },
+                    '&:hover fieldset': { 
+                      borderColor: !isValidPassword ? theme.palette.error.main : theme.palette.divider 
+                    },
+                    '&.Mui-focused fieldset': { 
+                      borderColor: isValidPassword ? theme.palette.primary.main : theme.palette.error.main 
+                    },
                   },
+                  '& .MuiFormHelperText-root': {
+                    position: 'absolute',
+                    bottom: '-4.1vh',
+                    left: 0,
+                    color: theme.palette.error.main,
+                    marginTop: 0,
+                  },
+                  marginBottom: 4, 
                 }}
                 InputProps={{
                   endAdornment: (
                     <InputAdornment position="end">
-                      <IconButton aria-label="toggle password visibility" onClick={handleClickShowPassword} edge="end">
+                      <IconButton
+                        aria-label="toggle password visibility"
+                        onClick={handleClickShowPassword}
+                        edge="end"
+                      >
                         {showPassword ? <Visibility /> : <VisibilityOff />}
                       </IconButton>
                     </InputAdornment>
                   ),
                 }}
               />
+  
               <TextField
                 margin="normal"
                 required
@@ -269,21 +303,40 @@ const Signup: React.FC<SignupProps> = ({ toggleForm }) => {
                 autoComplete="current-password"
                 value={passwordConfirm}
                 onChange={handlePasswordConfirmChange}
-                InputLabelProps={{ style: { color: theme.palette.text.primary } }}
+                InputLabelProps={{ 
+                  style: { color: theme.palette.text.primary } 
+                }}
                 error={!doPasswordsMatch}
                 helperText={!doPasswordsMatch && "Passwords do not match."}
                 sx={{
-                  marginBottom: '2vh',
                   '& .MuiOutlinedInput-root': {
-                    '& fieldset': { borderColor: !doPasswordsMatch ? theme.palette.error.main : theme.palette.divider },
-                    '&:hover fieldset': { borderColor: !doPasswordsMatch ? theme.palette.error.main : theme.palette.divider },
-                    '&.Mui-focused fieldset': { borderColor: doPasswordsMatch ? theme.palette.primary.main : theme.palette.error.main },
+                    '& fieldset': { 
+                      borderColor: !doPasswordsMatch ? theme.palette.error.main : theme.palette.divider 
+                    },
+                    '&:hover fieldset': { 
+                      borderColor: !doPasswordsMatch ? theme.palette.error.main : theme.palette.divider 
+                    },
+                    '&.Mui-focused fieldset': { 
+                      borderColor: doPasswordsMatch ? theme.palette.primary.main : theme.palette.error.main 
+                    },
                   },
+                  '& .MuiFormHelperText-root': {
+                    position: 'absolute',
+                    bottom: '-2.31vh',
+                    left: 0,
+                    color: theme.palette.error.main,
+                    marginTop: 0,
+                  },
+                  marginBottom: 4, 
                 }}
                 InputProps={{
                   endAdornment: (
                     <InputAdornment position="end">
-                      <IconButton aria-label="toggle confirm password visibility" onClick={handleClickShowPasswordConfirm} edge="end">
+                      <IconButton
+                        aria-label="toggle confirm password visibility"
+                        onClick={handleClickShowPasswordConfirm}
+                        edge="end"
+                      >
                         {showPasswordConfirm ? <Visibility /> : <VisibilityOff />}
                       </IconButton>
                     </InputAdornment>
@@ -294,7 +347,11 @@ const Signup: React.FC<SignupProps> = ({ toggleForm }) => {
                 type="submit"
                 fullWidth
                 variant="contained"
-                sx={{ mt: '2vh', mb: '2vh', backgroundColor: theme.palette.primary.main }}
+                sx={{ 
+                  mt: 3, 
+                  mb: 3, 
+                  backgroundColor: theme.palette.primary.main 
+                }}
                 disabled={!isValidPassword || !doPasswordsMatch || !!emailError}
               >
                 Sign Up
@@ -304,23 +361,63 @@ const Signup: React.FC<SignupProps> = ({ toggleForm }) => {
                 variant="contained"
                 color="secondary"
                 startIcon={<GoogleIcon />}
-                sx={{ mt: '1vh', mb: '2vh' }}
+                sx={{ 
+                  mt: 1, 
+                  mb: 3 
+                }}
                 onClick={signInWithGoogle}
               >
                 Sign Up with Google
               </Button>
-              <Box display="flex" justifyContent="center" alignItems="center" mt="2vh" mb="2vh">
-                <Typography variant="body2" sx={{ color: theme.palette.text.primary }}>
+              <Box 
+                display="flex" 
+                justifyContent="center" 
+                alignItems="center" 
+                mt={2} 
+                mb={2}
+              >
+                <Typography 
+                  variant="body2" 
+                  sx={{ color: theme.palette.text.primary }}
+                >
                   Already have an account?
                 </Typography>
-                <Link href="#" variant="body2" id="link" onClick={() => toggleForm('login')} sx={{ cursor: 'pointer', ml: 1 }}>
+                <Link 
+                  href="#" 
+                  variant="body2" 
+                  id="link" 
+                  onClick={() => toggleForm('login')} 
+                  sx={{ 
+                    cursor: 'pointer', 
+                    ml: 1 
+                  }}
+                >
                   Sign In
                 </Link>
               </Box>
-              <Box sx={{ position: 'relative', width: '100%' }}>
+              <Box 
+                sx={{ 
+                  position: 'relative', 
+                  width: '100%' 
+                }}
+              >
                 {error && (
-                  <Box display="flex" justifyContent="center" alignItems="center" width="100%" sx={{ position: 'absolute', top: '110%', left: 0 }}>
-                    <Typography variant="body2" color="error" textAlign="center">
+                  <Box 
+                    display="flex" 
+                    justifyContent="center" 
+                    alignItems="center" 
+                    width="100%" 
+                    sx={{ 
+                      position: 'absolute', 
+                      top: '110%', 
+                      left: 0 
+                    }} 
+                  >
+                    <Typography 
+                      variant="body2" 
+                      color="error" 
+                      textAlign="center"
+                    >
                       {error}
                     </Typography>
                   </Box>
@@ -331,7 +428,11 @@ const Signup: React.FC<SignupProps> = ({ toggleForm }) => {
         </Card>
       </Container>
     </ThemeProvider>
-);
+  );
+  
+
+  
+  
 
 };
 

@@ -8,7 +8,7 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
 import { Loader, ReportsContainer, MatchedPair, ReportCard, ButtonGroup, UnmatchedReports, UnmatchedButtonGroup, UnmatchedReportCard } from '../../../../../styles/conflictStyle';
-
+import { matchedRecomendations } from '@/functions/requests';
 import { mainContentStyles } from '../../../../../styles/evaluateStyle';
 import { Dialog, DialogTitle, DialogContent } from '@mui/material';
 
@@ -37,7 +37,8 @@ const UserConflicts = () => {
 
     const type = searchParams.get('type');
     const name = pathname.split('/').pop();
-
+    const [aiInsight, setAiInsight] = useState(false);
+    const [reportBatchIndex, setReportBatchIndex] = useState(0);
     const [reportIds, setReportIds] = useState<number[]>([]);
     const [matchedReports, setMatchedReports] = useState<any[]>([]);
     const [unmatchedList1, setUnmatchedList1] = useState<any[]>([]);
@@ -54,7 +55,69 @@ const UserConflicts = () => {
 
     const [canGenerteReport, setCanGenerateReport] = useState(false);
 
+    const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
+    const aiToggle = async () => {
+        try {
+            setAiInsight((prevState) => !prevState);
+        } catch (error: any) {
+            console.log("ERROR enabling or disabling ai insights", error);
+        }
+    };
+    useEffect(() => {
+        // Only trigger when aiInsight is true
+        if (aiInsight) {
+            const fetchAllRecommendations = async () => {
+                try {
+                    for (const [index, report] of matchedReports.entries()) {
+                        try {
+                            const result = await matchedRecomendations(report);
+    
+                            // Log the result to verify it's in the expected format
+                            console.log("Recommendation result for report:", result);
+    
+                            // Check if the result has the 'result' property and if it's a string
+                            if (result && typeof result.result === 'string') {
+                                const recommendation = result.result;
+    
+                                // Get the first word of the recommendation
+                                const firstWord = recommendation.split(/\s+/)[0]; 
+    
+                                // Automatically select based on the first word
+                                if (firstWord === "Both") {
+                                    handleButtonClick('acceptBoth', index);
+                                } else if (firstWord === "Vulnerability-1") {
+                                    handleButtonClick('acceptLeft', index);
+                                } else if (firstWord === "Vulnerability-2") {
+                                    handleButtonClick('acceptRight', index);
+                                } else {
+                                    handleButtonClick('acceptNone', index);
+                                }
+                            } else {
+                                // Handle cases where result is not in the expected format
+                                console.warn("Unexpected result format:", result);
+                                handleButtonClick('acceptNone', index);
+                            }
+                        } catch (error) {
+                            console.error("Error fetching recommendation for report:", report, error);
+                        }
+    
+                        // Introduce a 3-second delay between each request
+                        await sleep(3000);
+                    }
+                } catch (error) {
+                    console.error("Error during fetching recommendations:", error);
+                } finally {
+                    setLoading(false); // Set loading to false after the process is complete
+                }
+            };
+    
+            fetchAllRecommendations(); // Call the function
+        }
+    }, [aiInsight, matchedReports]);
+    
+    
+    
     const fetchUploadIDsForReport = async () => {
         try {
             if (name && type === 'client') {
@@ -74,7 +137,7 @@ const UserConflicts = () => {
         }
     };
 
-
+    
 
 
     const fetchReportsJSON = async () => {
@@ -342,6 +405,15 @@ const UserConflicts = () => {
                         <Button onClick={() => selectAllReports('matchedLeft')}>Select All Left</Button>
                         <Button onClick={() => deselectAllReports('matchedLeft')}>Deselect All Left</Button>
                     </Box>
+                    <Box sx={{left:"20px"}} display="flex" justifyContent="space-between" alignItems="center">
+                        <Button
+                            variant="contained"
+                            color={aiInsight ? "primary" : "secondary"}
+                            onClick={aiToggle}
+                        >
+                            {aiInsight ? "Disable AI Insights" : "Enable AI Insights"}
+                        </Button>
+                    </Box>
                     <Box display="flex" gap={2} justifyContent="center">
                         <Button onClick={() => selectAllReports('matchedRight')}>Select All Right</Button>
                         <Button onClick={() => deselectAllReports('matchedRight')}>Deselect All Right</Button>
@@ -434,7 +506,7 @@ const UserConflicts = () => {
 
 
 
-    return (
+    return ( 
 
         <ReportsContainer sx={mainContentStyles}>
             {matchedReports.length > 0 && (

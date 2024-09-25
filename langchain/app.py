@@ -61,6 +61,76 @@ def reinsert_ips(result, ips):
         result = result.replace("[IP_ADDRESS]", ip, 1)  
     return result
 
+@app.route('/matchedRecommendations', methods=['POST'])
+def matched_recommendation():
+    auth_header = request.headers.get('Authorization')
+    if not auth_header or not auth_header.startswith('Bearer '):
+        return jsonify({'error': 'Authorization token is missing or invalid'}), 401
+
+    token = auth_header.split(" ")[1]
+    verification_result = verify_jwt(token)
+
+    if isinstance(verification_result, tuple):
+        return jsonify(verification_result[0]), verification_result[1]
+
+    data = request.json
+    chain_prompt_1 = data.get('chain_prompt_1', '')
+    chain_prompt_2 = data.get('chain_prompt_2', '')
+    print(chain_prompt_1)
+    print(chain_prompt_1)
+    if not chain_prompt_1 or not chain_prompt_2:
+        return jsonify({'error': 'Both chain_prompt_1 and chain_prompt_2 are required'}), 400
+
+    try:
+        load_dotenv(find_dotenv())
+        model_type = os.environ['MODEL_TYPE']
+
+        if model_type == 'openai':
+            openai.api_key = os.environ['API_KEY']
+            model = ChatOpenAI()
+        elif model_type == 'ollama':
+            model = ChatOllama(model="llama3.1:8b", base_url="http://host.docker.internal:11434")
+        elif model_type == 'gemini':
+            if "GOOGLE_API_KEY" not in os.environ:
+                os.environ["GOOGLE_API_KEY"] = os.environ['API_KEY']
+            model = ChatGoogleGenerativeAI(model="gemini-pro")
+        else:
+            raise ValueError(f"Invalid model type: {model_type}")
+
+        # Process both prompts at the same time
+        modified_prompt_1, ip_address_1 = extract_ips(chain_prompt_1)
+        modified_prompt_2, ip_address_2 = extract_ips(chain_prompt_2)
+
+        # Combine both prompts into a single template
+        template = """
+        Vulnerability 1: {chain_prompt_1} 
+        Vulnerability 2: {chain_prompt_2}
+        
+        You are a cybersecurity specialist. These are 2 vulnerabilities which have been matched by IP and other factors they have in common, being marked as possibly the same vulnerability. 
+        If they are the same vulnerability, select the one which is most descriptive by responding with "Vulnerability-1" or "Vulnerability-2" followed by your reasoning. 
+        ONLY if they are not the same, respond with "Both" followed by your reasoning. Keep all reasoning concise. The response should be the keyword followed by a newline then your reasoning. 
+        """
+        
+        # Pass both modified prompts into the template
+        prompt = ChatPromptTemplate.from_template(template)
+        chain = prompt | model
+
+        # Execute the model with both prompts as input
+        result = chain.invoke({
+            "chain_prompt_1": modified_prompt_1,
+            "chain_prompt_2": modified_prompt_2
+        })
+
+        # Reinserting IP addresses back into the result
+        final_result = reinsert_ips(result.content, ip_address_1)  # Concatenate the IPs if needed
+
+        return jsonify({'result': final_result})
+    
+    except Exception as e:
+        print(f"Error invoking model: {e}")
+        traceback.print_exc()
+        return jsonify({'error': f'Error invoking model: {e}'}), 500
+  
 @app.route('/unmatchedRecomendations', methods=['POST'])
 def unmatched_recommendation():
     data = request.json
@@ -106,7 +176,7 @@ def unmatched_recommendation():
         return jsonify({'error': f'Error invoking model: {e}'}), 500
 
 @app.route('/topVulChain', methods=['POST'])
-def run_test():
+def top_vul():
     #test_jwt()
     # Extract token from the Authorization header
     auth_header = request.headers.get('Authorization')

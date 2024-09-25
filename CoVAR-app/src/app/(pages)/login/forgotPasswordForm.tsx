@@ -34,7 +34,7 @@ const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({ toggleForm }) =
       setTimeout(() => {
         toggleForm('login'); // Redirect to login form
         setSuccessMessage('');
-      }, 10000);
+      }, 5000);
     } catch (error: any) {
       if (error.response && error.response.status === 404) {
         setError('No account found with this email address.');

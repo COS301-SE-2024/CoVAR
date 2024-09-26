@@ -1,52 +1,53 @@
-'use client'
+'use client';
 
 import { Box, Card, keyframes } from '@mui/material';
 import { styled } from '@mui/material/styles';
 
 export const ReportsContainer = styled(Box)(({ theme }) => ({
-    padding: theme.spacing(3),
-    overflow: 'auto',
+  padding: theme.spacing(3),
+  overflow: 'auto',
 }));
 
 export const MatchedPair = styled(Box)(({ theme }) => ({
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: theme.spacing(2),
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  marginBottom: theme.spacing(2),
 }));
 
 export const ReportRow = styled(Box)(({ theme }) => ({
-    display: 'flex',
-    justifyContent: 'space-between',
-    width: '100%',
+  display: 'flex',
+  justifyContent: 'space-between',
+  width: '100%',
 }));
 
 export const ReportCard = styled(Card)(({ theme }) => ({
-    width: '48%',
+  width: '48%',
 }));
 
 export const ButtonGroup = styled(Box)(({ theme }) => ({
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    margin: theme.spacing(2, 0),
-    width: '10%',
-    gap: theme.spacing(1),
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  margin: theme.spacing(2, 0),
+  width: '10%',
+  gap: theme.spacing(1),
 }));
+
 export const UnmatchedButtonGroup = styled(Box)(({ theme }) => ({
-    display: 'flex',
-    justifyContent: 'center',
-    marginTop: theme.spacing(2),
-    gap: theme.spacing(1),
+  display: 'flex',
+  justifyContent: 'center',
+  marginTop: theme.spacing(2),
+  gap: theme.spacing(1),
 }));
 
 export const UnmatchedReports = styled(Box)(({ theme }) => ({
-    marginTop: theme.spacing(4),
+  marginTop: theme.spacing(4),
 }));
 
-export const UnmatchedReportCard = styled(Card)(({ theme, selected }: { theme: any; selected: boolean }) => ({
-    marginBottom: theme.spacing(2),
-    border: selected ? `4px solid ${theme.palette.success.main}` : 'none',
+export const UnmatchedReportCard = styled(Card)<{ selected: boolean }>(({ theme, selected }) => ({
+  marginBottom: theme.spacing(2),
+  border: selected ? `4px solid ${theme.palette.success.main}` : 'none',
 }));
 
 const l5 = keyframes`
@@ -61,23 +62,23 @@ const l5 = keyframes`
   100%  {inset:0    35px 35px 0   }
 `;
 
-const LoaderWrapper = styled('div') `
+const LoaderWrapper = styled('div')`
   width: 65px;
   aspect-ratio: 1;
   position: relative;
 
   &:before,
   &:after {
-    content: "";
-    position: absolute;
-    border-radius: 50px;
-    box-shadow: 0 0 0 3px inset #fff;
-    animation: ${l5} 2.5s infinite;
+  content: "";
+  position: absolute;
+  border-radius: 50px;
+  box-shadow: 0 0 0 3px inset #fff;
+  animation: ${l5} 2.5s infinite;
   }
 
   &:after {
-    animation-delay: -1.25s;
-    border-radius: 0;
+  animation-delay: -1.25s;
+  border-radius: 0;
   }
 `;
 
@@ -85,3 +86,33 @@ export const Loader = () => {
   return <LoaderWrapper className="loader" />;
 };
 
+const rainbowPulse = keyframes`
+  0% {
+    border-color: red;
+  }
+  14% {
+    border-color: orange;
+  }
+  28% {
+    border-color: yellow;
+  }
+  42% {
+    border-color: green;
+  }
+  57% {
+    border-color: blue;
+  }
+  71% {
+    border-color: indigo;
+  }
+  85% {
+    border-color: violet;
+  }
+  100% {
+    border-color: red;
+  }
+`;
+
+export const PulseRainbow = styled('div')`
+  animation: ${rainbowPulse} 2s infinite;
+`;

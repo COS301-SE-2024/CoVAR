@@ -51,6 +51,8 @@ const UserConflicts = () => {
     const [reportType1, setReportType1] = useState<string>('');
     const [reportType2, setReportType2] = useState<string>('');
     const [selectedUnmatchedReports, setSelectedUnmatchedReports] = useState<{ list1: number[], list2: number[] }>({ list1: [], list2: [] });
+    const [aiSelections, setAiSelections] = useState<{ [index: number]: boolean }>({});
+
 
     const [canGenerteReport, setCanGenerateReport] = useState(false);
 
@@ -66,6 +68,7 @@ const UserConflicts = () => {
 
     useEffect(() => {
         console.log('final report:', finalReport);
+        console.log('aiSelect:', aiSelections);
     }
         , [finalReport]);
 
@@ -92,18 +95,18 @@ const UserConflicts = () => {
 
                                 // Automatically select based on the first word
                                 if (firstWord === "Both") {
-                                    handleButtonClick('acceptBoth', index);
+                                    handleButtonClick('acceptBoth', index, true);
                                 } else if (firstWord === "Vulnerability-1") {
-                                    handleButtonClick('acceptLeft', index);
+                                    handleButtonClick('acceptLeft', index, true);
                                 } else if (firstWord === "Vulnerability-2") {
-                                    handleButtonClick('acceptRight', index);
+                                    handleButtonClick('acceptRight', index, true);;
                                 } else {
-                                    handleButtonClick('acceptNone', index);
+                                    handleButtonClick('acceptNone', index, true);
                                 }
                             } else {
                                 // Handle cases where result is not in the expected format
                                 console.warn("Unexpected result format for matched report:", result);
-                                handleButtonClick('acceptNone', index);
+                                handleButtonClick('acceptNone', index, true);
                             }
                         } catch (error) {
                             console.error("Error fetching recommendation for matched report:", report, error);
@@ -331,8 +334,10 @@ const UserConflicts = () => {
         </>
     ), [unmatchedList2, isUnmatchedReportSelected, handleUnmatchedReport]);
 
-    const MemoizedReportCard = memo(({ report, isSelected }: { report: any; isSelected: boolean }) => (
-        <ReportCard sx={{ border: isSelected ? '4px solid #4caf50' : 'none' }}>
+    const MemoizedReportCard = memo(({ report, isSelected, aiSelected }: { report: any; isSelected: boolean; aiSelected: boolean }) => (
+        <ReportCard sx={{
+            border: isSelected ? (aiSelected ? '4px solid #2196f3' : '4px solid #4caf50') : 'none',
+        }}>
             <CardContent>
                 {Object.entries(report).map(([key, value]) => (
                     <Typography key={key} variant="body2">
@@ -346,18 +351,18 @@ const UserConflicts = () => {
     MemoizedReportCard.displayName = "MemoizedReportCard";
 
     const renderReport = useMemo(() => {
-        const render = (report: any, isSelected: boolean) => (
-            <MemoizedReportCard report={report} isSelected={isSelected} />
+        const render = (report: any, isSelected: boolean, index: number) => (
+            <MemoizedReportCard report={report} isSelected={isSelected} aiSelected={aiSelections[index]} />
         );
         render.displayName = "renderReportFunction";
         return render;
-    }, []);
+    }, [aiSelections]);
 
 
-    const handleButtonClick = (action: string, index: number) => {
+    const handleButtonClick = (action: string, index: number, aiSelected = false) => {
         setFinalReport(prevFinalReport => {
             const updatedReportSet = new Set(prevFinalReport);
-
+    
             if (action === 'acceptLeft') {
                 updatedReportSet.add(matchedReports[index][0]);
             } else if (action === 'acceptRight') {
@@ -369,13 +374,13 @@ const UserConflicts = () => {
                 updatedReportSet.delete(matchedReports[index][0]);
                 updatedReportSet.delete(matchedReports[index][1]);
             }
-
+    
             return Array.from(updatedReportSet);
         });
-
+    
         setSelectedReports(prevSelectedReports => {
             const updatedSelectedReports = { ...prevSelectedReports };
-
+    
             if (action === 'acceptLeft') {
                 updatedSelectedReports.left.push(index);
             } else if (action === 'acceptRight') {
@@ -387,9 +392,15 @@ const UserConflicts = () => {
                 updatedSelectedReports.left = updatedSelectedReports.left.filter(i => i !== index);
                 updatedSelectedReports.right = updatedSelectedReports.right.filter(i => i !== index);
             }
-
+    
             return updatedSelectedReports;
         });
+    
+        // Update AI selection tracking
+        setAiSelections(prevAiSelections => ({
+            ...prevAiSelections,
+            [index]: aiSelected,
+        }));
     };
 
 
@@ -491,7 +502,7 @@ const UserConflicts = () => {
                 {matchedReports.map(([report1, report2], index) => (
                     <MatchedPair key={index}>
                         <Box display="flex" width="100%" justifyContent="space-between" alignItems="center">
-                            {renderReport(report1, selectedReports.left.includes(index))}
+                            {renderReport(report1, selectedReports.left.includes(index), index)}
                             <ButtonGroup>
                                 <Button
                                     variant="contained"
@@ -522,7 +533,7 @@ const UserConflicts = () => {
                                     <CancelIcon />
                                 </Button>
                             </ButtonGroup>
-                            {renderReport(report2, selectedReports.right.includes(index))}
+                            {renderReport(report2, selectedReports.right.includes(index), index)}
                         </Box>
                     </MatchedPair>
                 ))}

@@ -349,6 +349,26 @@ router.get('/users/assigned_clients', authenticateToken, async (req, res) => {
     }
 });
 
+// Get all organizations assigned to the logged-in VA
+router.get('/users/assigned_organizations', authenticateToken, async (req, res) => {
+    const token = req.headers['authorization'].split(' ')[1];
+    const decodedToken = verifyToken(token);
+    const id = decodedToken.user_id;
+    
+    try {
+        const organizations = await pgClient.query(
+            `SELECT * FROM organizations 
+            WHERE organization_id IN (SELECT organization FROM assignment WHERE va = $1)`, 
+            [id]
+        );
+        res.send(organizations.rows);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
+});
+
+
 // Check if email exists in the database
 router.post('/users/checkEmailExists', async (req, res) => {
     const { email } = req.body;

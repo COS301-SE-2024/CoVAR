@@ -7,7 +7,7 @@ import SeverityDistribution from './components/severityDistribution';
 import VulnerabilityLineChart from './components/lineChart';
 import ReportsList from './components/reportsList';
 import TopVulnerabilities from './components/topVulnerabilities';
-import { fetchLastReportDates, getAllReports, getUserRole, fetchAssignedClients } from '@/functions/requests';
+import { fetchLastReportDates, getAllReports, getUserRole, fetchClientsAssigned, fetchOrganisationsAssigned } from '@/functions/requests';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import { evaluateLaunchStyles } from '../../../styles/evaluateStyle';
@@ -118,14 +118,19 @@ const Dashboard: React.FC = () => {
     const fetchAssignedUsersAndOrgs = async () => {
         try {
             const token = localStorage.getItem('accessToken');
-            const [usersResponse, orgsResponse, reportDates] = await Promise.all([
-                axios.get('/api/users/assigned_clients', { headers: { Authorization: `Bearer ${token}` } }),
-                axios.get('/api/users/assigned_organizations', { headers: { Authorization: `Bearer ${token}` } }),
+            const userId = userID;
+            console.log(userId);
+            const [clients, orgs, reportDates] = await Promise.all([
+                fetchClientsAssigned(token as string),
+                fetchOrganisationsAssigned(token as string),
                 fetchLastReportDates(token as string)
             ]);
-
-            setUsers(usersResponse.data);
-            setOrganizations(orgsResponse.data);
+            console.log(clients);
+            console.log(orgs);
+            console.log('Report Dates:', reportDates);
+    
+            setUsers(clients);
+            setOrganizations(orgs);
             setLastReportDatesClients(reportDates.clients);
             setLastReportDatesOrgs(reportDates.organizations);
             setLoading(false);
@@ -134,6 +139,8 @@ const Dashboard: React.FC = () => {
             setLoading(false);
         }
     };
+    
+    
 
     const calculateSeverityDistribution = (reports: VulnerabilityReport[]) => {
         const distribution: { [key: string]: number } = {
@@ -180,6 +187,26 @@ const Dashboard: React.FC = () => {
     const handleOrganizationButtonClick = (organization: Organization) => {
         router.push(`/evaluate/organization/${organization.name}`);
     };
+
+    const formatDate = (dateString: string) => {
+        if (!dateString) return 'No report';
+        const date = new Date(dateString);
+        
+        const formattedDate = date.toLocaleDateString('en-GB', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        });
+        
+        const formattedTime = date.toLocaleTimeString('en-GB', {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+        });
+
+        return `${formattedDate} ${formattedTime}`;
+    };
+
 
     const getReportsPerClient = async () => {
         try {
@@ -277,34 +304,34 @@ const Dashboard: React.FC = () => {
                     {users.length === 0 && organizations.length === 0 ? (
                         <Typography>No assigned clients or organisations found.</Typography>
                     ) : (
-                        <List>
-                            {users.map((user) => (
-                                <ListItem key={user.user_id} sx={{ marginBottom: 1, padding: 1, borderRadius: 1, boxShadow: 1 }}>
-                                    <ListItemText
-                                        primary={`User: ${user.username}`}
-                                        secondary={`Last Report: ${lastReportDatesClients.find(c => c.client_name === user.username)?.last_report_date || 'No report'}`}
-                                    />
-                                    <ListItemSecondaryAction>
-                                        <Button variant="contained" onClick={() => handleUserButtonClick(user)}>
-                                            Evaluate
-                                        </Button>
-                                    </ListItemSecondaryAction>
-                                </ListItem>
-                            ))}
-                            {organizations.map((org) => (
-                                <ListItem key={org.organization_id} sx={{ marginBottom: 1, padding: 1, borderRadius: 1, boxShadow: 1 }}>
-                                    <ListItemText
-                                        primary={`Organisation: ${org.name}`}
-                                        secondary={`Last Report: ${lastReportDatesOrgs.find(o => o.organization_name === org.name)?.last_report_date || 'No report'}`}
-                                    />
-                                    <ListItemSecondaryAction>
-                                        <Button variant="contained" onClick={() => handleOrganizationButtonClick(org)}>
-                                            Evaluate
-                                        </Button>
-                                    </ListItemSecondaryAction>
-                                </ListItem>
-                            ))}
-                        </List>
+                    <List>
+                        {users.map((user) => (
+                            <ListItem key={user.user_id} sx={{ marginBottom: 1, padding: 1, borderRadius: 1, boxShadow: 1 }}>
+                                <ListItemText
+                                    primary={`User: ${user.username}`}
+                                    secondary={`Last Report: ${formatDate(lastReportDatesClients.find(c => c.client_name === user.username)?.last_report_date as string) || 'No report'}`}
+                                />
+                                <ListItemSecondaryAction>
+                                    <Button variant="contained" onClick={() => handleUserButtonClick(user)}>
+                                        Evaluate
+                                    </Button>
+                                </ListItemSecondaryAction>
+                            </ListItem>
+                        ))}
+                        {organizations.map((org) => (
+                            <ListItem key={org.organization_id} sx={{ marginBottom: 1, padding: 1, borderRadius: 1, boxShadow: 1 }}>
+                                <ListItemText
+                                    primary={`Organisation: ${org.name}`}
+                                    secondary={`Last Report: ${formatDate(lastReportDatesOrgs.find(o => o.organization_name === org.name)?.last_report_date as string) || 'No report' }`}
+                                />
+                                <ListItemSecondaryAction>
+                                    <Button variant="contained" onClick={() => handleOrganizationButtonClick(org)}>
+                                        Evaluate
+                                    </Button>
+                                </ListItemSecondaryAction>
+                            </ListItem>
+                        ))}
+                    </List>
                     )}
                 </Paper>
             </Box>

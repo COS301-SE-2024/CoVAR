@@ -3,7 +3,7 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { Button, Card, CardContent, CircularProgress, TextField, Typography, IconButton} from '@mui/material';
 import { Box } from '@mui/system';
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
-import { getUserRole, fetchUsersByOrg, removeUser, addUser, deleteOrganisation, createOrganisation, changeOrganisationName, leaveOrganisation, inviteMember, fetchInvites, acceptInvite, rejectInvite } from '../../../functions/requests';
+import { getUserRole, fetchUsersByOrg, removeUser, deleteOrganisation, createOrganisation, changeOrganisationName, leaveOrganisation, inviteMember, fetchInvites, acceptInvite, rejectInvite } from '../../../functions/requests';
 import { buttonStyles, cardStyles, headingBoxStyles, mainContentStyles, textFieldStyles } from '../../../styles/organisationStyle';
 import { useRouter } from 'next/navigation';
 import AcceptIcon from '@mui/icons-material/Check'; 

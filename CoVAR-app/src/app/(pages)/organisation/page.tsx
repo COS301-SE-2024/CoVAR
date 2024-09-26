@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { Button, Card, CardContent, CircularProgress, TextField, Typography, IconButton} from '@mui/material';
 import { Box } from '@mui/system';
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
@@ -8,6 +8,8 @@ import { buttonStyles, cardStyles, headingBoxStyles, mainContentStyles, textFiel
 import { useRouter } from 'next/navigation';
 import AcceptIcon from '@mui/icons-material/Check'; 
 import RejectIcon from '@mui/icons-material/Close';
+import { useTheme } from '@mui/material/styles';
+
 type User = {
     id: string;
     email: string;
@@ -16,6 +18,7 @@ type User = {
 };
 
 const Organisation = () => {
+    const theme = useTheme();
     const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
     const [newMemberEmail, setNewMemberEmail] = useState('');
@@ -30,9 +33,11 @@ const Organisation = () => {
     const [inviteMemberMessage, setInviteMemberMessage] = useState<string | null>(null);
     const [changeNameMessage, setChangeNameMessage] = useState<string | null>(null);
     const [disbandOrgMessage, setDisbandOrgMessage] = useState<string | null>(null);
+    const [leaveOrgMessage, setLeaveOrgMessage] = useState<string | null>(null);
     const [createOrgErrorMessage, setCreateOrgErrorMessage] = useState<string | null>(null);
     const [isChangeNameButtonDisabled, setIsChangeNameButtonDisabled] = useState(true);
     const [invites, setInvites] = useState([]);
+    const pollingRef = useRef<NodeJS.Timeout | null>(null);
 
     const router = useRouter();
     
@@ -113,6 +118,8 @@ const Organisation = () => {
                 const status = await removeUser(isInOrg, ownerId, user.email, accessToken);
                 if (status === 200) {
                     setUsers(users.filter((u) => u.id !== user.id));
+                    await fetchUserRole(); 
+                    await fetchUsersList();
                 }
             }
         } catch (error:any) {
@@ -128,13 +135,52 @@ const Organisation = () => {
             const accessToken = localStorage.getItem('accessToken');
             if (accessToken && isInOrg && username) {
                 const status = await leaveOrganisation(isInOrg, username, accessToken);
+                console.log('1');
+                console.log('2');
+                if (status === 200) {
+                    console.log('Successfully left organisation');
+                    setIsInOrg(null);
+                    setOrganisationName('');
+                    setDisbandOrgMessage('Successfully left organisation');
+                    setUsers([]); 
+                    setTimeout(() => setLeaveOrgMessage(null), 10000);
+                    await getInvites();
+                }
+            }
+        } catch (error:any) {
+            setLeaveOrgMessage('Error leaving organisation.');
+            setTimeout(() => setLeaveOrgMessage(null), 10000);
+            if(error.response?.status === 403) {
+                redirectToLogin();
+            }
+        }
+    };
+
+    const handleDeleteOrganisation = async () => {
+        try {
+            const accessToken = localStorage.getItem('accessToken');
+            if (accessToken && isInOrg) {
+                const status = await deleteOrganisation(
+                    isInOrg,
+                    confirmDisbandOrganisationName,
+                    accessToken
+                );
                 if (status === 200) {
                     setIsInOrg(null);
                     setOrganisationName('');
+                    setConfirmDisbandOrganisationName('');
+                    setDisbandOrgMessage('Organisation disbanded successfully');
+                    setUsers([]); 
+                    setTimeout(() => setDisbandOrgMessage(null), 10000);
+                    await getInvites();
                 }
             }
-        } catch (error) {
-            console.error('Error leaving organisation:', error);
+        } catch (error:any) {
+            setDisbandOrgMessage('Error disbanding organisation.');
+            setTimeout(() => setDisbandOrgMessage(null), 10000);
+            if(error.response?.status === 403) {
+                redirectToLogin();
+            }
         }
     };
 
@@ -145,19 +191,26 @@ const Organisation = () => {
             const accessToken = localStorage.getItem('accessToken');
             if (accessToken && isInOrg && ownerId) {
                 const status = await inviteMember(isInOrg, ownerId, newMemberEmail, accessToken);
-                if (status === 200) {
+                if (status === 200 || status === 201) {
                     setNewMemberEmail('');
                     setInviteMemberMessage('Invite sent successfully.');
                     setTimeout(() => setInviteMemberMessage(null), 10000);
                 }
             }
         } catch (error) {
+            if (error.response?.status === 403) {
+                redirectToLogin();
+            } 
             if (error.response && error.response.data) {
                 setInviteMemberMessage(error.response.data);
             } else {
                 setInviteMemberMessage('Error sending invite.');
             }
             setTimeout(() => setInviteMemberMessage(null), 10000);
+
+            if (error.response?.status === 403) {
+                redirectToLogin();
+            } 
         }
     };
     
@@ -168,10 +221,13 @@ const Organisation = () => {
             if (accessToken && username) {
                 const inviteData = await fetchInvites(username, accessToken);
                 setInvites(inviteData); 
-                console.log("Invites:", inviteData);
             }
         } catch (error) {
             console.error('Error fetching invites:', error);
+
+            if (error.response?.status === 403) {
+                redirectToLogin();
+            } 
         }
     }, [username]);
 
@@ -181,6 +237,8 @@ const Organisation = () => {
             if (accessToken && inviteId) {
                 const response = await acceptInvite(inviteId, accessToken); 
                 getInvites(); 
+                await fetchUserRole(); 
+                await fetchUsersList();
                 setInviteMemberMessage('Invite accepted successfully.');
                 setTimeout(() => setInviteMemberMessage(null), 10000);
             }
@@ -214,13 +272,37 @@ const Organisation = () => {
             }
         }
     };
-    
+
+    const startPolling = useCallback(() => {
+        if (!pollingRef.current) {
+            pollingRef.current = setInterval(() => {
+                getInvites();
+            }, 5000); 
+        }
+    }, [getInvites]);
+
+    const stopPolling = useCallback(() => {
+        if (pollingRef.current) {
+            clearInterval(pollingRef.current);
+            pollingRef.current = null;
+        }
+    }, []);
+
 
     useEffect(() => {
         if (!isInOrg) {
-            getInvites();
+            getInvites(); 
+            startPolling(); // Start polling for invites
+        } else {
+            stopPolling(); // Stop polling if the user is in an organization
         }
-    }, [isInOrg, getInvites]);
+
+        // Cleanup function to stop polling on unmount or when isInOrg changes
+        return () => {
+            stopPolling();
+        };
+    }, [isInOrg, getInvites, startPolling, stopPolling]);
+
 
     const handleChangeOrganisationName = async () => {
         try {
@@ -250,32 +332,6 @@ const Organisation = () => {
         }
     };
 
-    const handleDeleteOrganisation = async () => {
-        try {
-            const accessToken = localStorage.getItem('accessToken');
-            if (accessToken && isInOrg) {
-                const status = await deleteOrganisation(
-                    isInOrg,
-                    confirmDisbandOrganisationName,
-                    accessToken
-                );
-                if (status === 200) {
-                    setIsInOrg(null);
-                    setOrganisationName('');
-                    setConfirmDisbandOrganisationName('');
-                    setDisbandOrgMessage('Organisation disbanded successfully');
-                    setUsers([]); 
-                    setTimeout(() => setDisbandOrgMessage(null), 10000);
-                }
-            }
-        } catch (error:any) {
-            setDisbandOrgMessage('Error disbanding organisation.');
-            setTimeout(() => setDisbandOrgMessage(null), 10000);
-            if(error.response?.status === 403) {
-                redirectToLogin();
-            }
-        }
-    };
     
 
     const handleCreateNewOrganisation = async () => {
@@ -414,7 +470,13 @@ const Organisation = () => {
                                         {invites.map((invite) => (
                                             <Box
                                                 key={invite.invite_id} 
-                                                sx={{ mb: 2, display: 'flex', alignItems: 'center', border: '1px solid silver', borderRadius: 1, p: 1 }}
+                                                sx={{
+                                                     mb: 2, 
+                                                     display: 'flex', 
+                                                     alignItems: 'center', 
+                                                     border: `1px solid ${theme.palette.mode === 'light' ? 'silver' : 'rgb(102, 114, 119)'}`, 
+                                                     borderRadius: 1, p: 1 
+                                                    }}
                                             >
                                                 <Typography color="text.primary" sx={{ flexGrow: 1 }}>
                                                     {invite.organization_name}
@@ -424,7 +486,7 @@ const Organisation = () => {
                                                     onClick={() => handleRejectInvite(invite.invite_id)}
                                                     sx={{
                                                         ml: 1,
-                                                        border: '1px solid lightgray', 
+                                                        border: `1px solid ${theme.palette.mode === 'light' ? 'lightgray' : 'rgb(102, 114, 119)'}`, 
                                                         borderRadius: '50%', 
                                                         '&:hover': { backgroundColor: 'rgba(211, 28, 69, 0.1)' }
                                                     }} 
@@ -436,9 +498,10 @@ const Organisation = () => {
                                                     onClick={() => handleAcceptInvite(invite.invite_id)}
                                                     sx={{
                                                         ml: 1,
-                                                        border: '1px solid lightgray', 
+                                                        border: `1px solid ${theme.palette.mode === 'light' ? 'lightgray' : 'rgb(102, 114, 119)'}`, 
                                                         borderRadius: '50%', 
-                                                        '&:hover': { backgroundColor: 'rgba(0, 150, 255, 0.1)' }
+                                                        '&:hover': { backgroundColor: 'rgba(0, 150, 255, 0.1)' },
+                                                        '& svg': {color: theme.palette.mode === 'light' ? 'inherit' : 'rgb(76, 175, 80)', }
                                                     }} 
                                                 >
                                                     <AcceptIcon />
@@ -693,6 +756,21 @@ const Organisation = () => {
                             >
                                 Leave Organisation
                             </Button>
+                            <Box sx={{ mt: 1, textAlign: 'center' }}>
+                            {leaveOrgMessage && (
+                                <Typography
+                                    variant="body2"
+                                    color={leaveOrgMessage.startsWith('Error') ? 'error.main' : 'success.main'}
+                                    sx={{ 
+                                        display: 'inline-block',
+                                        whiteSpace: 'nowrap',
+                                        mb: 4  
+                                    }}
+                                >
+                                    {leaveOrgMessage}
+                                </Typography>    
+                            )}
+                            </Box>
                     </CardContent>
                 </Card>
                 </Box>

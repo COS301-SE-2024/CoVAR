@@ -264,8 +264,9 @@ router.post('/organizations/leave', authenticateToken, async (req, res) => {
         }
 
         await pgClient.query('UPDATE users SET organization_id = NULL WHERE user_id = $1', [userId]);
-
-        res.send('User left the organisation successfully');
+        
+        res.send('Successfully left organisation ');
+        console.log('Successfully left organisation');
     } catch (err) {
         console.error('Error leaving organization:', err);
         res.status(500).send('Server Error');
@@ -295,13 +296,13 @@ router.delete('/organizations/:orgId/delete', authenticateToken, async (req, res
 
         // Check if the user is the owner of the organization
         if (organization.rows[0].owner !== userId) {
-            return res.status(403).json({ error: 'Only the owner can remove users from the organization' });
+            return res.status(403).json({ error: 'Only the owner can remove users from the organisation' });
         }
 
         // Remove all users from the organization
         await pgClient.query('UPDATE users SET organization_id = NULL WHERE organization_id = $1', [orgId]);
 
-        return res.status(200).json({ message: 'All users removed from the organization successfully' });
+        return res.status(200).json({ message: 'All users removed from the organisation successfully' });
     } catch (error) {
         console.error('Error deleting organization:', error);
         return res.status(500).json({ error: 'Internal server error' });

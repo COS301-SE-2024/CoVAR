@@ -1,7 +1,7 @@
-'use client'
+'use client';
 import React, { useEffect, useState } from 'react';
 import { CircularProgress, Box, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Typography, Button } from '@mui/material';
-import { populateReportsTable, fetchExecReport } from '@/functions/requests';
+import { populateReportsTable, fetchExecReport, fetchTechReport } from '@/functions/requests'; // Assume fetchTechReport is a new function in your requests file
 import DownloadIcon from '@mui/icons-material/Download';
 import { mainContentStyles } from '@/styles/evaluateStyle';
 
@@ -48,7 +48,6 @@ const ReportsPage = () => {
                 alignItems: 'center',
                 width: '90%',
                 height: '100%',
-
             }}>
                 <CircularProgress />
             </Box>
@@ -57,7 +56,7 @@ const ReportsPage = () => {
 
     const handleFetchExecReport = async (reportId: string) => {
         try {
-            const blob = await fetchExecReport(reportId); // Fetch the PDF blob
+            const blob = await fetchExecReport(reportId); // Fetch the PDF blob for executive report
 
             // Create a URL for the blob
             const url = window.URL.createObjectURL(new Blob([blob]));
@@ -82,13 +81,40 @@ const ReportsPage = () => {
         }
     };
 
+    const handleFetchTechReport = async (reportId: string) => {
+        try {
+            const blob = await fetchTechReport(reportId); // Fetch the PDF blob for technical report
+
+            // Create a URL for the blob
+            const url = window.URL.createObjectURL(new Blob([blob]));
+
+            // Create a link element
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `technical_report_${reportId}.pdf`); // Set the file name
+
+            // Append the link to the document body
+            document.body.appendChild(link);
+
+            // Programmatically click the link to trigger the download
+            link.click();
+
+            // Clean up by removing the link and revoking the object URL
+            link.parentNode?.removeChild(link);
+            window.URL.revokeObjectURL(url);
+
+        } catch (error) {
+            console.error('Error fetching technical report:', error);
+        }
+    };
+
     return (
         <Box sx={{ ...mainContentStyles, padding: 3, width: '100%' }}>
             <Typography variant="h4" sx={{ marginBottom: 2 }}>
                 Reports
             </Typography>
-            <TableContainer component={Paper} sx={{ border: '1px solid #ccc' }}>
-                <Table>
+            <TableContainer component={Paper} sx={{ border: '1px solid #ccc', maxHeight: 800, overflowY: 'auto' }}>
+                <Table stickyHeader>
                     <TableHead sx={{ backgroundColor: '#52796F' }}>
                         <TableRow>
                             <TableCell sx={{ color: '#CAD2C5', fontWeight: 'bold' }}>Report ID</TableCell>
@@ -112,11 +138,19 @@ const ReportsPage = () => {
                                         variant="contained"
                                         color="primary"
                                         onClick={() => handleFetchExecReport(report.report_id)}
-                                        startIcon={<DownloadIcon />} // Add this line to include the icon
+                                        startIcon={<DownloadIcon />} // Icon for Executive Report
                                     >
                                         Download Executive Report
                                     </Button>
-
+                                    <Button
+                                        variant="contained"
+                                        color="secondary"
+                                        onClick={() => handleFetchTechReport(report.report_id)}
+                                        startIcon={<DownloadIcon />} // Icon for Technical Report
+                                        sx={{ marginLeft: 2 }}
+                                    >
+                                        Download Technical Report
+                                    </Button>
                                 </TableCell>
                             </TableRow>
                         ))}

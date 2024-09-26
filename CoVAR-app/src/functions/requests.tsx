@@ -485,7 +485,19 @@ export const fetchExecReport = async (reportId:any) => {
     const response = await handleRequest(request);
     return new Blob([response]);
 }
-
+export const fetchTechReport = async (reportId:any) => {
+    const token = localStorage.getItem('accessToken');
+    const request: AxiosRequestConfig = {
+        method: 'get',
+        url: `/api/reports/tech/${reportId}`,
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+        responseType: 'blob' ,
+    };
+    const response = await handleRequest(request);
+    return new Blob([response]);
+}
 export const fetchAndMatchReports = async (reportIds: number[]) => {
     try {
         if (reportIds.length > 0) {

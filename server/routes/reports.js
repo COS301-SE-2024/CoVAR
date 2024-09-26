@@ -775,6 +775,188 @@ router.get('/reports/executive/:report_id', authenticateToken, async (req, res) 
         res.status(500).json({ error: 'Internal Server Error' });
     }
 });
+router.get('/reports/tech/:report_id', authenticateToken, async (req, res) => {
+    try {
+        const { report_id } = req.params;
+
+        // Fetch the report data by ID
+        const reportResult = await pgClient.query(
+            'SELECT report_id, created_at, content FROM reports WHERE report_id = $1',
+            [report_id]
+        );
+
+        if (reportResult.rows.length === 0) {
+            return res.status(404).json({ error: 'Report not found' });
+        }
+        const report = reportResult.rows[0];
+
+        const clientName = report.title || 'UnknownClient';
+        const reportCreationDate = new Date(report.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+        const doc = new PDFDocument({
+            size: 'A4',
+            margin: 50,
+            autoFirstPage: false
+        });
+
+        const sanitizedClientName = clientName.replace(/[^a-zA-Z0-9]/g, '_');
+        let filename = `CoVarExecutive-${sanitizedClientName}-${reportCreationDate}.pdf`;
+        filename = encodeURIComponent(filename);
+        res.setHeader('Content-disposition', `attachment; filename="${filename}"`);
+        res.setHeader('Content-type', 'application/pdf');
+
+        doc.pipe(res);
+
+        const creationDate = new Date(report.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long' });
+
+        // Cover Page Setup (same as before)
+        doc.addPage();
+        const imagePath = path.join(__dirname, '../routes/assets/4546131_3922.jpg');
+        doc.image(imagePath, { fit: [500, 500], align: 'center', valign: 'center' });
+        doc.moveDown(35);
+
+        doc.rect(50, doc.y, 500, 70).fill('darkblue');
+        doc.fontSize(24).fillColor('white').text('Cyber Security Vulnerability Report', 60, doc.y, { align: 'left' });
+        doc.text(reportCreationDate, 60, doc.y + 10, { align: 'left' });
+
+        doc.rect(50, doc.y, 500, 30).fill('gray');
+        doc.fontSize(12).fillColor('white').text('BlueVision ITM (Pty) Limited', 60, doc.y + 10, { align: 'left' });
+
+        doc.moveDown(4);
+        doc.fontSize(8).fillColor('gray').text(`Disclosure Classification: Confidential`, { align: 'left' });
+        doc.text(`2022 Revision: 1.0`, { align: 'right' });
+
+        const addHeader = () => {
+            doc.fontSize(10).text(`Cyber Security Vulnerability Report ${creationDate}`, 50, 40);
+            doc.text(`BlueVision ITM (Pty) Limited`, { align: 'right' });
+            doc.moveDown();
+        };
+        let pagenumber = 1;
+        const addFooter = () => {
+            doc.fontSize(8).fillColor('gray').text(`Cyber Security Vulnerability Report ${creationDate} Revision: 1.0`, 50, doc.page.height - 90);
+            doc.text(`Disclosure Classification: Confidential`);
+            doc.text(`© Copyright BlueVision ITM (PTY) Limited – All Rights Reserved.`);
+            doc.text(`Page ${pagenumber++}`, { align: 'right' });
+        };
+
+        const addNewPage = () => {
+            if (doc.pageNumber > 0) {
+                addFooter();
+                doc.addPage();
+            } else {
+                doc.addPage();
+            }
+            addHeader();
+        };
+
+        addNewPage();
+
+        doc.fontSize(20).text('Technical Report', { align: 'center' });
+        doc.moveDown();
+        doc.text(`Date Created: ${new Date(report.created_at).toLocaleDateString()}`);
+        doc.moveDown();
+
+        doc.fontSize(18).fillColor('black').text('Vulnerability Manager', { align: 'left' });
+        doc.fontSize(12).text('Greenbone Vulnerability Manager is proprietary software...', { align: 'left' });
+
+        doc.fontSize(18).text('Risk Profile', { align: 'left' });
+        doc.fontSize(12).text('A system’s risk profile is constructed by...', { align: 'left' });
+        doc.moveDown();
+
+        // Updated Table of Contents
+        doc.fontSize(14).text('Table of Contents', { align: 'left' });
+        doc.moveDown(0.5);
+
+        const tableTop = doc.y;
+        const tableLeft = 50;
+        const tableWidth = 450;  // Reduced total width for the table
+        const cellPadding = 5;
+        const columnWidths = [50, 100, 100, 200];  // Updated column widths for smaller size
+        const rowHeight = 25;
+
+        // Table header background
+        doc.rect(tableLeft, tableTop, tableWidth, rowHeight).fillAndStroke('darkblue', 'black');
+
+        // Table headers with 4th column "Hosts"
+        doc.fillColor('white').fontSize(10).text('No.', tableLeft + cellPadding, tableTop + cellPadding, { width: columnWidths[0], align: 'center' });
+        doc.text('Vulnerability', tableLeft + columnWidths[0] + cellPadding, tableTop + cellPadding, { width: columnWidths[1], align: 'center' });
+        doc.text('CVSS Score', tableLeft + columnWidths[0] + columnWidths[1] + cellPadding, tableTop + cellPadding, { width: columnWidths[2], align: 'center' });
+        doc.text('Hosts', tableLeft + columnWidths[0] + columnWidths[1] + columnWidths[2] + cellPadding, tableTop + cellPadding, { width: columnWidths[3], align: 'center' });
+
+        doc.fillColor('black');
+
+        // Updated drawRow function to include the 4th column "Hosts"
+        const drawRow = (y, index, vulnerability, cvss, hosts) => {
+            const textOptions = { width: columnWidths[1] - 2 * cellPadding, align: 'left' };
+            
+            // Calculate the height needed for the vulnerability text
+            const vulnerabilityHeight = doc.heightOfString(vulnerability, textOptions);
+            const rowHeightAdjusted = Math.max(vulnerabilityHeight + 2 * cellPadding, rowHeight);  // Ensure the row height is at least the default rowHeight
+        
+            // Draw table cells
+            doc.rect(tableLeft, y, columnWidths[0], rowHeightAdjusted).stroke();
+            doc.rect(tableLeft + columnWidths[0], y, columnWidths[1], rowHeightAdjusted).stroke();
+            doc.rect(tableLeft + columnWidths[0] + columnWidths[1], y, columnWidths[2], rowHeightAdjusted).stroke();
+            doc.rect(tableLeft + columnWidths[0] + columnWidths[1] + columnWidths[2], y, columnWidths[3], rowHeightAdjusted).stroke();
+        
+            // Write text inside the cells
+            doc.text(index.toString(), tableLeft + cellPadding, y + cellPadding, { width: columnWidths[0], align: 'center' });
+            doc.text(vulnerability, tableLeft + columnWidths[0] + cellPadding, y + cellPadding, textOptions);
+            doc.text(cvss, tableLeft + columnWidths[0] + columnWidths[1] + cellPadding, y + cellPadding, { width: columnWidths[2], align: 'center' });
+            doc.text(hosts.join(', '), tableLeft + columnWidths[0] + columnWidths[1] + columnWidths[2] + cellPadding, y + cellPadding, { width: columnWidths[3], align: 'center' });
+        
+            // Return the adjusted row height for positioning the next row
+            return rowHeightAdjusted;
+        };
+
+        // Fetch and loop through the report TOC data
+        try {
+            const reportTOCResult = await pgClient.query(
+                `
+                WITH final_report AS (
+                    SELECT 
+                        json_array_elements(content->'finalReport') AS report_element 
+                    FROM reports 
+                    WHERE report_id = $1
+                )
+                SELECT 
+                    report_element ->> 'nvtName' AS nvt_name, 
+                    json_agg(report_element ->> 'IP') AS hosts, 
+                    report_element ->> 'CVSS' AS cvss_score
+                FROM final_report 
+                GROUP BY nvt_name, cvss_score;
+                `,
+                [report_id]
+            );
+
+            let currentY = tableTop + rowHeight;  // Initial Y position for the first row
+
+            // Draw rows dynamically
+            reportTOCResult.rows.forEach((row, index) => {
+                const adjustedRowHeight = drawRow(currentY, index + 1, row.nvt_name, row.cvss_score, row.hosts);
+                currentY += adjustedRowHeight;  // Move Y position for the next row
+            });
+
+        } catch (error) {
+            console.error("Error fetching report TOC:", error);
+            if (!res.headersSent) {  // Check if headers were already sent
+                res.status(500).send('Error fetching reports');
+            }
+        }
+
+        addFooter();
+        addNewPage();
+        
+        doc.end();
+    } catch (error) {
+        console.error('Error fetching reports:', error);
+        return res.status(500).json({ error: 'An error occurred while fetching reports' });
+    }
+});
+
+
+
+
 // const truncateToSecond = (date) => {
 //     const newDate = new Date(date);
 //     newDate.setMilliseconds(0);

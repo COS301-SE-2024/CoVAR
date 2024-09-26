@@ -20,7 +20,6 @@ router.get('/reports/all', authenticateToken, async (req, res) => {
 
 // Route to get the last report date for each client or organization
 router.get('/reports/last_report_dates', authenticateToken, async (req, res) => {
-
     try {
         // Query to get last report date for assigned clients
         const clientReports = await pgClient.query(
@@ -28,7 +27,7 @@ router.get('/reports/last_report_dates', authenticateToken, async (req, res) => 
             FROM users u
             JOIN user_reports ur ON u.user_id = ur.user_id
             JOIN reports r ON ur.report_id = r.report_id
-            WHERE u.role = 'client'
+            WHERE u.role = 'client' OR u.role = 'admin'
             GROUP BY u.username`
         );
 
@@ -45,6 +44,10 @@ router.get('/reports/last_report_dates', authenticateToken, async (req, res) => 
             clients: clientReports.rows,
             organizations: organizationReports.rows
         };
+
+        console.log('Client Reports:', clientReports.rows);
+        console.log('Organization Reports:', organizationReports.rows);
+
 
         res.send(result);
     } catch (err) {

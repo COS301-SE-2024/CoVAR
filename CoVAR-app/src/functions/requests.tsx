@@ -167,6 +167,8 @@ export const fetchAssignedClients = async (userId: string, accessToken: string) 
     return await handleRequest(request);
 };
 
+
+
 export const fetchAssignedOrganisations = async (userId: string, accessToken: string) => {
     const request = {
         method: 'get',
@@ -177,17 +179,30 @@ export const fetchAssignedOrganisations = async (userId: string, accessToken: st
 };
 
 export const fetchLastReportDates = async (token: string) => {
-    try {
-        const response = await axios.get('/api/reports/last_report_dates', {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-        });
-        return response.data;
-    } catch (error) {
-        console.error('Error fetching last report dates:', error);
-        throw error;
-    }
+    const request = {
+        method: 'get',
+        url: '/api/reports/last_report_dates',
+        headers: { Authorization: `Bearer ${token}` },
+    };
+    return await handleRequest(request);
+};
+
+export const fetchClientsAssigned = async (token: string) => {
+    const request = {
+        method: 'get',
+        url: '/api/users/assigned_clients',
+        headers: { Authorization: `Bearer ${token}` },
+    };
+    return await handleRequest(request);
+};
+
+export const fetchOrganisationsAssigned = async (token: string) => {
+    const request = {
+        method: 'get',
+        url: '/api/users/assigned_organizations',
+        headers: { Authorization: `Bearer ${token}` },
+    };
+    return await handleRequest(request);
 };
 
 export const assignClient = async (userId: string, clientUsername: string, accessToken: string) => {

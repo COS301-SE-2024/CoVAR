@@ -7,7 +7,7 @@ import SeverityDistribution from './components/severityDistribution';
 import VulnerabilityLineChart from './components/lineChart';
 import ReportsList from './components/reportsList';
 import TopVulnerabilities from './components/topVulnerabilities';
-import { fetchLastReportDates, getAllReports, getUserRole, fetchAssignedClients } from '@/functions/requests';
+import { fetchLastReportDates, getAllReports, getUserRole, fetchClientsAssigned, fetchOrganisationsAssigned } from '@/functions/requests';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import { evaluateLaunchStyles } from '../../../styles/evaluateStyle';
@@ -118,14 +118,19 @@ const Dashboard: React.FC = () => {
     const fetchAssignedUsersAndOrgs = async () => {
         try {
             const token = localStorage.getItem('accessToken');
-            const [usersResponse, orgsResponse, reportDates] = await Promise.all([
-                axios.get('/api/users/assigned_clients', { headers: { Authorization: `Bearer ${token}` } }),
-                axios.get('/api/users/assigned_organizations', { headers: { Authorization: `Bearer ${token}` } }),
+            const userId = userID;
+            console.log(userId);
+            const [clients, orgs, reportDates] = await Promise.all([
+                fetchClientsAssigned(token as string),
+                fetchOrganisationsAssigned(token as string),
                 fetchLastReportDates(token as string)
             ]);
-
-            setUsers(usersResponse.data);
-            setOrganizations(orgsResponse.data);
+            console.log(clients);
+            console.log(orgs);
+            console.log('Report Dates:', reportDates);
+    
+            setUsers(clients);
+            setOrganizations(orgs);
             setLastReportDatesClients(reportDates.clients);
             setLastReportDatesOrgs(reportDates.organizations);
             setLoading(false);
@@ -134,6 +139,8 @@ const Dashboard: React.FC = () => {
             setLoading(false);
         }
     };
+    
+    
 
     const calculateSeverityDistribution = (reports: VulnerabilityReport[]) => {
         const distribution: { [key: string]: number } = {

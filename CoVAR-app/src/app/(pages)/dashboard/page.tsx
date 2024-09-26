@@ -13,6 +13,7 @@ import axios from 'axios';
 import { evaluateLaunchStyles } from '../../../styles/evaluateStyle';
 import { fetchReportsPerClient } from '@/functions/requests';
 import ReportsPerClient from './components/reportsPerClient';
+import AdminPage from './components/adminPage';
 
 interface VulnerabilityReport {
     IP: string;
@@ -337,6 +338,15 @@ const Dashboard: React.FC = () => {
             </Box>
         );
     }
+
+    if (role === 'admin') {
+        return (
+            <Box sx={mainContentStyles}>
+                <AdminPage />
+            </Box>
+        );
+    }
+    
 
     return null;
 };

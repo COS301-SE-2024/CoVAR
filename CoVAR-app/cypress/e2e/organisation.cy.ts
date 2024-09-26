@@ -25,9 +25,9 @@ describe('Organisation E2E Tests', () => {
 
       // Check that the invite was sent successfully
       cy.get('body').then(($body) => {
-        if ($body.find('.MuiTypography-root').length > 0) {
-          cy.get('.MuiTypography-root')
-            .should('have.text', 'Invite sent successfully.')
+        if ($body.find('Typography[variant="body2"]').length > 0) {
+          cy.get('Typography[variant="body2"]')
+            .should('have.text', 'Invite sent successfully.');
         }
       });
 

@@ -9,6 +9,7 @@ import { dataGridStyles } from '@/styles/adminToolsStyle';
 import { Height } from '@mui/icons-material';
 import { mainContentStyles } from '@/styles/sidebarStyle';
 import SeverityDistribution from './severityDistribution';
+import { chartContainerStyles } from '@/styles/dashboardStyle';
 
 type User = {
     user_id: string;
@@ -174,7 +175,10 @@ const AdminPage: React.FC = () => {
                     <Typography>Admins: {userMetrics.admins}</Typography>
                     <Typography>VAs: {userMetrics.vas}</Typography>
                     <Typography>Clients: {userMetrics.clients}</Typography>
-                    <SeverityDistribution data={roleData} />
+                    <Paper sx={chartContainerStyles}>
+                        <Typography variant="h6">Role Distribution</Typography>
+                        <SeverityDistribution data={roleData} />
+                    </Paper>
                 </Paper>
 
 

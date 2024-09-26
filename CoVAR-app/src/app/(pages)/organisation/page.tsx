@@ -17,6 +17,14 @@ type User = {
     createdAt?: string;
 };
 
+type Invite = {
+    invite_id: string;
+    organization_name: string;
+    user_id: string;
+    invite_status: string;
+  };
+  
+
 const Organisation = () => {
     const theme = useTheme();
     const [users, setUsers] = useState<User[]>([]);
@@ -36,7 +44,7 @@ const Organisation = () => {
     const [leaveOrgMessage, setLeaveOrgMessage] = useState<string | null>(null);
     const [createOrgErrorMessage, setCreateOrgErrorMessage] = useState<string | null>(null);
     const [isChangeNameButtonDisabled, setIsChangeNameButtonDisabled] = useState(true);
-    const [invites, setInvites] = useState([]);
+    const [invites, setInvites]  = useState<Invite[]>([]);
     const pollingRef = useRef<NodeJS.Timeout | null>(null);
 
     const router = useRouter();

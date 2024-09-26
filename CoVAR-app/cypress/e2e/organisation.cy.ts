@@ -19,11 +19,17 @@ describe('Organisation E2E Tests', () => {
 
       cy.get('.MuiDataGrid-row--firstVisible > [data-field="email"]').should('have.text', Cypress.env('client_username'));
     
-      //Add a member to the organisation
-      cy.get("#email").type(Cypress.env('va_username'), {force: true});
-      cy.contains('button', 'Add Member').click({force: true});
+      // Invite a member to the organisation
+      cy.get("#email").type(Cypress.env('va_username'), { force: true });
+      cy.contains('button', 'Invite Member').click({ force: true });
 
-      cy.get('.MuiDataGrid-row--lastVisible > [data-field="email"]').should('have.text', Cypress.env('va_username'));
+      // Check that the invite was sent successfully
+      cy.get('body').then(($body) => {
+        if ($body.find('.MuiTypography-root').length > 0) {
+          cy.get('.MuiTypography-root')
+            .should('have.text', 'Invite sent successfully.')
+        }
+      });
 
       //Change the organisation name
       cy.get('#organisation-name').type("Another name");

@@ -229,7 +229,7 @@ const Organisation = () => {
                 redirectToLogin();
             } 
         }
-    }, [username]);
+    },  [username, redirectToLogin])
 
     const handleAcceptInvite = async (inviteId: string) => {
         try {

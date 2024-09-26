@@ -127,7 +127,7 @@ router.post('/organizations/:id/invite', authenticateToken, async (req, res) => 
         // Create an invite in the organization_invites table
         const inviteQuery = `INSERT INTO organization_invites (organization_id, user_id, invite_status) VALUES ($1, $2, 'pending')`;
         await pgClient.query(inviteQuery, [organizationId, userId]);
-        res.send('Invite sent to user successfully');
+        res.send('200');
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server Error');
@@ -265,8 +265,7 @@ router.post('/organizations/leave', authenticateToken, async (req, res) => {
 
         await pgClient.query('UPDATE users SET organization_id = NULL WHERE user_id = $1', [userId]);
         
-        res.send('Successfully left organisation ');
-        console.log('Successfully left organisation');
+        res.send('200');
     } catch (err) {
         console.error('Error leaving organization:', err);
         res.status(500).send('Server Error');

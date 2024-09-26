@@ -197,6 +197,7 @@ const Organisation = () => {
             const accessToken = localStorage.getItem('accessToken');
             if (accessToken && isInOrg && ownerId) {
                 const status = await inviteMember(isInOrg, ownerId, newMemberEmail, accessToken);
+                console.log('Status:', status);
                 if (status === 200) {
                     setNewMemberEmail('');
                     setInviteMemberMessage('Invite sent successfully.');

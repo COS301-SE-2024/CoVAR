@@ -181,6 +181,26 @@ const Dashboard: React.FC = () => {
         router.push(`/evaluate/organization/${organization.name}`);
     };
 
+    const formatDate = (dateString: string) => {
+        if (!dateString) return 'No report';
+        const date = new Date(dateString);
+        
+        const formattedDate = date.toLocaleDateString('en-GB', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        });
+        
+        const formattedTime = date.toLocaleTimeString('en-GB', {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+        });
+
+        return `${formattedDate} ${formattedTime}`;
+    };
+
+
     const getReportsPerClient = async () => {
         try {
             const data: ClientReport[] = await fetchReportsPerClient();
@@ -277,34 +297,34 @@ const Dashboard: React.FC = () => {
                     {users.length === 0 && organizations.length === 0 ? (
                         <Typography>No assigned clients or organisations found.</Typography>
                     ) : (
-                        <List>
-                            {users.map((user) => (
-                                <ListItem key={user.user_id} sx={{ marginBottom: 1, padding: 1, borderRadius: 1, boxShadow: 1 }}>
-                                    <ListItemText
-                                        primary={`User: ${user.username}`}
-                                        secondary={`Last Report: ${lastReportDatesClients.find(c => c.client_name === user.username)?.last_report_date || 'No report'}`}
-                                    />
-                                    <ListItemSecondaryAction>
-                                        <Button variant="contained" onClick={() => handleUserButtonClick(user)}>
-                                            Evaluate
-                                        </Button>
-                                    </ListItemSecondaryAction>
-                                </ListItem>
-                            ))}
-                            {organizations.map((org) => (
-                                <ListItem key={org.organization_id} sx={{ marginBottom: 1, padding: 1, borderRadius: 1, boxShadow: 1 }}>
-                                    <ListItemText
-                                        primary={`Organisation: ${org.name}`}
-                                        secondary={`Last Report: ${lastReportDatesOrgs.find(o => o.organization_name === org.name)?.last_report_date || 'No report'}`}
-                                    />
-                                    <ListItemSecondaryAction>
-                                        <Button variant="contained" onClick={() => handleOrganizationButtonClick(org)}>
-                                            Evaluate
-                                        </Button>
-                                    </ListItemSecondaryAction>
-                                </ListItem>
-                            ))}
-                        </List>
+                    <List>
+                        {users.map((user) => (
+                            <ListItem key={user.user_id} sx={{ marginBottom: 1, padding: 1, borderRadius: 1, boxShadow: 1 }}>
+                                <ListItemText
+                                    primary={`User: ${user.username}`}
+                                    secondary={`Last Report: ${formatDate(lastReportDatesClients.find(c => c.client_name === user.username)?.last_report_date as string) || 'No report'}`}
+                                />
+                                <ListItemSecondaryAction>
+                                    <Button variant="contained" onClick={() => handleUserButtonClick(user)}>
+                                        Evaluate
+                                    </Button>
+                                </ListItemSecondaryAction>
+                            </ListItem>
+                        ))}
+                        {organizations.map((org) => (
+                            <ListItem key={org.organization_id} sx={{ marginBottom: 1, padding: 1, borderRadius: 1, boxShadow: 1 }}>
+                                <ListItemText
+                                    primary={`Organisation: ${org.name}`}
+                                    secondary={`Last Report: ${formatDate(lastReportDatesOrgs.find(o => o.organization_name === org.name)?.last_report_date as string) || 'No report' }`}
+                                />
+                                <ListItemSecondaryAction>
+                                    <Button variant="contained" onClick={() => handleOrganizationButtonClick(org)}>
+                                        Evaluate
+                                    </Button>
+                                </ListItemSecondaryAction>
+                            </ListItem>
+                        ))}
+                    </List>
                     )}
                 </Paper>
             </Box>

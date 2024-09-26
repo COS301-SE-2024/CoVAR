@@ -116,9 +116,11 @@ const UserConflicts = () => {
                             // Check if the result has the 'result' property and if it's a string
                             if (result && typeof result.result === 'string') {
                                 const recommendation = result.result;
-    
+                                const firstWord = recommendation.split(/\s+/)[0]; 
+                                if(firstWord=="Keep"){
                                 // Handle the recommendation for unmatched reports (customize as needed)
-                                handleButtonClick('acceptUnmatched', index);  // You can customize logic here
+                                    handleUnmatchedReport('add', index, 'list1')  // You can customize logic here
+                                }
                             } else {
                                 // Handle cases where result is not in the expected format
                                 console.warn("Unexpected result format for unmatched report:", result);
@@ -140,8 +142,12 @@ const UserConflicts = () => {
                             // Log the result to verify it's in the expected format
                             console.log("Recommendation result for unmatched report 2:", result);
     
-                            // Handle the recommendation for unmatched reports (customize as needed)
-                            handleButtonClick('acceptUnmatched', index);  // You can customize logic here
+                            const recommendation = result.result;
+                                const firstWord = recommendation.split(/\s+/)[0]; 
+                                if(firstWord=="Keep"){
+                                // Handle the recommendation for unmatched reports (customize as needed)
+                                handleUnmatchedReport('add', index, 'list2');  // You can customize logic here
+                                }
                         } catch (error) {
                             console.error("Error fetching recommendation for unmatched report 2:", report, error);
                         }

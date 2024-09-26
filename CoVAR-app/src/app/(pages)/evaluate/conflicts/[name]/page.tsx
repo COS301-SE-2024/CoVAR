@@ -8,7 +8,7 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
 import { Loader, ReportsContainer, MatchedPair, ReportCard, ButtonGroup, UnmatchedReports, UnmatchedButtonGroup, UnmatchedReportCard } from '../../../../../styles/conflictStyle';
-import { matchedRecomendations,unmatchedRecomendations } from '@/functions/requests';
+import { matchedRecomendations, unmatchedRecomendations } from '@/functions/requests';
 import { mainContentStyles } from '../../../../../styles/evaluateStyle';
 import { Dialog, DialogTitle, DialogContent } from '@mui/material';
 
@@ -63,6 +63,12 @@ const UserConflicts = () => {
             console.log("ERROR enabling or disabling ai insights", error);
         }
     };
+
+    useEffect(() => {
+        console.log('final report:', finalReport);
+    }
+        , [finalReport]);
+
     useEffect(() => {
         // Only trigger when aiInsight is true
         if (aiInsight) {
@@ -70,19 +76,20 @@ const UserConflicts = () => {
                 try {
                     // Process matched reports first
                     for (const [index, report] of matchedReports.entries()) {
+
                         try {
                             const result = await matchedRecomendations(report);
-    
+
                             // Log the result to verify it's in the expected format
                             console.log("Recommendation result for matched report:", result);
-    
+
                             // Check if the result has the 'result' property and if it's a string
                             if (result && typeof result.result === 'string') {
                                 const recommendation = result.result;
-    
+
                                 // Get the first word of the recommendation
-                                const firstWord = recommendation.split(/\s+/)[0]; 
-    
+                                const firstWord = recommendation.split(/\s+/)[0];
+
                                 // Automatically select based on the first word
                                 if (firstWord === "Both") {
                                     handleButtonClick('acceptBoth', index);
@@ -101,22 +108,22 @@ const UserConflicts = () => {
                         } catch (error) {
                             console.error("Error fetching recommendation for matched report:", report, error);
                         }
-    
+
                         await sleep(200);
                     }
-    
+
                     // After completing the matched reports, process the unmatched ones
                     for (const [index, report] of unmatchedList1.entries()) {
                         try {
                             const result = await unmatchedRecomendations(report);
-    
+
                             // Log the result to verify it's in the expected format
                             console.log("Recommendation result for unmatched report:", result);
-    
+
                             // Check if the result has the 'result' property and if it's a string
                             if (result && typeof result.result === 'string') {
                                 const recommendation = result.result;
-    
+
                                 // Handle the recommendation for unmatched reports (customize as needed)
                                 handleButtonClick('acceptUnmatched', index);  // You can customize logic here
                             } else {
@@ -127,42 +134,42 @@ const UserConflicts = () => {
                         } catch (error) {
                             console.error("Error fetching recommendation for unmatched report:", report, error);
                         }
-    
-                        
+
+
                         await sleep(200);
                     }
-                    
+
                     // Process the second unmatched list, unmatchedList2 (if required)
                     for (const [index, report] of unmatchedList2.entries()) {
                         try {
                             const result = await unmatchedRecomendations(report);
-    
+
                             // Log the result to verify it's in the expected format
                             console.log("Recommendation result for unmatched report 2:", result);
-    
+
                             // Handle the recommendation for unmatched reports (customize as needed)
                             handleButtonClick('acceptUnmatched', index);  // You can customize logic here
                         } catch (error) {
                             console.error("Error fetching recommendation for unmatched report 2:", report, error);
                         }
-    
-                       
+
+
                         await sleep(200);
                     }
-    
+
                 } catch (error) {
                     console.error("Error during fetching recommendations:", error);
                 } finally {
                     setLoading(false); // Set loading to false after the process is complete
                 }
             };
-    
+
             fetchAllRecommendations(); // Call the function
         }
     }, [aiInsight, matchedReports, unmatchedList1, unmatchedList2]);
-    
-    
-    
+
+
+
     const fetchUploadIDsForReport = async () => {
         try {
             if (name && type === 'client') {
@@ -182,7 +189,7 @@ const UserConflicts = () => {
         }
     };
 
-    
+
 
 
     const fetchReportsJSON = async () => {
@@ -260,7 +267,7 @@ const UserConflicts = () => {
         return selectedUnmatchedReports[listType].includes(index);
     }, [selectedUnmatchedReports]);
 
-    
+
 
     const handleUnmatchedReport = (action: string, index: number, listType: 'list1' | 'list2') => {
 
@@ -342,31 +349,43 @@ const UserConflicts = () => {
 
 
     const handleButtonClick = (action: string, index: number) => {
-        const updatedReportSet = new Set(finalReport);
-        const updatedSelectedReports = { ...selectedReports };
+        setFinalReport(prevFinalReport => {
+            const updatedReportSet = new Set(prevFinalReport);
 
-        if (action === 'acceptLeft') {
-            updatedReportSet.add(matchedReports[index][0]);
-            updatedSelectedReports.left.push(index);
-        } else if (action === 'acceptRight') {
-            updatedReportSet.add(matchedReports[index][1]);
-            updatedSelectedReports.right.push(index);
-        } else if (action === 'acceptBoth') {
-            updatedReportSet.add(matchedReports[index][0]);
-            updatedReportSet.add(matchedReports[index][1]);
-            updatedSelectedReports.left.push(index);
-            updatedSelectedReports.right.push(index);
-        } else if (action === 'acceptNone') {
+            if (action === 'acceptLeft') {
+                updatedReportSet.add(matchedReports[index][0]);
+            } else if (action === 'acceptRight') {
+                updatedReportSet.add(matchedReports[index][1]);
+            } else if (action === 'acceptBoth') {
+                updatedReportSet.add(matchedReports[index][0]);
+                updatedReportSet.add(matchedReports[index][1]);
+            } else if (action === 'acceptNone') {
+                updatedReportSet.delete(matchedReports[index][0]);
+                updatedReportSet.delete(matchedReports[index][1]);
+            }
 
-            updatedReportSet.delete(matchedReports[index][0]);
-            updatedReportSet.delete(matchedReports[index][1]);
-            updatedSelectedReports.left = updatedSelectedReports.left.filter((i) => i !== index);
-            updatedSelectedReports.right = updatedSelectedReports.right.filter((i) => i !== index);
-        }
-        setFinalReport(Array.from(updatedReportSet));
-        setSelectedReports(updatedSelectedReports);
-       
+            return Array.from(updatedReportSet);
+        });
+
+        setSelectedReports(prevSelectedReports => {
+            const updatedSelectedReports = { ...prevSelectedReports };
+
+            if (action === 'acceptLeft') {
+                updatedSelectedReports.left.push(index);
+            } else if (action === 'acceptRight') {
+                updatedSelectedReports.right.push(index);
+            } else if (action === 'acceptBoth') {
+                updatedSelectedReports.left.push(index);
+                updatedSelectedReports.right.push(index);
+            } else if (action === 'acceptNone') {
+                updatedSelectedReports.left = updatedSelectedReports.left.filter(i => i !== index);
+                updatedSelectedReports.right = updatedSelectedReports.right.filter(i => i !== index);
+            }
+
+            return updatedSelectedReports;
+        });
     };
+
 
     const selectAllReports = (listType: 'matchedLeft' | 'matchedRight' | 'unmatched1' | 'unmatched2') => {
         const updatedFinalReport = new Set(finalReport);
@@ -449,7 +468,7 @@ const UserConflicts = () => {
                         <Button onClick={() => selectAllReports('matchedLeft')}>Select All Left</Button>
                         <Button onClick={() => deselectAllReports('matchedLeft')}>Deselect All Left</Button>
                     </Box>
-                    <Box sx={{left:"20px"}} display="flex" justifyContent="space-between" alignItems="center">
+                    <Box sx={{ left: "20px" }} display="flex" justifyContent="space-between" alignItems="center">
                         <Button
                             variant="contained"
                             color={aiInsight ? "primary" : "secondary"}
@@ -513,7 +532,7 @@ const UserConflicts = () => {
         try {
             setGeneratingReport(true);
             const response = await generateReportRequest(finalReport, name, type);
-            
+
 
 
             setTimeout(() => {
@@ -550,7 +569,7 @@ const UserConflicts = () => {
 
 
 
-    return ( 
+    return (
 
         <ReportsContainer sx={mainContentStyles}>
             {matchedReports.length > 0 && (

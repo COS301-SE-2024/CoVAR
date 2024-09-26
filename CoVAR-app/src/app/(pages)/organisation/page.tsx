@@ -135,8 +135,6 @@ const Organisation = () => {
             const accessToken = localStorage.getItem('accessToken');
             if (accessToken && isInOrg && username) {
                 const status = await leaveOrganisation(isInOrg, username, accessToken);
-                console.log('1');
-                console.log('2');
                 if (status === 200) {
                     console.log('Successfully left organisation');
                     setIsInOrg(null);
@@ -191,13 +189,13 @@ const Organisation = () => {
             const accessToken = localStorage.getItem('accessToken');
             if (accessToken && isInOrg && ownerId) {
                 const status = await inviteMember(isInOrg, ownerId, newMemberEmail, accessToken);
-                if (status === 200 || status === 201) {
+                if (status === 200) {
                     setNewMemberEmail('');
                     setInviteMemberMessage('Invite sent successfully.');
                     setTimeout(() => setInviteMemberMessage(null), 10000);
                 }
             }
-        } catch (error) {
+        } catch (error:any) {
             if (error.response?.status === 403) {
                 redirectToLogin();
             } 
@@ -222,7 +220,7 @@ const Organisation = () => {
                 const inviteData = await fetchInvites(username, accessToken);
                 setInvites(inviteData); 
             }
-        } catch (error) {
+        } catch (error:any) {
             console.error('Error fetching invites:', error);
 
             if (error.response?.status === 403) {

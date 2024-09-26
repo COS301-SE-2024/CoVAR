@@ -127,7 +127,7 @@ router.post('/organizations/:id/invite', authenticateToken, async (req, res) => 
         // Create an invite in the organization_invites table
         const inviteQuery = `INSERT INTO organization_invites (organization_id, user_id, invite_status) VALUES ($1, $2, 'pending')`;
         await pgClient.query(inviteQuery, [organizationId, userId]);
-        res.status(201).send('Invite sent to user successfully');
+        res.send('Invite sent to user successfully');
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server Error');

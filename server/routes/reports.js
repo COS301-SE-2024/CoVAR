@@ -542,11 +542,11 @@ router.get('/reports/executive/:report_id', authenticateToken, async (req, res) 
         doc.moveDown(0.5);
 
         // Define table dimensions and position
-        const tableTop = doc.y;
+        let tableTop = doc.y;
         const tableLeft = 50;
         const tableWidth = 500;
         const cellPadding = 5;
-        const columnWidths = [150, 175, 175];
+        let columnWidths = [150, 175, 175];
         const rowHeight = 25;
 
         // Draw table header background
@@ -871,7 +871,7 @@ router.get('/reports/tech/:report_id', authenticateToken, async (req, res) => {
         const tableLeft = 50;
         const tableWidth = 450;  // Reduced total width for the table
         const cellPadding = 5;
-        const columnWidths = [50, 100, 100, 200];  // Updated column widths for smaller size
+        let columnWidths = [50, 100, 100, 200];  // Updated column widths for smaller size
         const rowHeight = 25;
 
         // Table header background
@@ -928,7 +928,7 @@ router.get('/reports/tech/:report_id', authenticateToken, async (req, res) => {
                 `,
                 [report_id]
             );
-
+           
             let currentY = tableTop + rowHeight;  // Initial Y position for the first row
 
             // Draw rows dynamically
@@ -946,15 +946,125 @@ router.get('/reports/tech/:report_id', authenticateToken, async (req, res) => {
 
         addFooter();
         addNewPage();
+        const TechreportResult = await pgClient.query(`
+            WITH final_report AS (
+                SELECT 
+                    json_array_elements(content->'finalReport') AS report_element 
+                FROM reports 
+                WHERE report_id = $1
+            )
+            SELECT 
+                report_element ->> 'nvtName' AS Title, 
+                json_agg(report_element ->> 'IP') AS IP, 
+                report_element ->> 'CVSS' AS cvss_score,
+                report_element ->> 'Severity' AS Level,
+                report_element ->> 'Summary' AS Description,
+                report_element ->> 'CVEs' AS CVEs,
+                report_element ->> 'Impact' AS Impact,
+                report_element ->> 'vulnerabilityInsight' AS Details,
+                report_element ->> 'Solution' AS Recommendation,
+                report_element ->> 'Hostname' AS Hostname,
+                report_element ->> 'Port' AS PortNumber,
+                report_element ->> 'portProtocol' AS PortProtocol
+            FROM final_report 
+            GROUP BY Title, cvss_score, Level, Description, CVEs, Impact, Details, Recommendation, Hostname, PortNumber, PortProtocol;
+        `, [report_id]);
         
+        // Define column widths (adjusted for the second table)
+        const titleColumnWidth = 75; // Width for the title labels
+        const dataColumnWidth = 300; // Reduced width for the Host name
+        const smallColumnWidth = 70;  // Smaller width for IP, Port, and Protocol fields
+        
+        TechreportResult.rows.forEach((row, rowIndex) => {
+            // Add a new page for each row
+            addNewPage();
+        
+            // Prepare the fields for the current row
+            const fields = [
+                { label: 'Title', value: row.title || 'N/A' },
+                { label: 'Level', value: row.level || 'N/A' },
+                { label: 'Description', value: row.description || 'N/A' },
+                { label: 'Impact', value: row.impact || 'N/A' },
+                { label: 'Recommendation', value: row.recommendation || 'N/A' },
+                { label: 'Details', value: row.details || 'N/A' },
+                { label: 'CVEs', value: row.cves || 'N/A' },
+                { label: 'CVSS Score', value: row.cvss_score || 'N/A' }
+            ];
+        
+            let currentY = 100; // Set starting position for the fields
+            
+            // Draw each field with its title label and background
+            fields.forEach((field) => {
+                const titleXPosition = 50; // Position for the title label on the left
+                const dataXPosition = titleXPosition + titleColumnWidth + 10; // Position for the data field
+        
+                const textOptions = { width: dataColumnWidth - 2 * cellPadding, align: 'left' };
+        
+                // Calculate height of the text (in case it needs to wrap)
+                const fieldHeight = doc.heightOfString(field.value, textOptions);
+                const adjustedRowHeight = Math.max(fieldHeight + 2 * cellPadding, rowHeight);
+        
+                // Draw the blue background for the title label
+                doc.rect(titleXPosition, currentY, titleColumnWidth, adjustedRowHeight).fill('darkblue');
+        
+                // Draw the title label text in white over the blue background
+                doc.font('Helvetica-Bold').fillColor('white');
+                doc.text(field.label, titleXPosition + cellPadding, currentY + cellPadding, { width: titleColumnWidth - 2 * cellPadding, align: 'left' });
+        
+                // Draw the data field next to the title with default color (black)
+                doc.font('Helvetica').fillColor('black');
+                doc.text(field.value, dataXPosition, currentY + cellPadding, textOptions);
+        
+                // Draw borders around the data field if needed
+                doc.rect(dataXPosition - cellPadding, currentY, dataColumnWidth, adjustedRowHeight).stroke();
+        
+                // Update Y position
+                currentY += adjustedRowHeight;
+            });
+        
+            // Add new table below each report with the headers: IP, Host name, Port number, Port protocol
+            currentY += 20; // Space between the fields and the new table
+        
+            // Define the table headers and data
+            const tableHeaders = ['IP', 'Host name', 'Port number', 'Port protocol'];
+            const tableData = [row.ip || 'N/A', row.hostname || 'N/A', row.portnumber || 'N/A', row.portprotocol || 'N/A'];
+        
+            // Set the starting position of the table
+            let tableX = 50;
+            let tableHeaderHeight = rowHeight;
+        
+            // Draw the headers with a blue background
+            tableHeaders.forEach((header, index) => {
+                // Adjust column width for smaller table
+                const columnWidth = (index === 1) ? dataColumnWidth : smallColumnWidth; // Reduced width for Host name and others
+                doc.rect(tableX, currentY, columnWidth, tableHeaderHeight).fill('darkblue');
+                doc.font('Helvetica-Bold').fillColor('white');
+                doc.text(header, tableX + cellPadding, currentY + cellPadding, { width: columnWidth - 2 * cellPadding, align: 'center' });
+                tableX += columnWidth; // Move X position for the next header
+            });
+        
+            currentY += tableHeaderHeight; // Move Y for data row
+        
+            // Reset X position and draw the data for each header
+            tableX = 50;
+            tableData.forEach((data, index) => {
+                // Adjust column width for smaller table
+                const columnWidth = (index === 1) ? dataColumnWidth : smallColumnWidth;
+                doc.font('Helvetica').fillColor('black');
+                doc.text(data, tableX + cellPadding, currentY + cellPadding, { width: columnWidth - 2 * cellPadding, align: 'center' });
+                tableX += columnWidth; // Move X position for the next cell
+            });
+        
+            currentY += rowHeight; // Move Y for the next row if needed
+        });
+        
+
         doc.end();
     } catch (error) {
         console.error('Error fetching reports:', error);
         return res.status(500).json({ error: 'An error occurred while fetching reports' });
     }
 });
-
-
 
 
 // const truncateToSecond = (date) => {

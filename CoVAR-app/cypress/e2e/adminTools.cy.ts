@@ -4,10 +4,14 @@ describe('Admin tools E2E Tests', () => {
     })
 
     it('client should not see admin tools or evaluate page', () => {
+        cy.wait(4000);
+
         // Login
         cy.get('input[name="email"]', { timeout: 4000 }).type(Cypress.env('client_username'), { log: false })
         cy.get('input[name="password"]').type(Cypress.env('client_password'), { log: false })
         cy.get('button[type="submit"]').click()
+        cy.wait(4000);
+
 
         //Navigate to the admin tools page
         cy.get('[test-id="adminToolsLink"]', { timeout: 4500 }).should('not.exist');
@@ -20,10 +24,13 @@ describe('Admin tools E2E Tests', () => {
     })
 
     it('demote a va to client and promote again', () => {
+        cy.wait(4000);
+
         // Login
         cy.get('input[name="email"]', { timeout: 4000 }).type(Cypress.env('admin_username'), { log: false })
         cy.get('input[name="password"]').type(Cypress.env('admin_password'), { log: false })
         cy.get('button[type="submit"]').click()
+        cy.wait(4000);
 
         //Navigate to the admin tools page
         cy.get('[test-id="adminToolsLink"]', { timeout: 4500 }).click();
@@ -40,10 +47,13 @@ describe('Admin tools E2E Tests', () => {
     })
 
     it('assign a client to a va', () => {
+        cy.wait(4000);
+
         // Login as admin
         cy.get('input[name="email"]', { timeout: 4000 }).type(Cypress.env('admin_username'), { log: false })
         cy.get('input[name="password"]').type(Cypress.env('admin_password'), { log: false })
         cy.get('button[type="submit"]').click()
+        cy.wait(4000);
 
         //Navigate to the admin tools page
         cy.get('[test-id="adminToolsLink"]', { timeout: 4500 }).click();
@@ -86,10 +96,12 @@ describe('Admin tools E2E Tests', () => {
     })
 
     it('remove a client from a va', () => {
+        cy.wait(4000);
         // Login as admin
         cy.get('input[name="email"]', { timeout: 4000 }).type(Cypress.env('admin_username'), { log: false })
         cy.get('input[name="password"]').type(Cypress.env('admin_password'), { log: false })
         cy.get('button[type="submit"]').click()
+        cy.wait(4000);
 
         //Navigate to the organisation page
         cy.get('[test-id="adminToolsLink"]', { timeout: 4500 }).click();

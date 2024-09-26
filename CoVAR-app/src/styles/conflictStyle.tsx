@@ -45,10 +45,10 @@ export const UnmatchedReports = styled(Box)(({ theme }) => ({
   marginTop: theme.spacing(4),
 }));
 
-export const UnmatchedReportCard = styled(Card)<{ selected: boolean }>(({ theme, selected }) => ({
-  marginBottom: theme.spacing(2),
-  border: selected ? `4px solid ${theme.palette.success.main}` : 'none',
-}));
+// export const UnmatchedReportCard = styled(Card)<{ selected: boolean }>(({ theme, selected }) => ({
+//   marginBottom: theme.spacing(2),
+//   border: selected ? `4px solid ${theme.palette.success.main}` : 'none',
+// }));
 
 const l5 = keyframes`
   0%    {inset:0    35px 35px 0   }
@@ -86,33 +86,5 @@ export const Loader = () => {
   return <LoaderWrapper className="loader" />;
 };
 
-const rainbowPulse = keyframes`
-  0% {
-    border-color: red;
-  }
-  14% {
-    border-color: orange;
-  }
-  28% {
-    border-color: yellow;
-  }
-  42% {
-    border-color: green;
-  }
-  57% {
-    border-color: blue;
-  }
-  71% {
-    border-color: indigo;
-  }
-  85% {
-    border-color: violet;
-  }
-  100% {
-    border-color: red;
-  }
-`;
 
-export const PulseRainbow = styled('div')`
-  animation: ${rainbowPulse} 2s infinite;
-`;
+

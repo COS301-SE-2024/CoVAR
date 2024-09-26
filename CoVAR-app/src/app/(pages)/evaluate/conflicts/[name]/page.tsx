@@ -2,12 +2,12 @@
 import { fetchAndMatchReports, fetchUploadsClient, fetchUploadsOrganization, generateReportRequest } from "@/functions/requests";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
-import { CardContent, Typography, Box, Button, CircularProgress, Backdrop } from '@mui/material';
+import { CardContent, Typography, Box, Button, CircularProgress, Backdrop, keyframes, styled, Card } from '@mui/material';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
-import { Loader, ReportsContainer, MatchedPair, ReportCard, ButtonGroup, UnmatchedReports, UnmatchedButtonGroup, UnmatchedReportCard } from '../../../../../styles/conflictStyle';
+import { Loader, ReportsContainer, MatchedPair, ReportCard, ButtonGroup, UnmatchedReports, UnmatchedButtonGroup } from '../../../../../styles/conflictStyle';
 import { matchedRecomendations, unmatchedRecomendations } from '@/functions/requests';
 import { mainContentStyles } from '../../../../../styles/evaluateStyle';
 import { Dialog, DialogTitle, DialogContent } from '@mui/material';
@@ -52,7 +52,9 @@ const UserConflicts = () => {
     const [reportType2, setReportType2] = useState<string>('');
     const [selectedUnmatchedReports, setSelectedUnmatchedReports] = useState<{ list1: number[], list2: number[] }>({ list1: [], list2: [] });
     const [aiSelections, setAiSelections] = useState<{ [index: number]: boolean }>({});
-
+    const [unmatchedAiSelections1, setUnmatchedAiSelections1] = useState<{ [index: number]: boolean }>({});
+    const [unmatchedAiSelections2, setUnmatchedAiSelections2] = useState<{ [index: number]: boolean }>({});
+    const [matchedReportsExist, setMatchedReportsExist] = useState(false);
 
     const [canGenerteReport, setCanGenerateReport] = useState(false);
 
@@ -126,10 +128,10 @@ const UserConflicts = () => {
                             // Check if the result has the 'result' property and if it's a string
                             if (result && typeof result.result === 'string') {
                                 const recommendation = result.result;
-                                const firstWord = recommendation.split(/\s+/)[0]; 
-                                if(firstWord=="Keep"){
-                                // Handle the recommendation for unmatched reports (customize as needed)
-                                    handleUnmatchedReport('add', index, 'list1')  // You can customize logic here
+                                const firstWord = recommendation.split(/\s+/)[0];
+                                if (firstWord == "Keep") {
+                                    // Handle the recommendation for unmatched reports (customize as needed)
+                                    handleUnmatchedReport('add', index, 'list1', true)  // You can customize logic here
                                 }
                             } else {
                                 // Handle cases where result is not in the expected format
@@ -151,13 +153,13 @@ const UserConflicts = () => {
 
                             // Log the result to verify it's in the expected format
                             console.log("Recommendation result for unmatched report 2:", result);
-    
+
                             const recommendation = result.result;
-                                const firstWord = recommendation.split(/\s+/)[0]; 
-                                if(firstWord=="Keep"){
+                            const firstWord = recommendation.split(/\s+/)[0];
+                            if (firstWord == "Keep") {
                                 // Handle the recommendation for unmatched reports (customize as needed)
-                                handleUnmatchedReport('add', index, 'list2');  // You can customize logic here
-                                }
+                                handleUnmatchedReport('add', index, 'list2', true);  // You can customize logic here
+                            }
                         } catch (error) {
                             console.error("Error fetching recommendation for unmatched report 2:", report, error);
                         }
@@ -213,6 +215,10 @@ const UserConflicts = () => {
             if (unmatchedList2.length > 0) {
                 setReportType2(unmatchedList2[0].type);
             }
+
+            if (matches.length > 0) {
+                setMatchedReportsExist(true);
+            }
         } catch (error) {
             console.error('Error fetching reports:', error);
         } finally {
@@ -248,10 +254,23 @@ const UserConflicts = () => {
         isSelected: boolean;
         handleAdd: () => void;
         handleRemove: () => void;
+        aiselected: boolean;
     };
 
-    const MemoizedUnmatchedReportCard = memo(({ vulnerability, isSelected, handleAdd, handleRemove }: UnmatchedReportCardProps) => (
-        <UnmatchedReportCard selected={isSelected} theme={undefined}>
+    const UnmatchedReportCard = styled(Card)(({ selected, aiselected }: { selected: boolean; aiselected: boolean }) => ({
+        border: selected
+            ? aiselected
+                ? '4px solid'
+                : '4px solid #4caf50'
+            : 'none',
+        animation: aiselected
+            ? `${rainbowPulse} 3s infinite linear`
+            : 'none',
+        marginTop: '16px' // Adding spacing of 2 (16px)
+    }));
+
+    const MemoizedUnmatchedReportCard = memo(({ vulnerability, isSelected, handleAdd, handleRemove, aiselected }: UnmatchedReportCardProps) => (
+        <UnmatchedReportCard selected={isSelected} theme={undefined} aiselected={aiselected}>
             <CardContent>
                 {Object.entries(vulnerability).map(([key, value]) => (
                     <Typography key={key} variant="body2">
@@ -278,7 +297,7 @@ const UserConflicts = () => {
 
 
 
-    const handleUnmatchedReport = (action: string, index: number, listType: 'list1' | 'list2') => {
+    const handleUnmatchedReport = (action: string, index: number, listType: 'list1' | 'list2', aiSelected = false) => {
 
         const updatedReportSet = new Set(finalReport);
         const updatedSelectedUnmatchedReports = { ...selectedUnmatchedReports };
@@ -291,6 +310,22 @@ const UserConflicts = () => {
             updatedSelectedUnmatchedReports[listType] = updatedSelectedUnmatchedReports[listType].filter((i) => i !== index);
         }
 
+        if (listType === 'list1') {
+            setUnmatchedAiSelections1(prevUnmatchedAiSelections1 => {
+                const updatedAiSelections = { ...prevUnmatchedAiSelections1 };
+                updatedAiSelections[index] = aiSelected;
+                return updatedAiSelections;
+            });
+        }
+
+        if (listType === 'list2') {
+            setUnmatchedAiSelections1(prevUnmatchedAiSelections2 => {
+                const updatedAiSelections = { ...prevUnmatchedAiSelections2 };
+                updatedAiSelections[index] = aiSelected;
+                return updatedAiSelections;
+            });
+        }
+
         setFinalReport(Array.from(updatedReportSet));
         setSelectedUnmatchedReports(updatedSelectedUnmatchedReports);
     };
@@ -299,8 +334,24 @@ const UserConflicts = () => {
     const unmatchedReportsList1 = useMemo(() => (
         <>
             <Typography variant="h5" gutterBottom>{reportType1} Report </Typography>
-            <Button onClick={() => selectAllReports('unmatched1')}>Select All</Button>
-            <Button onClick={() => deselectAllReports('unmatched1')}>Deselect All</Button>
+            <Box display="flex" justifyContent="space-between" alignItems="center" marginBottom={2}>
+                <Box display="flex" gap={2}>
+                    <Button onClick={() => selectAllReports('unmatched1')}>Select All</Button>
+                    <Button onClick={() => deselectAllReports('unmatched1')}>Deselect All</Button>
+                </Box>
+                {!matchedReportsExist && (
+                    <Box position="relative" flexGrow={1} display="flex" justifyContent="center">
+                        <Button
+                            sx={{ position: 'relative', left: '-6.5%' }} // Shift left using 'left' positioning
+                            variant="contained"
+                            color={aiInsight ? "primary" : "secondary"}
+                            onClick={aiToggle}
+                        >
+                            {aiInsight ? "Disable AI Insights" : "Enable AI Insights"}
+                        </Button>
+                    </Box>
+                )}
+            </Box>
             {unmatchedList1.map((vulnerability, index) => (
                 <MemoizedUnmatchedReportCard
                     key={index}
@@ -308,6 +359,7 @@ const UserConflicts = () => {
                     isSelected={isUnmatchedReportSelected(index, 'list1')}
                     handleAdd={() => handleUnmatchedReport('add', index, 'list1')}
                     handleRemove={() => handleUnmatchedReport('remove', index, 'list1')}
+                    aiselected={unmatchedAiSelections1[index]}
                 />
             ))}
         </>
@@ -329,14 +381,30 @@ const UserConflicts = () => {
                     isSelected={isUnmatchedReportSelected(index, 'list2')}
                     handleAdd={() => handleUnmatchedReport('add', index, 'list2')}
                     handleRemove={() => handleUnmatchedReport('remove', index, 'list2')}
+                    aiselected={unmatchedAiSelections2[index]}
                 />
             ))}
         </>
     ), [unmatchedList2, isUnmatchedReportSelected, handleUnmatchedReport]);
 
+    const rainbowPulse = keyframes`
+    0% { border-color: #53BF9D; } 
+    25% { border-color: #F94C66; }  
+    50% { border-color: #BD4291; }  
+    75% { border-color: #FFC54D; }  
+    100% { border-color: #53BF9D; }  
+  `;
+
     const MemoizedReportCard = memo(({ report, isSelected, aiSelected }: { report: any; isSelected: boolean; aiSelected: boolean }) => (
         <ReportCard sx={{
-            border: isSelected ? (aiSelected ? '4px solid #2196f3' : '4px solid #4caf50') : 'none',
+            border: isSelected
+                ? aiSelected
+                    ? '4px solid'
+                    : '4px solid #4caf50'
+                : 'none',
+            animation: aiSelected
+                ? `${rainbowPulse} 3s infinite linear`
+                : 'none',
         }}>
             <CardContent>
                 {Object.entries(report).map(([key, value]) => (
@@ -362,7 +430,7 @@ const UserConflicts = () => {
     const handleButtonClick = (action: string, index: number, aiSelected = false) => {
         setFinalReport(prevFinalReport => {
             const updatedReportSet = new Set(prevFinalReport);
-    
+
             if (action === 'acceptLeft') {
                 updatedReportSet.add(matchedReports[index][0]);
             } else if (action === 'acceptRight') {
@@ -374,13 +442,13 @@ const UserConflicts = () => {
                 updatedReportSet.delete(matchedReports[index][0]);
                 updatedReportSet.delete(matchedReports[index][1]);
             }
-    
+
             return Array.from(updatedReportSet);
         });
-    
+
         setSelectedReports(prevSelectedReports => {
             const updatedSelectedReports = { ...prevSelectedReports };
-    
+
             if (action === 'acceptLeft') {
                 updatedSelectedReports.left.push(index);
             } else if (action === 'acceptRight') {
@@ -392,10 +460,10 @@ const UserConflicts = () => {
                 updatedSelectedReports.left = updatedSelectedReports.left.filter(i => i !== index);
                 updatedSelectedReports.right = updatedSelectedReports.right.filter(i => i !== index);
             }
-    
+
             return updatedSelectedReports;
         });
-    
+
         // Update AI selection tracking
         setAiSelections(prevAiSelections => ({
             ...prevAiSelections,
@@ -485,15 +553,18 @@ const UserConflicts = () => {
                         <Button onClick={() => selectAllReports('matchedLeft')}>Select All Left</Button>
                         <Button onClick={() => deselectAllReports('matchedLeft')}>Deselect All Left</Button>
                     </Box>
-                    <Box sx={{ left: "20px" }} display="flex" justifyContent="space-between" alignItems="center">
-                        <Button
-                            variant="contained"
-                            color={aiInsight ? "primary" : "secondary"}
-                            onClick={aiToggle}
-                        >
-                            {aiInsight ? "Disable AI Insights" : "Enable AI Insights"}
-                        </Button>
-                    </Box>
+
+                    {matchedReportsExist && (
+                        <Box sx={{ left: "20px" }} display="flex" justifyContent="space-between" alignItems="center">
+                            <Button
+                                variant="contained"
+                                color={aiInsight ? "primary" : "secondary"}
+                                onClick={aiToggle}
+                            >
+                                {aiInsight ? "Disable AI Insights" : "Enable AI Insights"}
+                            </Button>
+                        </Box>)}
+
                     <Box display="flex" gap={2} justifyContent="center">
                         <Button onClick={() => selectAllReports('matchedRight')}>Select All Right</Button>
                         <Button onClick={() => deselectAllReports('matchedRight')}>Deselect All Right</Button>

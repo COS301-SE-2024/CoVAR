@@ -491,6 +491,7 @@ const Organisation = () => {
                                                 <IconButton
                                                     color="error"
                                                     onClick={() => handleRejectInvite(invite.invite_id)}
+                                                    data-testid={`rejectInvite-${invite.organization_name}`}
                                                     sx={{
                                                         ml: 1,
                                                         border: `1px solid ${theme.palette.mode === 'light' ? 'lightgray' : 'rgb(102, 114, 119)'}`, 
@@ -503,6 +504,7 @@ const Organisation = () => {
                                                 <IconButton
                                                     color="primary"
                                                     onClick={() => handleAcceptInvite(invite.invite_id)}
+                                                    data-testid={`acceptInvite-${invite.organization_name}`}
                                                     sx={{
                                                         ml: 1,
                                                         border: `1px solid ${theme.palette.mode === 'light' ? 'lightgray' : 'rgb(102, 114, 119)'}`, 

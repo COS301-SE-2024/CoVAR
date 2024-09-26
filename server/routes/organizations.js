@@ -75,40 +75,66 @@ router.post('/organizations/create',authenticateToken, async (req, res) => {
     }
 });
 
-// Add user to organization
-router.post('/organizations/:id/add_user',  authenticateToken, async (req, res) => {
-    const { id: OwnerId } = req.params;
+// Invite user to organization
+router.post('/organizations/:id/invite', authenticateToken, async (req, res) => {
+    const { id: ownerId } = req.params;
     const { organizationId, username } = req.body;
 
     try {
-        //get org name 
+        // Get organization name
         const orgQuery = `SELECT name FROM organizations WHERE organization_id = $1`;
         const orgResult = await pgClient.query(orgQuery, [organizationId]);
-        const OrgName = orgResult.rows[0].name;
-        let ownerResult = await isOwner(pgClient, OrgName, OwnerId);
+        const orgName = orgResult.rows[0]?.name;
+
+        if (!orgName) {
+            return res.status(404).send('Organisation not found');
+        }
+
+        // Check if the user making the request is the owner
+        const ownerResult = await isOwner(pgClient, orgName, ownerId);
         if (!ownerResult.isOwner) {
-            return res.status(ownerResult.error === 'Organization not found' ? 404 : 403).send(ownerResult.error);
+            return res.status(ownerResult.error === 'OrganiSation not found' ? 404 : 403).send(ownerResult.error);
         }
 
-        const userResult = await pgClient.query('SELECT user_id FROM users WHERE username = $1', [username]);
-        if (userResult.rows.length === 0) {
-            return res.status(404).send('User not found');
-        }
+       // Check if the user exists and get their role
+       const userResult = await pgClient.query('SELECT user_id, role FROM users WHERE username = $1', [username]);
+       if (userResult.rows.length === 0) {
+           return res.status(404).send('User not found');
+       }
 
-        const userInOrgResult = await pgClient.query('SELECT organization_id FROM users WHERE user_id = $1', [userResult.rows[0].user_id]);
+       const userId = userResult.rows[0].user_id;
+       const userRole = userResult.rows[0].role;
+
+       // Check if the user's role is unauthorized
+       if (userRole === 'unauthorised') {
+           return res.status(403).send('User is unauthorised');
+       }
+
+        // Check if the user is already in an organization
+        const userInOrgResult = await pgClient.query('SELECT organization_id FROM users WHERE user_id = $1', [userId]);
         if (userInOrgResult.rows.length > 0 && userInOrgResult.rows[0].organization_id !== null) {
-            return res.status(400).send('User already in an organization');
+            return res.status(400).send('User is already in an organisation');
         }
 
-        const userId = userResult.rows[0].user_id;
-        await pgClient.query('UPDATE users SET organization_id = $1 WHERE user_id = $2', [organizationId, userId]);
+        // Check if there is an existing pending invite for the user
+        const inviteCheckQuery = `SELECT * FROM organization_invites WHERE user_id = $1 AND organization_id = $2 AND invite_status = 'pending'`;
+        const inviteCheckResult = await pgClient.query(inviteCheckQuery, [userId, organizationId]);
 
-        res.send('User added to organization successfully');
+        if (inviteCheckResult.rows.length > 0) {
+            return res.status(400).send('User already has a pending invite to this organisation');
+        }
+
+        // Create an invite in the organization_invites table
+        const inviteQuery = `INSERT INTO organization_invites (organization_id, user_id, invite_status) VALUES ($1, $2, 'pending')`;
+        await pgClient.query(inviteQuery, [organizationId, userId]);
+        res.status(201).send('Invite sent to user successfully');
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server Error');
     }
 });
+
+
 
 // Remove user from organization
 router.post('/organizations/:id/remove_user',  authenticateToken , async (req, res) => {

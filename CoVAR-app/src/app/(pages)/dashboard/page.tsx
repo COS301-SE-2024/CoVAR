@@ -13,6 +13,7 @@ import axios from 'axios';
 import { evaluateLaunchStyles } from '../../../styles/evaluateStyle';
 import { fetchReportsPerClient } from '@/functions/requests';
 import ReportsPerClient from './components/reportsPerClient';
+import AdminPage from './components/adminPage';
 
 interface VulnerabilityReport {
     IP: string;
@@ -105,11 +106,14 @@ const Dashboard: React.FC = () => {
             const responseData = await getAllReports();
             setResponseData(responseData);
 
-            const reports = responseData[0].content.finalReport;
-            calculateSeverityDistribution(reports);
-            setTopVulnerabilities(reports.sort((a: VulnerabilityReport, b: VulnerabilityReport) => parseFloat(b.CVSS) - parseFloat(a.CVSS)).slice(0, 5));
-            setAllReports(reports);
-            setFilteredReports(reports);
+            if (responseData) {
+                const reports = responseData[0].content.finalReport;
+                calculateSeverityDistribution(reports);
+                setTopVulnerabilities(reports.sort((a: VulnerabilityReport, b: VulnerabilityReport) => parseFloat(b.CVSS) - parseFloat(a.CVSS)).slice(0, 5));
+                setAllReports(reports);
+                setFilteredReports(reports);
+            }
+
         } catch (error) {
             console.log(error);
         }
@@ -337,6 +341,15 @@ const Dashboard: React.FC = () => {
             </Box>
         );
     }
+
+    if (role === 'admin') {
+        return (
+            <Box sx={mainContentStyles}>
+                <AdminPage />
+            </Box>
+        );
+    }
+    
 
     return null;
 };

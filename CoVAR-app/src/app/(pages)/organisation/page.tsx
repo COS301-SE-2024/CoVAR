@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { Button, Card, CardContent, CircularProgress, TextField, Typography, IconButton, CheckCircle} from '@mui/material';
+import { Button, Card, CardContent, CircularProgress, TextField, Typography, IconButton} from '@mui/material';
 import { Box } from '@mui/system';
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import { getUserRole, fetchUsersByOrg, removeUser, deleteOrganisation, createOrganisation, changeOrganisationName, leaveOrganisation, inviteMember, fetchInvites, acceptInvite, rejectInvite, getOwner } from '../../../functions/requests';

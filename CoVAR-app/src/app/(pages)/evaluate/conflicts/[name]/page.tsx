@@ -257,20 +257,25 @@ const UserConflicts = () => {
         aiselected: boolean;
     };
 
-    const UnmatchedReportCard = styled(Card)(({ selected, aiselected }: { selected: boolean; aiselected: boolean }) => ({
-        border: selected
-            ? aiselected
-                ? '4px solid'
-                : '4px solid #4caf50'
-            : 'none',
-        animation: aiselected
-            ? `${rainbowPulse} 3s infinite linear`
-            : 'none',
-        marginTop: '16px' // Adding spacing of 2 (16px)
-    }));
+    const UnmatchedReportCard = styled(Card, {
+        shouldForwardProp: (prop) => prop !== 'selected' && prop !== 'aiselected',
+    })<{ selected: boolean; aiselected: boolean }>(
+        ({ selected, aiselected }) => ({
+            border: selected
+                ? aiselected
+                    ? '4px solid'
+                    : '4px solid #4caf50'
+                : 'none',
+            animation: aiselected
+                ? `${rainbowPulse} 3s infinite linear`
+                : 'none',
+            marginTop: '16px', // Adding spacing of 2 (16px)
+        })
+    );
+
 
     const MemoizedUnmatchedReportCard = memo(({ vulnerability, isSelected, handleAdd, handleRemove, aiselected }: UnmatchedReportCardProps) => (
-        <UnmatchedReportCard selected={isSelected} theme={undefined} aiselected={aiselected}>
+        <UnmatchedReportCard selected={isSelected} aiselected={!!aiselected}>
             <CardContent>
                 {Object.entries(vulnerability).map(([key, value]) => (
                     <Typography key={key} variant="body2">
@@ -288,6 +293,7 @@ const UserConflicts = () => {
             </CardContent>
         </UnmatchedReportCard>
     ));
+
 
     MemoizedUnmatchedReportCard.displayName = "MemoizedUnmatchedReportCard";
 
@@ -319,7 +325,7 @@ const UserConflicts = () => {
         }
 
         if (listType === 'list2') {
-            setUnmatchedAiSelections1(prevUnmatchedAiSelections2 => {
+            setUnmatchedAiSelections2(prevUnmatchedAiSelections2 => {
                 const updatedAiSelections = { ...prevUnmatchedAiSelections2 };
                 updatedAiSelections[index] = aiSelected;
                 return updatedAiSelections;
@@ -555,7 +561,7 @@ const UserConflicts = () => {
                     </Box>
 
                     {matchedReportsExist && (
-                        <Box sx={{ left: "20px" }} display="flex" justifyContent="space-between" alignItems="center">
+                        <Box sx={{ left: "8px" }} position="relative" flexGrow={1} display="flex" justifyContent="center">
                             <Button
                                 variant="contained"
                                 color={aiInsight ? "primary" : "secondary"}

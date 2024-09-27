@@ -54,6 +54,8 @@ const OrganizationEvaluation: React.FC = () => {
   const [reports, setReports] = useState<any[][]>([]);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [reportNames, setReportNames] = useState<string[]>([]);
+  const [snackbarOpenInvalid, setSnackbarOpenInvalid] = useState(false);
+
 
   useEffect(() => {
     const fetchInitialUploads = async () => {
@@ -83,6 +85,7 @@ const OrganizationEvaluation: React.FC = () => {
           setReports([]);
         }
       } catch (error) {
+        setSnackbarOpenInvalid(true);
         console.error('Error generating reports:', error);
       }
     };
@@ -117,6 +120,9 @@ const OrganizationEvaluation: React.FC = () => {
     }
   };
 
+
+  
+
   const handleToggle = async (upload_id: number, fileName: string) => {
     try {
       if (reportIds.includes(upload_id)) {
@@ -133,12 +139,18 @@ const OrganizationEvaluation: React.FC = () => {
         }
       }
     } catch (error) {
+      setSnackbarOpenInvalid(true);
       console.error('Error updating report status:', error);
     }
   };
 
   const handleCloseSnackbar = () => {
     setSnackbarOpen(false);
+  };
+
+
+  const handleCloseSnackbarInvalid = () => {
+    setSnackbarOpenInvalid(false);
   };
 
   return (
@@ -152,6 +164,17 @@ const OrganizationEvaluation: React.FC = () => {
         autoHideDuration={1000}
         onClose={handleCloseSnackbar}
         message="Cannot add more than 2 reports"
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      />
+      <Snackbar
+        sx={{
+          width: '100%',
+          position: 'absolute',
+        }}
+        open={snackbarOpenInvalid}
+        autoHideDuration={1000}
+        onClose={handleCloseSnackbarInvalid}
+        message="Invalid Report Format"
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
       />
       <Grid container spacing={2}>

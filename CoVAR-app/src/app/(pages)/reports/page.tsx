@@ -4,7 +4,7 @@ import { CircularProgress, Box, Table, TableBody, TableCell, TableContainer, Tab
 import { populateReportsTable, fetchExecReport, fetchTechReport } from '@/functions/requests'; // Assume fetchTechReport is a new function in your requests file
 import DownloadIcon from '@mui/icons-material/Download';
 import { mainContentStyles } from '@/styles/evaluateStyle';
-
+import {headingBoxStyles} from '../../../styles/organisationStyle';
 type Report = {
     report_id: string;
     created_at: string;
@@ -110,19 +110,19 @@ const ReportsPage = () => {
 
     return (
         <Box sx={{ ...mainContentStyles, padding: 3, width: '100%' }}>
-            <Typography variant="h4" sx={{ marginBottom: 2 }}>
+            <Typography variant="h4" sx={{ marginBottom: 2, color: 'text.primary' }}>
                 Reports
             </Typography>
-            <TableContainer component={Paper} sx={{ border: '1px solid #ccc', maxHeight: '80vh', overflowY: 'auto' }}>
+            <TableContainer component={Paper} sx={{ ...mainContentStyles, border: '1px solid #ccc', maxHeight: '80vh', overflowY: 'auto' }}>
                 <Table stickyHeader>
                     <TableHead sx={{ backgroundColor: '#52796F' }}>
                         <TableRow>
-                            <TableCell sx={{ color: '#CAD2C5', fontWeight: 'bold' }}>Report ID</TableCell>
-                            <TableCell sx={{ color: '#CAD2C5', fontWeight: 'bold' }}>Date Created</TableCell>
-                            <TableCell sx={{ color: '#CAD2C5', fontWeight: 'bold' }}>Critical Count</TableCell>
-                            <TableCell sx={{ color: '#CAD2C5', fontWeight: 'bold' }}>Medium Count</TableCell>
-                            <TableCell sx={{ color: '#CAD2C5', fontWeight: 'bold' }}>Low Count</TableCell>
-                            <TableCell sx={{ color: '#CAD2C5', fontWeight: 'bold' }}>Actions</TableCell>
+                            <TableCell sx={{ color: 'text.primary', fontWeight: 'bold' }}>Report ID</TableCell>
+                            <TableCell sx={{ color: 'text.primary', fontWeight: 'bold' }}>Date Created</TableCell>
+                            <TableCell sx={{ color: 'text.primary', fontWeight: 'bold' }}>Critical Count</TableCell>
+                            <TableCell sx={{ color: 'text.primary', fontWeight: 'bold' }}>Medium Count</TableCell>
+                            <TableCell sx={{ color: 'text.primary', fontWeight: 'bold' }}>Low Count</TableCell>
+                            <TableCell sx={{ color: 'text.primary', fontWeight: 'bold' }}>Actions</TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
@@ -159,6 +159,7 @@ const ReportsPage = () => {
             </TableContainer>
         </Box>
     );
+    
 };
 
 export default ReportsPage;

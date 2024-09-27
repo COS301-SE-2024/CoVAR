@@ -510,4 +510,12 @@ export const rejectInvite = async (inviteId: string, accessToken: string) => {
 };
 
 
-
+//Get Organisation Owner Email
+export const getOwner = async (orgId: string, accessToken: string) => {
+    const request = {
+        method: 'get',
+        url: `/api/organizations/${orgId}/owner`,
+        headers: { Authorization: `Bearer ${accessToken}` },
+    };
+    return await handleRequest(request);
+};

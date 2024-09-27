@@ -1,9 +1,9 @@
 'use client'
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { Button, Card, CardContent, CircularProgress, TextField, Typography, IconButton} from '@mui/material';
+import { Button, Card, CardContent, CircularProgress, TextField, Typography, IconButton, CheckCircle} from '@mui/material';
 import { Box } from '@mui/system';
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
-import { getUserRole, fetchUsersByOrg, removeUser, deleteOrganisation, createOrganisation, changeOrganisationName, leaveOrganisation, inviteMember, fetchInvites, acceptInvite, rejectInvite } from '../../../functions/requests';
+import { getUserRole, fetchUsersByOrg, removeUser, deleteOrganisation, createOrganisation, changeOrganisationName, leaveOrganisation, inviteMember, fetchInvites, acceptInvite, rejectInvite, getOwner } from '../../../functions/requests';
 import { buttonStyles, cardStyles, headingBoxStyles, mainContentStyles, textFieldStyles } from '../../../styles/organisationStyle';
 import { useRouter } from 'next/navigation';
 import AcceptIcon from '@mui/icons-material/Check'; 
@@ -38,6 +38,7 @@ const Organisation = () => {
     const [isInOrg, setIsInOrg] = useState<string | null>(null);
     const [username, setUsername] = useState<string | null>(null);
     const [ownerId, setOwnerId] = useState<string | null>(null);
+    const [ownerEmail, setOwnerEmail] = useState<string | null>(null);
     const [inviteMemberMessage, setInviteMemberMessage] = useState<string | null>(null);
     const [changeNameMessage, setChangeNameMessage] = useState<string | null>(null);
     const [disbandOrgMessage, setDisbandOrgMessage] = useState<string | null>(null);
@@ -65,6 +66,7 @@ const Organisation = () => {
                     }));
                     setUsers(usersWithId);
                     //console.log("Users list:", usersWithId);
+                    setOwnerEmail(fetchedOwnerEmail);
                 }
             } catch (error:any) {
                 //console.error('Error fetching users:', error);
@@ -118,6 +120,29 @@ const Organisation = () => {
             setIsChangeNameButtonDisabled(true);
         }
     }, [confirmLeaveOrganisationName, confirmDisbandOrganisationName, organisationName]);
+
+
+    const fetchOwnerEmail = useCallback(async () => {
+        if (isInOrg) {
+            try {
+                const accessToken = localStorage.getItem('accessToken');
+                if (accessToken) {
+                    const response = await getOwner(isInOrg, accessToken);
+                    const ownerEmail = response.username;
+                    setOwnerEmail(ownerEmail);
+                }
+            } catch (error:any) {
+                console.error('Error fetching owner email:', error);
+                if (error.response?.status === 403) {
+                    redirectToLogin();
+                }
+            }
+        }
+    }, [isInOrg, redirectToLogin]);
+
+    useEffect(() => {
+        fetchOwnerEmail();
+    }, [isInOrg, fetchOwnerEmail]);
 
     const handleRemoveUser = async (user: User) => {
         try {
@@ -369,34 +394,70 @@ const Organisation = () => {
     
 
     const columns: GridColDef[] = [
-        { field: 'email', headerName: 'Email', flex: 1, headerAlign: 'left', resizable: false },
         {
-            resizable: false,
-            field: 'actions',
-            headerName: 'Actions',
-            flex: 0.5,
+            field: 'email',
+            headerName: 'Email',
+            flex: 1,
             headerAlign: 'left',
-            align: 'left',
-            disableColumnMenu: true,
+            resizable: false,
             renderCell: (params: GridRenderCellParams) => (
-                <Button
-                    variant="contained"
-                    sx={{
-                        backgroundColor: '#EE1D52',
-                        color: '#CAD2C5',
-                        width: '110px',
-                        '&:hover': {
-                            backgroundColor: '#D11C45',
-                        },
-                    }}
-                    onClick={() => handleRemoveUser(params.row)}
-                    disabled={!isOwner || params.row.email === username}
-                >
-                    Remove
-                </Button>
+                <span style={{ color: params.row.email === username ? (theme.palette.mode === 'light' ? '#006A4E' : '#7AAFA5') : 'inherit' }}>
+                    {params.row.email}
+                </span>
             ),
         },
+        {
+            field: 'role',
+            headerName: 'Role',
+            flex: 1,
+            headerAlign: 'left',
+            renderCell: (params: GridRenderCellParams) => {
+                const isOwner = params.row.email === ownerEmail; 
+                return (
+                    <span
+                        style={{
+                            fontWeight: isOwner ? 'bold' : 'normal',
+                            color: params.row.email === username ? (theme.palette.mode === 'light' ? '#006A4E' : '#7AAFA5') : 'inherit',
+                        }}
+                    >
+                        {isOwner ? 'Owner' : 'Member'} 
+                    </span>
+                );
+            },
+        },
+        ...(isOwner ? [
+            {
+                resizable: false,
+                field: 'actions',
+                headerName: 'Actions',
+                flex: 0.5,
+                headerAlign: 'left',
+                align: 'left',
+                disableColumnMenu: true,
+                renderCell: (params: GridRenderCellParams) => (
+                    <Button
+                        variant="contained"
+                        sx={{
+                            backgroundColor: '#EE1D52',
+                            color: '#CAD2C5',
+                            width: '110px',
+                            '&:hover': {
+                                backgroundColor: '#D11C45',
+                            },
+                        }}
+                        onClick={() => handleRemoveUser(params.row)}
+                        disabled={params.row.email === username}
+                    >
+                        Remove
+                    </Button>
+                ),
+            },
+        ] : []),
     ];
+    
+    
+    
+    
 
     if (loading) {
         return (

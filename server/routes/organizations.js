@@ -308,5 +308,39 @@ router.delete('/organizations/:orgId/delete', authenticateToken, async (req, res
     }
 });
 
+// Get owner's email by organization ID
+router.get('/organizations/:orgId/owner', authenticateToken, async (req, res) => {
+    const { orgId } = req.params;
+
+    try {
+        // Fetch the organization to get the owner ID
+        const orgQuery = 'SELECT owner FROM organizations WHERE organization_id = $1';
+        const orgResult = await pgClient.query(orgQuery, [orgId]);
+
+        if (orgResult.rows.length === 0) {
+            return res.status(404).send('Organization not found');
+        }
+
+        const ownerId = orgResult.rows[0].owner;
+
+        // Fetch the owner's email using the owner ID
+        const userQuery = 'SELECT username FROM users WHERE user_id = $1';
+        const userResult = await pgClient.query(userQuery, [ownerId]);
+
+        if (userResult.rows.length === 0) {
+            return res.status(404).send('Owner not found');
+        }
+
+        const owner = userResult.rows[0];
+
+        // Send the owner's as a response
+        res.send(owner);
+    } catch (err) {
+        console.error('Error fetching owner email:', err);
+        res.status(500).send('Server Error');
+    }
+});
+
+
 
 module.exports = router;

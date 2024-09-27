@@ -66,7 +66,6 @@ const Organisation = () => {
                     }));
                     setUsers(usersWithId);
                     //console.log("Users list:", usersWithId);
-                    setOwnerEmail(fetchedOwnerEmail);
                 }
             } catch (error:any) {
                 //console.error('Error fetching users:', error);

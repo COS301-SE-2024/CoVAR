@@ -1,14 +1,18 @@
 'use client'
-import React from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { Box, Typography, CircularProgress, Card, Button } from '@mui/material';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import { loungeContainerStyles, loungeBoxStyles, brandTextStyles, iconStyles, loungeHeadingStyles, loungeTextStyles, signOutButtonStyles } from '../../../styles/loungeStyle';
 import { useRouter } from 'next/navigation';
 import { doSignOut } from '../../../functions/firebase/auth';
+import axios from 'axios';
+
+
 
 const Lounge: React.FC = () => {
     const router = useRouter();
+    const pollingRef = useRef<NodeJS.Timeout | null>(null);
 
     const handleSignOut = async () => {
         try {
@@ -18,6 +22,54 @@ const Lounge: React.FC = () => {
             console.error('signout error', error);
         }
     };
+
+// Function to get the current user and check their role
+const checkUserStatus = useCallback(async () => {
+    try {
+        const response = await axios.post(
+            '/api/getUser',
+            { accessToken: localStorage.getItem('accessToken') },
+            { headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}` } }
+        );
+
+        const {role} = response.data;
+        console.log("Role:", role);
+
+        if (role !== 'unauthorised') {
+            router.replace('/dashboard'); 
+        }
+
+    } catch (error) {
+        console.error('Error fetching user status:', error);
+    }
+}, [router]);
+
+// Start polling every 5 seconds
+const startPolling = useCallback(() => {
+    if (!pollingRef.current) {
+        pollingRef.current = setInterval(() => {
+            checkUserStatus(); 
+        }, 5000); 
+    }
+}, [checkUserStatus]);
+
+
+
+const stopPolling = useCallback(() => {
+    if (pollingRef.current) {
+        clearInterval(pollingRef.current);
+        pollingRef.current = null;
+    }
+}, []);
+
+
+useEffect(() => {
+    startPolling();
+
+    return () => {
+        stopPolling(); 
+    };
+}, [startPolling, stopPolling]);
 
     return (
         <Box sx={loungeContainerStyles}>

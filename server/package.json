@@ -13,7 +13,7 @@
     "express": "^4.21.0",
     "firebase-admin": "^12.2.0",
     "jsonwebtoken": "^9.0.2",
-    "nodemon": "^2.0.7",
+    "nodemon": "^3.1.7",
     "pdfkit": "^0.15.0",
     "pg": "^8.5.1",
     "string-similarity": "^4.0.4",

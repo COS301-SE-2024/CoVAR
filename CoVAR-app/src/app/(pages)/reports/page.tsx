@@ -113,7 +113,7 @@ const ReportsPage = () => {
             <Typography variant="h4" sx={{ marginBottom: 2 }}>
                 Reports
             </Typography>
-            <TableContainer component={Paper} sx={{ border: '1px solid #ccc', maxHeight: 800, overflowY: 'auto' }}>
+            <TableContainer component={Paper} sx={{ border: '1px solid #ccc', maxHeight: '80vh', overflowY: 'auto' }}>
                 <Table stickyHeader>
                     <TableHead sx={{ backgroundColor: '#52796F' }}>
                         <TableRow>

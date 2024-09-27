@@ -491,12 +491,23 @@ router.get('/reports/executive/:report_id', authenticateToken, async (req, res) 
 
         // Add the footer on the cover page
         doc.moveDown(4);
-        doc.fontSize(8).fillColor('gray').text(`Disclosure Classification: Confidential`, { align: 'left' });
-        doc.text(`2022 Revision: 1.0`, { align: 'right' });
+        const disclosureText = `Disclosure Classification: Confidential`;
+        const revisionText = `2022 Revision: 1.0`;
+
+        const disclosureWidth = doc.widthOfString(disclosureText);
+        const pageWidth = doc.page.width; // Get the width of the page
+        const revisionX = pageWidth - doc.widthOfString(revisionText) - 20; // Calculate X position for right alignment with some padding
+
+        // Write the disclosure text
+        doc.fontSize(8).fillColor('gray').text(disclosureText, { align: 'left' });
+
+        // Write the revision text at calculated position
+        doc.text(revisionText, revisionX, doc.y, { align: 'left' }); // Keep align as left since we are positioning it manually
+
 
         // Function to add header and footer to each page
         const addHeader = () => {
-            doc.fontSize(10).text(`Cyber Security Vulnerability Report ${creationDate}`, 50, 40);
+            doc.fontSize(10).fillColor('gray').text(`Cyber Security Vulnerability Report ${creationDate}`, 50, 40);
             doc.text(`BlueVision ITM (Pty) Limited`, { align: 'right' });
             doc.moveDown();
         };
@@ -827,44 +838,73 @@ router.get('/reports/tech/:report_id', authenticateToken, async (req, res) => {
         doc.text(`2022 Revision: 1.0`, { align: 'right' });
 
         const addHeader = () => {
-            doc.fontSize(10).text(`Cyber Security Vulnerability Report ${creationDate}`, 50, 40);
-            doc.text(`BlueVision ITM (Pty) Limited`, { align: 'right' });
-            doc.moveDown();
+            const leftText = `Cyber Security Vulnerability Report ${creationDate}`;
+            const rightText = `BlueVision ITM (Pty) Limited`;
+
+            // Draw the left text aligned to the left side
+            doc.fontSize(10).text(leftText, 50, 40, {
+                width: doc.page.width / 2 - 50, // Leave space for the right text
+                align: 'left'
+            });
+
+            // Draw the right text aligned to the right side
+            doc.fontSize(10).text(rightText, 0, 40, {
+                width: doc.page.width - 100,  // Ensures padding on both sides
+                align: 'right'
+            });
         };
+        
         let pagenumber = 1;
         const addFooter = () => {
-            doc.fontSize(8).fillColor('gray').text(`Cyber Security Vulnerability Report ${creationDate} Revision: 1.0`, 50, doc.page.height - 90);
-            doc.text(`Disclosure Classification: Confidential`);
-            doc.text(`© Copyright BlueVision ITM (PTY) Limited – All Rights Reserved.`);
-            doc.text(`Page ${pagenumber++}`, { align: 'right' });
+            const footerText = `Cyber Security Vulnerability Report ${creationDate} Revision: 1.0 | Disclosure Classification: Confidential | © Copyright BlueVision ITM (PTY) Limited – All Rights Reserved. | Page ${pagenumber++}`;
+            console.log("doc height",doc.page.height - 90);
+            doc.fontSize(8).fillColor('gray').text(footerText, 50, doc.page.height - 90, {
+                width: doc.page.width - 100, // Leaves some padding on both sides
+                align: 'center' // Center align the footer text
+            });
         };
 
         const addNewPage = () => {
-            if (doc.pageNumber > 0) {
-                addFooter();
-                doc.addPage();
-            } else {
-                doc.addPage();
+            console.log("page number",pagenumber);
+            if (pagenumber > 0) {
+                console.log("chicken");
+                addFooter(); 
+                console.log("chicken2");
             }
-            addHeader();
+            doc.addPage(); 
+            addHeader();    
         };
+        
 
         addNewPage();
-
+        doc.moveDown();
+        doc.moveDown();
+        doc.moveDown();
         doc.fontSize(20).text('Technical Report', { align: 'center' });
         doc.moveDown();
-        doc.text(`Date Created: ${new Date(report.created_at).toLocaleDateString()}`);
+
+        // Date Created Section
+        doc.text(`Date Created: ${new Date(report.created_at).toLocaleDateString()}`, { indent: 20 }); // Move Date Created slightly to the right
         doc.moveDown();
 
-        doc.fontSize(18).fillColor('black').text('Vulnerability Manager', { align: 'left' });
-        doc.fontSize(12).text('Greenbone Vulnerability Manager is proprietary software...', { align: 'left' });
-
-        doc.fontSize(18).text('Risk Profile', { align: 'left' });
-        doc.fontSize(12).text('A system’s risk profile is constructed by...', { align: 'left' });
+       // Vulnerability Manager Section
+       doc.fontSize(18).fillColor('black').text('Vulnerability Manager', { align: 'left', indent: 20 }); // Move slightly to the right with indent
+        doc.fontSize(12).text(
+            'Greenbone Vulnerability Manager is proprietary software used to perform vulnerability scans on ', 
+            { align: 'left', indent: 20, paragraphIndent: 20 } // Apply indent and paragraphIndent to wrap the text correctly
+        );
+        doc.fontSize(12).text(
+            'network devices. Greenbone Vulnerability Manager is used for all Andile Solutions vulnerability ', 
+            { align: 'left', indent: 20, paragraphIndent: 20 } // Apply indent and paragraphIndent to wrap the text correctly
+        );
+        doc.fontSize(12).text(
+            'scanning', 
+            { align: 'left', indent: 20, paragraphIndent: 20 } // Apply indent and paragraphIndent to wrap the text correctly
+        );
         doc.moveDown();
 
         // Updated Table of Contents
-        doc.fontSize(14).text('Table of Contents', { align: 'left' });
+        doc.fontSize(14).text('Table of Contents', { align: 'left', indent: 20 }); // Move Table of Contents slightly to the right
         doc.moveDown(0.5);
 
         const tableTop = doc.y;
@@ -944,8 +984,6 @@ router.get('/reports/tech/:report_id', authenticateToken, async (req, res) => {
             }
         }
 
-        addFooter();
-        addNewPage();
         const TechreportResult = await pgClient.query(`
             WITH final_report AS (
                 SELECT 
@@ -965,16 +1003,31 @@ router.get('/reports/tech/:report_id', authenticateToken, async (req, res) => {
                 report_element ->> 'Solution' AS Recommendation,
                 report_element ->> 'Hostname' AS Hostname,
                 report_element ->> 'Port' AS PortNumber,
-                report_element ->> 'portProtocol' AS PortProtocol
+                report_element ->> 'portProtocol' AS PortProtocol,
+                report_element ->> 'vulnerabilityDetectionMethod' AS Result
             FROM final_report 
-            GROUP BY Title, cvss_score, Level, Description, CVEs, Impact, Details, Recommendation, Hostname, PortNumber, PortProtocol;
+            GROUP BY 
+                report_element ->> 'nvtName', 
+                report_element ->> 'CVSS',
+                report_element ->> 'Severity',
+                report_element ->> 'Summary',
+                report_element ->> 'CVEs',
+                report_element ->> 'Impact',
+                report_element ->> 'vulnerabilityInsight',
+                report_element ->> 'Solution',
+                report_element ->> 'Hostname',
+                report_element ->> 'Port',
+                report_element ->> 'portProtocol',
+                report_element ->> 'vulnerabilityDetectionMethod';
         `, [report_id]);
         
-        // Define column widths (adjusted for the second table)
-        const titleColumnWidth = 75; // Width for the title labels
-        const dataColumnWidth = 300; // Reduced width for the Host name
-        const smallColumnWidth = 70;  // Smaller width for IP, Port, and Protocol fields
         
+        // Define column widths (adjusted for the new Result column)
+        const titleColumnWidth = 75; // Width for the title labels
+        const dataColumnWidth = 250; // Adjusted width for the Host name
+        const smallColumnWidth = 60;  // Smaller width for IP, Port, Protocol fields
+        const resultColumnWidth = 200; // Width for the Result (vulnerability detection method) field
+        const hostnameColumnWidth = 120;
         TechreportResult.rows.forEach((row, rowIndex) => {
             // Add a new page for each row
             addNewPage();
@@ -992,7 +1045,7 @@ router.get('/reports/tech/:report_id', authenticateToken, async (req, res) => {
             ];
         
             let currentY = 100; // Set starting position for the fields
-            
+        
             // Draw each field with its title label and background
             fields.forEach((field) => {
                 const titleXPosition = 50; // Position for the title label on the left
@@ -1002,7 +1055,7 @@ router.get('/reports/tech/:report_id', authenticateToken, async (req, res) => {
         
                 // Calculate height of the text (in case it needs to wrap)
                 const fieldHeight = doc.heightOfString(field.value, textOptions);
-                const adjustedRowHeight = Math.max(fieldHeight + 2 * cellPadding, rowHeight);
+                const adjustedRowHeight = Math.max(fieldHeight + 2 * cellPadding, rowHeight); // Ensure at least rowHeight
         
                 // Draw the blue background for the title label
                 doc.rect(titleXPosition, currentY, titleColumnWidth, adjustedRowHeight).fill('darkblue');
@@ -1022,42 +1075,82 @@ router.get('/reports/tech/:report_id', authenticateToken, async (req, res) => {
                 currentY += adjustedRowHeight;
             });
         
-            // Add new table below each report with the headers: IP, Host name, Port number, Port protocol
+            // Add new table below each report with the headers: IP, Host name, Port number, Port protocol, and Result
             currentY += 20; // Space between the fields and the new table
         
             // Define the table headers and data
-            const tableHeaders = ['IP', 'Host name', 'Port number', 'Port protocol'];
-            const tableData = [row.ip || 'N/A', row.hostname || 'N/A', row.portnumber || 'N/A', row.portprotocol || 'N/A'];
+            const tableHeaders = ['IP', 'Host name', 'Port number', 'Port protocol', 'Result'];
+            const tableData = [row.ip || 'N/A', row.hostname || 'N/A', row.portnumber || 'N/A', row.portprotocol || 'N/A', row.result || 'N/A'];
         
             // Set the starting position of the table
             let tableX = 50;
-            let tableHeaderHeight = rowHeight;
         
-            // Draw the headers with a blue background
+            // Draw the headers with a blue background and borders
             tableHeaders.forEach((header, index) => {
-                // Adjust column width for smaller table
-                const columnWidth = (index === 1) ? dataColumnWidth : smallColumnWidth; // Reduced width for Host name and others
-                doc.rect(tableX, currentY, columnWidth, tableHeaderHeight).fill('darkblue');
+                // Adjust column width for the new Result field
+                let columnWidth;
+                switch (index) {
+                    case 1: columnWidth = hostnameColumnWidth; break; // Hostname gets the larger width
+                    case 4: columnWidth = resultColumnWidth; break; // Result column width
+                    default: columnWidth = smallColumnWidth; break; // IP, Port number, and Protocol get smaller width
+                }
+        
+                // Draw the header cell background and text
+                doc.rect(tableX, currentY, columnWidth, rowHeight).fill('darkblue');
                 doc.font('Helvetica-Bold').fillColor('white');
                 doc.text(header, tableX + cellPadding, currentY + cellPadding, { width: columnWidth - 2 * cellPadding, align: 'center' });
+        
+                // Draw the border around the header cell
+                doc.rect(tableX, currentY, columnWidth, rowHeight).stroke();
+        
                 tableX += columnWidth; // Move X position for the next header
             });
         
-            currentY += tableHeaderHeight; // Move Y for data row
+            currentY += rowHeight; // Move Y for data row
         
-            // Reset X position and draw the data for each header
+            // Reset X position and draw the data for each header with dynamic row height
             tableX = 50;
+        
+            // First, calculate the maximum row height based on the data in all cells of the row
+            let maxRowHeight = rowHeight; // Initialize with the default rowHeight
             tableData.forEach((data, index) => {
-                // Adjust column width for smaller table
-                const columnWidth = (index === 1) ? dataColumnWidth : smallColumnWidth;
+                let columnWidth;
+                switch (index) {
+                    case 1: columnWidth = hostnameColumnWidth; break; // Hostname gets the larger width
+                    case 4: columnWidth = resultColumnWidth; break; // Result column width
+                    default: columnWidth = smallColumnWidth; break; // IP, Port number, and Protocol get smaller width
+                }
+        
+                // Calculate the height of the text for each cell based on its column width
+                const textOptions = { width: columnWidth - 2 * cellPadding, align: 'center' };
+                const cellTextHeight = doc.heightOfString(data, textOptions);
+                
+                // Find the largest height among all the cells in this row
+                maxRowHeight = Math.max(maxRowHeight, cellTextHeight + 2 * cellPadding); 
+            });
+        
+            // Now that we know the maximum height, apply it uniformly to all cells in the row
+            tableX = 50; // Reset X position to draw data cells
+            tableData.forEach((data, index) => {
+                let columnWidth;
+                switch (index) {
+                    case 1: columnWidth = hostnameColumnWidth; break; // Hostname gets the larger width
+                    case 4: columnWidth = resultColumnWidth; break; // Result column width
+                    default: columnWidth = smallColumnWidth; break; // IP, Port number, and Protocol get smaller width
+                }
+        
+                // Draw the data cell and text
                 doc.font('Helvetica').fillColor('black');
                 doc.text(data, tableX + cellPadding, currentY + cellPadding, { width: columnWidth - 2 * cellPadding, align: 'center' });
+        
+                // Draw the border around the data cell with the maxRowHeight
+                doc.rect(tableX, currentY, columnWidth, maxRowHeight).stroke();
+        
                 tableX += columnWidth; // Move X position for the next cell
             });
         
-            currentY += rowHeight; // Move Y for the next row if needed
+            currentY += maxRowHeight; // Move Y for the next row if needed
         });
-        
 
         doc.end();
     } catch (error) {

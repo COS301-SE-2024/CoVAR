@@ -26,6 +26,15 @@ export const buttonStyles: SxProps<Theme> = {
   width: '100%',
 };
 
+export const headingBoxStyles: SxProps<Theme> = {
+  width: '98%',
+  display: 'flex',
+  justifyContent: 'center',
+  alignItems: 'center',
+  padding: (theme) => theme.spacing(2),
+  marginBottom: (theme) => theme.spacing(2),
+};
+
 
 export const uploadButtonStyles: SxProps<Theme> = (theme) => ({
   marginTop: theme.spacing(3),

@@ -108,6 +108,59 @@ router.post('/reports/getReports', authenticateToken, async (req, res) => {
         return res.status(500).json({ error: 'An error occurred while fetching reports' });
     }
 });
+
+router.post('/reports/getReportsPerClient', authenticateToken, async (req, res) => {
+    try {
+        const user = req.user; // Get the logged-in VA user
+        console.log('VA user:', user);
+
+        // Query to get the clients assigned to the logged-in VA
+        const assignedClientsQuery = `
+            SELECT u.user_id, u.username 
+            FROM assignment a
+            INNER JOIN users u ON a.client = u.user_id
+            WHERE a.va = $1
+        `;
+        const assignedClientsResult = await pgClient.query(assignedClientsQuery, [user.user_id]);
+
+        if (assignedClientsResult.rows.length === 0) {
+            console.log('No assigned clients found');
+            return res.status(404).json({ error: 'No assigned clients found' });
+        }
+
+        const assignedClients = assignedClientsResult.rows;
+
+        // Initialize an array to store the number of reports per client
+        const reportsPerClient = [];
+
+        // Loop through each assigned client and get the number of reports for each
+        for (let client of assignedClients) {
+            const clientReportsQuery = `
+                SELECT COUNT(ur.report_id) AS report_count
+                FROM user_reports ur
+                WHERE ur.user_id = $1
+            `;
+            const clientReportsResult = await pgClient.query(clientReportsQuery, [client.user_id]);
+
+            const reportCount = clientReportsResult.rows[0]?.report_count || 0;
+
+            // Push the result into the reportsPerClient array
+            reportsPerClient.push({
+                client_id: client.user_id,
+                client_name: client.username,
+                report_count: reportCount
+            });
+        }
+
+        // Send the results as the response
+        return res.status(200).json(reportsPerClient);
+    } catch (err) {
+        console.error('Error fetching reports per client:', err);
+        return res.status(500).json({ error: 'An error occurred while fetching reports per client' });
+    }
+});
+
+
 const width = 800; // Width of the canvas
 const height = 600; // Height of the canvas
 const chartJSNodeCanvas = new ChartJSNodeCanvas({ width, height });

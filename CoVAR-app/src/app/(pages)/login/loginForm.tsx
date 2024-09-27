@@ -4,7 +4,7 @@ import { useTheme, ThemeProvider } from '@mui/material/styles';
 import { Container, Box, Typography, TextField, Button, Link, CssBaseline, Card } from '@mui/material';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import GoogleIcon from "../../../assets/GoogleIcon";
-import { doSignInWithEmailAndPassword, doSignInWithGoogle } from '../../../functions/firebase/auth';
+import { doSignInWithEmailAndPassword, doSignInWithGoogle} from '../../../functions/firebase/auth';
 import { useRouter } from 'next/navigation';
 import { doc, setDoc, getDoc } from "firebase/firestore";
 import { db } from '../../../functions/firebase/firebaseConfig';
@@ -17,7 +17,7 @@ import InputAdornment from '@mui/material/InputAdornment';
 
 
 interface LoginProps {
-  toggleForm: () => void;
+  toggleForm: (formType: 'login' | 'signup' | 'forgotPassword') => void;
 }
 
 interface User {
@@ -27,7 +27,7 @@ interface User {
 }
 
 const Login: React.FC<LoginProps> = ({ toggleForm }) => {
-  const theme = useTheme(); // Use the theme hook here
+  const theme = useTheme(); 
   const router = useRouter();
 
   const [email, setEmail] = useState('');
@@ -204,19 +204,45 @@ const Login: React.FC<LoginProps> = ({ toggleForm }) => {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <Container maxWidth="xl" sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-        <Box sx={{ textAlign: 'center', marginRight: 'auto', marginLeft: 'auto' }}>
+      <Container 
+        maxWidth="xl" 
+        sx={{ 
+          display: 'flex', 
+          justifyContent: 'center', 
+          alignItems: 'center', 
+          height: '100vh', 
+        }}
+      >
+        <Box 
+          sx={{ 
+            textAlign: 'center', 
+            marginRight: 'auto', 
+            marginLeft: 'auto',
+            width: '100vw', 
+            height: '30vh', 
+          }}
+        >
           <Typography variant="h1" color="textPrimary" fontWeight={550} gutterBottom>
             CoVAR
           </Typography>
-          <LockOutlinedIcon sx={{ fontSize: 150, color: theme.palette.primary.main }} />
+          <LockOutlinedIcon sx={{ fontSize: '15vh', color: theme.palette.primary.main }} /> 
         </Box>
-        <Card sx={{ backgroundColor: theme.palette.background.paper, padding: 4, borderRadius: 1, borderStyle: 'solid', borderWidth: 1, borderColor: theme.palette.divider }}>
+        <Card 
+          sx={{ 
+            backgroundColor: theme.palette.background.paper, 
+            padding: '3vh', 
+            borderRadius: 1, 
+            borderStyle: 'solid', 
+            borderWidth: 1, 
+            borderColor: theme.palette.divider,
+            width: '50vw', 
+          }}
+        >
           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <Typography variant="h4" component="h2" fontWeight={550} gutterBottom>
               Sign In
             </Typography>
-            <Box component="form" sx={{ width: '100%', mt: 1 }} onSubmit={onSubmit}>
+            <Box component="form" sx={{ width: '100%', mt: '2vh' }} onSubmit={onSubmit}>
               <TextField
                 margin="normal"
                 required
@@ -232,7 +258,7 @@ const Login: React.FC<LoginProps> = ({ toggleForm }) => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 sx={{
-                  marginBottom: 3, 
+                  marginBottom: '2vh',
                   '& .MuiOutlinedInput-root': {
                     '& fieldset': {
                       borderColor: theme.palette.divider,
@@ -246,51 +272,50 @@ const Login: React.FC<LoginProps> = ({ toggleForm }) => {
                   },
                 }}
               />
-            <TextField
-              margin="normal"
-              required
-              fullWidth
-              name="password"
-              label="Password"
-              type={showPassword ? 'text' : 'password'}
-              id="password"
-              autoComplete="current-password"
-              InputLabelProps={{
-                style: { color: theme.palette.text.primary },
-              }}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              sx={{
-                marginBottom: 3, 
-                '& .MuiOutlinedInput-root': {
-                  '& fieldset': {
-                    borderColor: theme.palette.divider,
+              <TextField
+                margin="normal"
+                required
+                fullWidth
+                name="password"
+                label="Password"
+                type={showPassword ? 'text' : 'password'}
+                id="password"
+                autoComplete="current-password"
+                InputLabelProps={{
+                  style: { color: theme.palette.text.primary },
+                }}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                sx={{
+                  marginBottom: '2vh',
+                  '& .MuiOutlinedInput-root': {
+                    '& fieldset': {
+                      borderColor: theme.palette.divider,
+                    },
+                    '&:hover fieldset': {
+                      borderColor: theme.palette.divider,
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: theme.palette.primary.main,
+                    },
                   },
-                  '&:hover fieldset': {
-                    borderColor: theme.palette.divider,
-                  },
-                  '&.Mui-focused fieldset': {
-                    borderColor: theme.palette.primary.main,
-                  },
-                },
-              }}
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton
-                      aria-label="toggle password visibility"
-                      onClick={handleClickShowPassword}
-                      edge="end"
-                    >
-                      {showPassword ? <Visibility /> : <VisibilityOff />}
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              }}
-            />
-
-              <Box sx={{ textAlign: 'left', width: '100%', mt: 1, mb: 3 }}>
-                <Link href="#" variant="body2" sx={{ color: theme.palette.text.secondary }}>
+                }}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        aria-label="toggle password visibility"
+                        onClick={handleClickShowPassword}
+                        edge="end"
+                      >
+                        {showPassword ? <Visibility /> : <VisibilityOff />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+              />
+              <Box sx={{ textAlign: 'left', width: '100%', mt: '1vh', mb: '2vh' }}>
+                <Link href="#" variant="body2" sx={{ color: theme.palette.text.secondary }} onClick={() => toggleForm('forgotPassword')}>
                   Forgot your password?
                 </Link>
               </Box>
@@ -298,41 +323,42 @@ const Login: React.FC<LoginProps> = ({ toggleForm }) => {
                 type="submit"
                 fullWidth
                 variant="contained"
-                sx={{ mt: 1, mb: 3, backgroundColor: theme.palette.primary.main }}
+                sx={{ mt: '2vh', mb: '2vh', backgroundColor: theme.palette.primary.main }}
               >
                 Log in
               </Button>
               <Button
                 fullWidth
                 variant="contained"
-                sx={{ mt: 1, mb: 3, backgroundColor: theme.palette.primary.main }}
+                sx={{ mt: '1vh', mb: '2vh', backgroundColor: theme.palette.primary.main }}
                 onClick={signInWithGoogle}
               >
                 <GoogleIcon />Continue with Google
               </Button>
-              <Box display="flex" justifyContent="center" alignItems="center" mt={2} mb = {2}>
+              <Box display="flex" justifyContent="center" alignItems="center" mt="2vh" mb="2vh">
                 <Typography variant="body2" sx={{ color: theme.palette.text.primary }}>
                   Don&apos;t have an account?
                 </Typography>
-                <Link href="#" variant="body2" id="signupToggle" sx={{ color: theme.palette.text.secondary, ml: 1 }} onClick={toggleForm}>
+                <Link href="#" variant="body2" id="signupToggle" sx={{ color: theme.palette.text.secondary, ml: 1 }} onClick={() => toggleForm('signup')}>
                   Sign up
                 </Link>
               </Box>
-              <Box sx={{ position: 'relative', width: '100%' }}>
+              
+              <Box 
+                display="flex" 
+                justifyContent="center" 
+                alignItems="center" 
+                width="100%" 
+                sx={{ position: 'relative', mt: '2vh', minHeight: '2vh' }} 
+              >
                 {error && (
-                  <Box 
-                    display="flex" 
-                    justifyContent="center" 
-                    alignItems="center" 
-                    width="100%" 
-                    sx={{ position: 'absolute', top: '110%', left: 0 }} 
-                  >
-                    <Typography variant="body2" color="error" textAlign="center">
-                      {error}
-                    </Typography>
-                  </Box>
-                )}
+                <Typography variant="body2" color="error" textAlign="center">
+                  {error}
+                </Typography>
+                  )}
               </Box>
+          
+
             </Box>
           </Box>
         </Card>

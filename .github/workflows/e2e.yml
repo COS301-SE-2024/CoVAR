@@ -58,6 +58,8 @@ jobs:
 
       - name: Create Pem Files
         run: |
+          echo ${{ secrets.PUBLIC }} > langchain/public.pem
+          echo ${{ secrets.PRIVATE }} > langchain/private.pem
           echo ${{ secrets.PUBLIC }} > server/public.pem
           echo ${{ secrets.PRIVATE }} > server/private.pem
           echo ${{ secrets.REFRESH_PUBLIC }} > server/refreshPublic.pem

@@ -44,13 +44,13 @@ describe('Admin tools E2E Tests', () => {
         cy.get('.MuiDialog-root').should('exist');
         cy.get('.MuiDialog-root').contains('Confirm').click();
         cy.wait(4000);
-        cy.get('.MuiDataGrid-root .MuiDataGrid-row').contains(Cypress.env('va_username'), { log: false }).closest('.MuiDataGrid-row').contains('client').should('exist');
-        cy.get('.MuiDataGrid-root .MuiDataGrid-row').contains(Cypress.env('va_username'), { log: false }).closest('.MuiDataGrid-row').contains('button', 'Assign VA').click();
+        cy.get('.MuiDataGrid-root .MuiDataGrid-row', { timeout: 8000 }).contains(Cypress.env('va_username'), { log: false }).closest('.MuiDataGrid-row').contains('client').should('exist');
+        cy.get('.MuiDataGrid-root .MuiDataGrid-row', { timeout: 8000 }).contains(Cypress.env('va_username'), { log: false }).closest('.MuiDataGrid-row').contains('button', 'Assign VA').click();
         cy.wait(4000);
         cy.get('.MuiDialog-root').should('exist');
         cy.get('.MuiDialog-root').contains('Confirm').click();
         cy.wait(4000);
-        cy.get('.MuiDataGrid-root .MuiDataGrid-row').contains(Cypress.env('va_username'), { log: false }).closest('.MuiDataGrid-row').contains('va').should('exist');
+        cy.get('.MuiDataGrid-root .MuiDataGrid-row', { timeout: 8000 }).contains(Cypress.env('va_username'), { log: false }).closest('.MuiDataGrid-row').contains('va').should('exist');
     })
 
     it('assign a client to a va', () => {

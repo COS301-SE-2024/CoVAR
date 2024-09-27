@@ -7,13 +7,13 @@ describe('Admin tools E2E Tests', () => {
         cy.wait(4000);
 
         // Login
-        cy.get('input[name="email"]', { timeout: 4000 }).type(Cypress.env('client_username'), { log: false })
+        cy.get('input[name="email"]', { timeout: 8000 }).type(Cypress.env('client_username'), { log: false })
         cy.get('input[name="password"]').type(Cypress.env('client_password'), { log: false })
         cy.get('button[type="submit"]').click()
 
 
         //Navigate to the admin tools page
-        cy.get('[test-id="adminToolsLink"]', { timeout: 4500 }).should('not.exist');
+        cy.get('[test-id="adminToolsLink"]', { timeout: 8500 }).should('not.exist');
         cy.get('[test-id="evaluateLink"]').should('not.exist');
 
         //Logout

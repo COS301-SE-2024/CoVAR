@@ -10,8 +10,9 @@ import CancelIcon from '@mui/icons-material/Cancel';
 import { Loader, ReportsContainer, MatchedPair, ReportCard, ButtonGroup, UnmatchedReports, UnmatchedButtonGroup } from '../../../../../styles/conflictStyle';
 import { matchedRecomendations, unmatchedRecomendations } from '@/functions/requests';
 import { mainContentStyles } from '../../../../../styles/evaluateStyle';
-import { Dialog, DialogTitle, DialogContent } from '@mui/material';
 
+import Image from 'next/image';
+import AIImage from '../../../../../assets/AIImage.png';
 interface FileUpload {
     upload_id: number;
     va: number;
@@ -56,17 +57,20 @@ const UserConflicts = () => {
     const [unmatchedAiSelections2, setUnmatchedAiSelections2] = useState<{ [index: number]: boolean }>({});
     const [matchedReportsExist, setMatchedReportsExist] = useState(false);
 
+
     const [canGenerteReport, setCanGenerateReport] = useState(false);
 
     const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
     const aiToggle = async () => {
         try {
+
             setAiInsight((prevState) => !prevState);
         } catch (error: any) {
             console.log("ERROR enabling or disabling ai insights", error);
         }
     };
+
 
     useEffect(() => {
         console.log('final report:', finalReport);
@@ -77,8 +81,21 @@ const UserConflicts = () => {
     useEffect(() => {
         // Only trigger when aiInsight is true
         if (aiInsight) {
+
             const fetchAllRecommendations = async () => {
                 try {
+
+                    // const scrollFixedDistance = () => {
+                    //     const reportsContainer = document.querySelector('#reportsContainer');
+                    //     if (reportsContainer) {
+                    //         reportsContainer.scrollBy({
+                    //             top: 600,
+                    //             behavior: 'smooth'
+                    //         });
+                    //     }
+                    // };
+
+
                     // Process matched reports first
                     for (const [index, report] of matchedReports.entries()) {
 
@@ -110,6 +127,9 @@ const UserConflicts = () => {
                                 console.warn("Unexpected result format for matched report:", result);
                                 handleButtonClick('acceptNone', index, true);
                             }
+                            // if (aiScroll) {
+                            //     scrollFixedDistance();
+                            // }
                         } catch (error) {
                             console.error("Error fetching recommendation for matched report:", report, error);
                         }
@@ -138,6 +158,9 @@ const UserConflicts = () => {
                                 console.warn("Unexpected result format for unmatched report:", result);
                                 handleButtonClick('acceptNone', index);
                             }
+                            // if (aiScroll) {
+                            //     scrollFixedDistance();
+                            // }
                         } catch (error) {
                             console.error("Error fetching recommendation for unmatched report:", report, error);
                         }
@@ -168,6 +191,9 @@ const UserConflicts = () => {
                         await sleep(200);
                     }
 
+                    // if (aiScroll) {
+                    //     scrollFixedDistance();
+                    // }
                 } catch (error) {
                     console.error("Error during fetching recommendations:", error);
                 } finally {
@@ -348,12 +374,23 @@ const UserConflicts = () => {
                 {!matchedReportsExist && (
                     <Box position="relative" flexGrow={1} display="flex" justifyContent="center">
                         <Button
-                            sx={{ position: 'relative', left: '-6.5%' }} // Shift left using 'left' positioning
+                            sx={{
+                                position: 'relative',
+                                left: '-6.5%',
+                                width: '50px', // Set the fixed width
+                                height: '60px', // Set the fixed height
+                                display: 'flex', // Enable Flexbox
+                                justifyContent: 'center', // Horizontally center content
+                                alignItems: 'center', // Vertically center content
+                                padding: 0,
+                                overflow: 'hidden',
+
+                            }}
                             variant="contained"
                             color={aiInsight ? "primary" : "secondary"}
                             onClick={aiToggle}
                         >
-                            {aiInsight ? "Disable AI Insights" : "Enable AI Insights"}
+                            <Image src={AIImage} alt="AI" layout="fill" objectFit="cover" />
                         </Button>
                     </Box>
                 )}
@@ -561,13 +598,25 @@ const UserConflicts = () => {
                     </Box>
 
                     {matchedReportsExist && (
-                        <Box sx={{ left: "8px" }} position="relative" flexGrow={1} display="flex" justifyContent="center">
+                        <Box position="relative" flexGrow={1} display="flex" justifyContent="center">
                             <Button
+                                sx={{
+                                    position: 'relative',
+                                    left: '8px',
+                                    width: '50px', // Set the fixed width
+                                    height: '60px', // Set the fixed height
+                                    display: 'flex', // Enable Flexbox
+                                    justifyContent: 'center', // Horizontally center content
+                                    alignItems: 'center', // Vertically center content
+                                    padding: 0,
+                                    overflow: 'hidden',
+
+                                }}
                                 variant="contained"
                                 color={aiInsight ? "primary" : "secondary"}
                                 onClick={aiToggle}
                             >
-                                {aiInsight ? "Disable AI Insights" : "Enable AI Insights"}
+                                <Image src={AIImage} alt="AI" layout="fill" objectFit="cover" />
                             </Button>
                         </Box>)}
 
@@ -665,7 +714,7 @@ const UserConflicts = () => {
 
     return (
 
-        <ReportsContainer sx={mainContentStyles}>
+        <ReportsContainer sx={mainContentStyles} id="reportsContainer">
             {matchedReports.length > 0 && (
                 <Box>
                     {renderedMatchedReports}

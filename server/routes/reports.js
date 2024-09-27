@@ -9,7 +9,7 @@ const { ChartJSNodeCanvas } = require('chartjs-node-canvas');
 router.post('/reports/getReports', authenticateToken, async (req, res) => {
     try {
         const user = req.user;
-        console.log(user);
+        
 
         const userResult = await pgClient.query(
             'SELECT user_id, organization_id FROM users WHERE user_id = $1',
@@ -17,7 +17,7 @@ router.post('/reports/getReports', authenticateToken, async (req, res) => {
         );
 
         if (userResult.rows.length === 0) {
-            console.log('User not found');
+            
             return res.status(500).json({ error: 'User not found' });
         }
 
@@ -37,14 +37,14 @@ router.post('/reports/getReports', authenticateToken, async (req, res) => {
         const reportIdsResult = await pgClient.query(reportsQuery, queryParams);
 
         if (reportIdsResult.rows.length === 0) {
-            console.log('No reports found');
+            
             return res.status(500).json({ error: 'No reports found' });
         }
 
         const reportIds = reportIdsResult.rows.map(row => row.report_id);
 
         if (reportIds.length === 0) {
-            console.log('No reports found');
+            
             return res.status(500).json({ error: 'No reports found' });
         }
 
@@ -54,17 +54,16 @@ router.post('/reports/getReports', authenticateToken, async (req, res) => {
         );
         
 
-        // console.log(reportResult.rows);
+        
         let reports = reportsResult.rows.map(report => {
             const content = report.content.finalReport; // Accessing the 'reports' array within the content object
-            //console.log("Report Content:", content); // Log the entire content to see its structure
             let criticalCount = 0;
             let mediumCount = 0;
             let lowCount = 0;
 
             content.forEach(reportItem => {
 
-                //console.log("Item:", item); // Log the entire item to examine its structure
+                
                 let severity = reportItem.Severity || reportItem.severity; // Check for both 'Severity' and 'severity'
 
                 // Ensure that the severity is trimmed and in a consistent case
@@ -72,7 +71,7 @@ router.post('/reports/getReports', authenticateToken, async (req, res) => {
                     severity = severity.trim().toLowerCase();
                 }
 
-                //console.log("Item Severity:", severity); // Log the severity to see what it returns
+                
 
                 switch (severity) {
                     case 'high':
@@ -85,7 +84,7 @@ router.post('/reports/getReports', authenticateToken, async (req, res) => {
                         lowCount++;
                         break;
                     default:
-                        console.log("Unknown severity:", severity); // Log any severity that doesn't match expected values
+                        
                         break;
                 }
 
@@ -99,8 +98,6 @@ router.post('/reports/getReports', authenticateToken, async (req, res) => {
                 lowCount
             };
         });
-
-        console.log(reports);
         res.json({ reports });
 
     } catch (error) {
@@ -112,7 +109,6 @@ router.post('/reports/getReports', authenticateToken, async (req, res) => {
 router.post('/reports/getReportsPerClient', authenticateToken, async (req, res) => {
     try {
         const user = req.user; // Get the logged-in VA user
-        console.log('VA user:', user);
 
         // Query to get the clients assigned to the logged-in VA
         const assignedClientsQuery = `
@@ -124,7 +120,6 @@ router.post('/reports/getReportsPerClient', authenticateToken, async (req, res) 
         const assignedClientsResult = await pgClient.query(assignedClientsQuery, [user.user_id]);
 
         if (assignedClientsResult.rows.length === 0) {
-            console.log('No assigned clients found');
             return res.status(404).json({ error: 'No assigned clients found' });
         }
 
@@ -241,7 +236,6 @@ router.get('/reports/executive/:report_id', authenticateToken, async (req, res) 
                         lowVulnerabilities.add(vulnerabilityIdentifier); // Add to low vulnerabilities set
                         break;
                     default:
-                        console.log("Unknown severity:", severity);
                         break;
                 }
 
@@ -258,9 +252,6 @@ router.get('/reports/executive/:report_id', authenticateToken, async (req, res) 
         // Convert the Map to an array of categories and their counts
         const vulnerabilityTypes = Array.from(vulnerabilityCategories.keys());
         const vulnerabilityCounts = Array.from(vulnerabilityCategories.values());
-        // console.log("Unique Critical Hosts:", uniqueCriticalHostsCount);
-        // console.log("Unique Medium Hosts:", uniqueMediumHostsCount);
-        // console.log("Unique Low Hosts:", uniqueLowHostsCount);
         // Initialize counts
         let criticalCount = 0;
         let mediumCount = 0;
@@ -335,9 +326,7 @@ router.get('/reports/executive/:report_id', authenticateToken, async (req, res) 
                  ORDER BY created_at ASC`,
                 [new Date(report.created_at).toISOString(), req.user.user_id] // Convert date to ISO string for proper casting
             );
-            console.log('report created at', report.created_at);
             graphData = reportsResult.rows;
-            console.log('graph data', graphData);
         } else {
             // Select all reports from the database associated with the organization that are earlier than the current report
             const reportsResult = await pgClient.query(
@@ -351,7 +340,6 @@ router.get('/reports/executive/:report_id', authenticateToken, async (req, res) 
                 [new Date(report.created_at).toISOString(), userResult.rows[0].organization_id] // Convert date to ISO string for proper casting
             );
             graphData = reportsResult.rows;
-            console.log('graph data', graphData);
         }
         // Prepare data for trend graph
         const trendData = graphData.map((report) => {
@@ -390,7 +378,6 @@ router.get('/reports/executive/:report_id', authenticateToken, async (req, res) 
                 lowCount: currentLowCount,
             };
         });
-        console.log('trend data', trendData);
         // Generate trend graph using chart.js-node-canvas
         const labels = trendData.map((data) => data.date);
         const criticalCounts = trendData.map((data) => data.criticalCount);
@@ -494,7 +481,6 @@ router.get('/reports/executive/:report_id', authenticateToken, async (req, res) 
         const disclosureText = `Disclosure Classification: Confidential`;
         const revisionText = `2022 Revision: 1.0`;
 
-        const disclosureWidth = doc.widthOfString(disclosureText);
         const pageWidth = doc.page.width; // Get the width of the page
         const revisionX = pageWidth - doc.widthOfString(revisionText) - 20; // Calculate X position for right alignment with some padding
 
@@ -857,7 +843,6 @@ router.get('/reports/tech/:report_id', authenticateToken, async (req, res) => {
         let pagenumber = 1;
         const addFooter = () => {
             const footerText = `Cyber Security Vulnerability Report ${creationDate} Revision: 1.0 | Disclosure Classification: Confidential | © Copyright BlueVision ITM (PTY) Limited – All Rights Reserved. | Page ${pagenumber++}`;
-            console.log("doc height",doc.page.height - 90);
             doc.fontSize(8).fillColor('gray').text(footerText, 50, doc.page.height - 90, {
                 width: doc.page.width - 100, // Leaves some padding on both sides
                 align: 'center' // Center align the footer text
@@ -865,11 +850,8 @@ router.get('/reports/tech/:report_id', authenticateToken, async (req, res) => {
         };
 
         const addNewPage = () => {
-            console.log("page number",pagenumber);
-            if (pagenumber > 0) {
-                console.log("chicken");
+            if (pagenumber > 0) {          
                 addFooter(); 
-                console.log("chicken2");
             }
             doc.addPage(); 
             addHeader();    
@@ -1028,7 +1010,7 @@ router.get('/reports/tech/:report_id', authenticateToken, async (req, res) => {
         const smallColumnWidth = 60;  // Smaller width for IP, Port, Protocol fields
         const resultColumnWidth = 200; // Width for the Result (vulnerability detection method) field
         const hostnameColumnWidth = 120;
-        TechreportResult.rows.forEach((row, rowIndex) => {
+        TechreportResult.rows.forEach((row) => {
             // Add a new page for each row
             addNewPage();
         

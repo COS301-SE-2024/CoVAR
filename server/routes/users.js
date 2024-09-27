@@ -349,4 +349,49 @@ router.get('/users/assigned_clients', authenticateToken, async (req, res) => {
     }
 });
 
+// Get all organizations assigned to the logged-in VA
+router.get('/users/assigned_organizations', authenticateToken, async (req, res) => {
+    const token = req.headers['authorization'].split(' ')[1];
+    const decodedToken = verifyToken(token);
+    const id = decodedToken.user_id;
+    
+    try {
+        const organizations = await pgClient.query(
+            `SELECT * FROM organizations 
+            WHERE organization_id IN (SELECT organization FROM assignment WHERE va = $1)`, 
+            [id]
+        );
+        res.send(organizations.rows);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
+});
+
+
+// Check if email exists in the database
+router.post('/users/checkEmailExists', async (req, res) => {
+    const { email } = req.body;
+    if (!email) {
+        return res.status(400).send('Email is required');
+    }
+    try {
+        // Query the database to see if the email exists
+        const query = 'SELECT * FROM users WHERE username = $1';
+        const result = await pgClient.query(query, [email]);
+        
+        if (result.rows.length === 0) {
+            // Email not found
+            return res.status(404).send('Email not found');
+        }
+        // Email found
+        res.status(200).send('Email exists');
+    } catch (err) {
+        console.error('Error checking email:', err);
+        res.status(500).send('Server Error');
+    }
+});
+
+
+
 module.exports = router;

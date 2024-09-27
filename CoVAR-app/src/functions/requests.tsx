@@ -107,6 +107,17 @@ const handleRequest = async (request: AxiosRequestConfig) => {
     }
 };
 
+export const fetchReportsPerClient = async () => {
+    const accessToken = localStorage.getItem('accessToken');
+    const request: AxiosRequestConfig = {
+        method: 'post',
+        url: '/api/reports/getReportsPerClient',
+        headers: { Authorization: `Bearer ${accessToken}` },
+    };
+    return await handleRequest(request);
+};
+
+
 // Exported functions remain unchanged
 export const checkToken = async (accessToken: string) => {
     const request = {
@@ -125,6 +136,8 @@ export const fetchUsers = async (accessToken: string) => {
     };
     return await handleRequest(request);
 };
+
+
 
 export const fetchOrganisations = async (accessToken: string) => {
     const request = {
@@ -154,11 +167,40 @@ export const fetchAssignedClients = async (userId: string, accessToken: string) 
     return await handleRequest(request);
 };
 
+
+
 export const fetchAssignedOrganisations = async (userId: string, accessToken: string) => {
     const request = {
         method: 'get',
         url: `/api/users/${userId}/assigned_organizations`,
         headers: { Authorization: `Bearer ${accessToken}` },
+    };
+    return await handleRequest(request);
+};
+
+export const fetchLastReportDates = async (token: string) => {
+    const request = {
+        method: 'get',
+        url: '/api/reports/last_report_dates',
+        headers: { Authorization: `Bearer ${token}` },
+    };
+    return await handleRequest(request);
+};
+
+export const fetchClientsAssigned = async (token: string) => {
+    const request = {
+        method: 'get',
+        url: '/api/users/assigned_clients',
+        headers: { Authorization: `Bearer ${token}` },
+    };
+    return await handleRequest(request);
+};
+
+export const fetchOrganisationsAssigned = async (token: string) => {
+    const request = {
+        method: 'get',
+        url: '/api/users/assigned_organizations',
+        headers: { Authorization: `Bearer ${token}` },
     };
     return await handleRequest(request);
 };
@@ -182,6 +224,16 @@ export const unassignClient = async (userId: string, clientUsername: string, acc
     };
     return await handleRequest(request);
 };
+
+export const checkEmailExists = async (email: string) => {
+    const request = {
+        method: 'post',
+        url: '/api/users/checkEmailExists',
+        data: { email },
+    };
+    return await handleRequest(request);
+};
+
 
 export const getUserRole = async (accessToken: string) => {
     const request = {
@@ -299,6 +351,8 @@ export const leaveOrganisation = async (orgId: string, username: string, accessT
     };
     return await handleRequest(request);
 };
+
+
 
 export const handleDownloadFile = async (loid: number, fileName: string) => {
     try {

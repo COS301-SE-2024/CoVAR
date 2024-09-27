@@ -18,7 +18,7 @@ describe('Admin tools E2E Tests', () => {
 
         //Logout
 
-        cy.wait(2000);
+        cy.wait(6000);
         cy.get('[test-id="logoutButton"]', { timeout: 8000 }).click();
     })
 

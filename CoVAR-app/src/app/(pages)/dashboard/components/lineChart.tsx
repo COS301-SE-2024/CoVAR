@@ -11,20 +11,23 @@ const VulnerabilityLineChart: React.FC<VulnerabilityLineChartProps> = ({ respons
 
   useEffect(() => {
     const lineChartData: { name: string; critical: number; high: number; medium: number; low: number }[] = [];
-
-    for (let i = 0; i < responseData.length; i++) {
-      const report = responseData[i];
+  
+    const reversedResponseData = [...responseData].reverse(); // Clone and reverse the data
+  
+    for (let i = 0; i < reversedResponseData.length; i++) {
+      const report = reversedResponseData[i];
       const vulnerabilities = report.content.finalReport; 
       const critical = vulnerabilities.filter((vuln: any) => vuln.Severity === 'Critical').length;
       const high = vulnerabilities.filter((vuln: any) => vuln.Severity === 'High').length;
       const medium = vulnerabilities.filter((vuln: any) => vuln.Severity === 'Medium').length;
       const low = vulnerabilities.filter((vuln: any) => vuln.Severity === 'Low').length;
-
+  
       lineChartData.push({ name: `Report ${i + 1}`, critical, high, medium, low });
     }
-
+  
     setData(lineChartData);
   }, [responseData]);
+  
 
   return (
     <ResponsiveContainer width="100%" height={400}>

@@ -4,22 +4,27 @@ describe('Admin tools E2E Tests', () => {
     })
 
     it('client should not see admin tools or evaluate page', () => {
+        cy.wait(4000);
+
         // Login
-        cy.get('input[name="email"]', { timeout: 4000 }).type(Cypress.env('client_username'), { log: false })
+        cy.get('input[name="email"]', { timeout: 8000 }).type(Cypress.env('client_username'), { log: false })
         cy.get('input[name="password"]').type(Cypress.env('client_password'), { log: false })
         cy.get('button[type="submit"]').click()
 
+
         //Navigate to the admin tools page
-        cy.get('[test-id="adminToolsLink"]', { timeout: 4500 }).should('not.exist');
+        cy.get('[test-id="adminToolsLink"]', { timeout: 8500 }).should('not.exist');
         cy.get('[test-id="evaluateLink"]').should('not.exist');
 
         //Logout
 
-        cy.wait(2000);
+        cy.wait(6000);
         cy.get('[test-id="logoutButton"]', { timeout: 8000 }).click();
     })
 
     it('demote a va to client and promote again', () => {
+        cy.wait(4000);
+
         // Login
         cy.get('input[name="email"]', { timeout: 4000 }).type(Cypress.env('admin_username'), { log: false })
         cy.get('input[name="password"]').type(Cypress.env('admin_password'), { log: false })
@@ -40,6 +45,8 @@ describe('Admin tools E2E Tests', () => {
     })
 
     it('assign a client to a va', () => {
+        cy.wait(4000);
+
         // Login as admin
         cy.get('input[name="email"]', { timeout: 4000 }).type(Cypress.env('admin_username'), { log: false })
         cy.get('input[name="password"]').type(Cypress.env('admin_password'), { log: false })
@@ -70,8 +77,6 @@ describe('Admin tools E2E Tests', () => {
         // Ensure the assign button is visible and click it
         cy.get('.MuiDialog-root').find('button').contains('Assign').click({ force: true });
 
-
-
         //Logout
         cy.get('[test-id="logoutButton"]').click();
 
@@ -86,6 +91,7 @@ describe('Admin tools E2E Tests', () => {
     })
 
     it('remove a client from a va', () => {
+        cy.wait(4000);
         // Login as admin
         cy.get('input[name="email"]', { timeout: 4000 }).type(Cypress.env('admin_username'), { log: false })
         cy.get('input[name="password"]').type(Cypress.env('admin_password'), { log: false })

@@ -2,7 +2,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { Button, Card, CardContent, CircularProgress, TextField, Typography, IconButton} from '@mui/material';
 import { Box } from '@mui/system';
-import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
+import { DataGrid, GridColDef, GridRenderCellParams, GridAlignment } from '@mui/x-data-grid';
 import { getUserRole, fetchUsersByOrg, removeUser, deleteOrganisation, createOrganisation, changeOrganisationName, leaveOrganisation, inviteMember, fetchInvites, acceptInvite, rejectInvite, getOwner } from '../../../functions/requests';
 import { buttonStyles, cardStyles, headingBoxStyles, mainContentStyles, textFieldStyles } from '../../../styles/organisationStyle';
 import { useRouter } from 'next/navigation';
@@ -397,7 +397,7 @@ const Organisation = () => {
             field: 'email',
             headerName: 'Email',
             flex: 1,
-            headerAlign: 'left',
+            headerAlign: 'left' as GridAlignment, 
             resizable: false,
             renderCell: (params: GridRenderCellParams) => (
                 <span style={{ color: params.row.email === username ? (theme.palette.mode === 'light' ? '#006A4E' : '#7AAFA5') : 'inherit' }}>
@@ -409,7 +409,7 @@ const Organisation = () => {
             field: 'role',
             headerName: 'Role',
             flex: 1,
-            headerAlign: 'left',
+            headerAlign: 'left' as GridAlignment, 
             renderCell: (params: GridRenderCellParams) => {
                 const isOwner = params.row.email === ownerEmail; 
                 return (
@@ -430,8 +430,8 @@ const Organisation = () => {
                 field: 'actions',
                 headerName: 'Actions',
                 flex: 0.5,
-                headerAlign: 'left',
-                align: 'left',
+                headerAlign: 'left' as GridAlignment, 
+                align: 'left' as GridAlignment, 
                 disableColumnMenu: true,
                 renderCell: (params: GridRenderCellParams) => (
                     <Button

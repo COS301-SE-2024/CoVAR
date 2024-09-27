@@ -55,11 +55,11 @@ describe('Organisation E2E Tests', () => {
 
     // Accept the invite
     cy.contains('Pending Invites').should('be.visible');
-    const organizationName = 'Another name';
+    const organizationName = 'Test Organization';
 
     // Find the organization by name using the test ID of the invite box
-    cy.get(`[data-testid="invite-box-Another name"]`).should('be.visible').then(($orgBox) => {
-      cy.wrap($orgBox).find(`[data-testid="acceptInvite-Another name"]`).should('be.visible') .click(); 
+    cy.get(`[data-testid="invite-box-Test Organization"]`).should('be.visible').then(($orgBox) => {
+      cy.wrap($orgBox).find(`[data-testid="acceptInvite-Test Organization"]`).should('be.visible') .click(); 
 });
   }); 
 

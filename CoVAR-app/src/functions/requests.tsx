@@ -277,15 +277,6 @@ export const removeUser = async (orgId: string, ownerId: string, email: string, 
     return await handleRequest(request);
 };
 
-export const addUser = async (orgId: string, ownerId: string, email: string, accessToken: string) => {
-    const request = {
-        method: 'post',
-        url: `/api/organizations/${ownerId}/add_user`,
-        data: { organizationId: orgId, username: email },
-        headers: { Authorization: `Bearer ${accessToken}` },
-    };
-    return await handleRequest(request);
-};
 
 export const deleteOrganisation = async (orgId: string, organisationName: string, accessToken: string) => {
     const request = {
@@ -530,6 +521,55 @@ export const generateReportRequest = async (finalReport: any[], name: string | u
 };
 
 
+// Invite Member
+export const inviteMember = async (orgId: string, ownerId: string, email: string, accessToken: string) => {
+    const request = {
+        method: 'post',
+        url: `/api/organizations/${ownerId}/invite`,
+        data: { organizationId: orgId, username: email },
+        headers: { Authorization: `Bearer ${accessToken}` },
+    };
+    return await handleRequest(request);
+};
 
 
+// Fetch Invites
+export const fetchInvites = async (username: string, accessToken: string) => {
+    const request = {
+        method: 'get',
+        url: `/api/invites/${username}`,
+        headers: { Authorization: `Bearer ${accessToken}` },
+    };
+    return await handleRequest(request);
+};
 
+// Accept Invite
+export const acceptInvite = async (inviteId: string, accessToken: string) => {
+    const request = {
+        method: 'patch',
+        url: `/api/invites/${inviteId}/accept`,
+        headers: { Authorization: `Bearer ${accessToken}` },
+    };
+    return await handleRequest(request);
+};
+
+// Reject Invite
+export const rejectInvite = async (inviteId: string, accessToken: string) => {
+    const request = {
+        method: 'patch',
+        url: `/api/invites/${inviteId}/reject`,
+        headers: { Authorization: `Bearer ${accessToken}` },
+    };
+    return await handleRequest(request);
+};
+
+
+//Get Organisation Owner Email
+export const getOwner = async (orgId: string, accessToken: string) => {
+    const request = {
+        method: 'get',
+        url: `/api/organizations/${orgId}/owner`,
+        headers: { Authorization: `Bearer ${accessToken}` },
+    };
+    return await handleRequest(request);
+};

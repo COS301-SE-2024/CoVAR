@@ -56,17 +56,11 @@ describe('Organisation E2E Tests', () => {
     // Accept the invite
     cy.contains('Pending Invites').should('be.visible');
     const organizationName = 'Another name';
-    cy.contains('p.MuiTypography-root.MuiTypography-body1', 'Another name')
-        .should('be.visible') // Check that the organization name is visible
-        .then(($orgName) => {
-            // Navigate to the parent container of the organization name
-            const $parentContainer = $orgName.closest('div.MuiBox-root.css-1c00y6l');
 
-            // Find the accept invite button within the same parent container
-            cy.wrap($parentContainer).find('button.MuiIconButton-colorPrimary')
-                .should('be.visible') // Ensure the button is visible
-                .click(); // Click the button
-              });
+    // Find the organization by name using the test ID of the invite box
+    cy.get(`[data-testid="invite-box-Another name"]`).should('be.visible').then(($orgBox) => {
+      cy.wrap($orgBox).find(`[data-testid="acceptInvite-Another name"]`).should('be.visible') .click(); 
+});
   }); 
 
   it('change the organisation name', () => {

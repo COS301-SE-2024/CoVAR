@@ -476,7 +476,8 @@ const Organisation = () => {
                                 >
                                         {invites.map((invite) => (
                                             <Box
-                                                key={invite.invite_id} 
+                                            key={invite.invite_id}
+                                            data-testid={`invite-box-${invite.organization_name}`} 
                                                 sx={{
                                                      mb: 2, 
                                                      display: 'flex', 

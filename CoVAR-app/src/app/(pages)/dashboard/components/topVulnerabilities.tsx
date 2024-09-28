@@ -12,9 +12,9 @@ interface TopVulnerabilitiesProps {
 
 const TopVulnerabilities: React.FC<TopVulnerabilitiesProps> = ({ vulnerabilities }) => {
     const [insights, setInsights] = useState<{ [key: string]: string }>({});
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState<{ [key: string]: boolean }>({});
     const [open, setOpen] = useState<{ [key: string]: boolean }>({});
-    
+
     const fetchInsightForVulnerability = async (vulnerability: VulnerabilityReport) => {
         const chainPrompt = `${vulnerability.nvtName} (Severity: ${vulnerability.Severity}, IP: ${vulnerability.IP}, Port: ${vulnerability.Port}, CVSS: ${vulnerability.CVSS})`;
         const result = await TOPG({ chain_prompt: chainPrompt });
@@ -22,21 +22,21 @@ const TopVulnerabilities: React.FC<TopVulnerabilitiesProps> = ({ vulnerabilities
     };
 
     useEffect(() => {
-        const fetchAllInsights = async () => {
-            const newInsights: { [key: string]: string } = {};
-            for (const vulnerability of vulnerabilities) {
-                try {
-                    const result = await fetchInsightForVulnerability(vulnerability);
-                    newInsights[vulnerability.nvtOid] = result; // Use a unique ID like nvtOid for key
-                } catch (error) {
-                    console.error('Error fetching insight for vulnerability:', error);
-                }
-            }
-            setInsights(newInsights);
-            setLoading(false);
-        };
+        vulnerabilities.forEach(vulnerability => {
+            setLoading(prev => ({ ...prev, [vulnerability.nvtOid]: true }));
 
-        fetchAllInsights();
+            fetchInsightForVulnerability(vulnerability)
+                .then(result => {
+                    setInsights(prev => ({ ...prev, [vulnerability.nvtOid]: result }));
+                })
+                .catch(error => {
+                    console.error('Error fetching insight:', error);
+                    setInsights(prev => ({ ...prev, [vulnerability.nvtOid]: 'Failed to load insight' }));
+                })
+                .finally(() => {
+                    setLoading(prev => ({ ...prev, [vulnerability.nvtOid]: false }));
+                });
+        });
     }, [vulnerabilities]);
 
     const handleClickOpen = (vulnerabilityId: string) => {
@@ -50,33 +50,33 @@ const TopVulnerabilities: React.FC<TopVulnerabilitiesProps> = ({ vulnerabilities
     return (
         <ResponsiveContainer width="100%" height={400}>
             <List>
-                {vulnerabilities.map((vulnerability, index) => (
+                {vulnerabilities.map(vulnerability => (
                     <ListItem key={vulnerability.nvtOid}>
+                        {/* Always show vulnerability details */}
                         <ListItemText
-                            primary={
-                                loading
-                                    ? <CircularProgress size={20} />
-                                    : `${vulnerability.nvtName} (${vulnerability.Severity})`
-                            }
+                            primary={`${vulnerability.nvtName} (${vulnerability.Severity})`}
                             secondary={`IP: ${vulnerability.IP}, Port: ${vulnerability.Port}, CVSS: ${vulnerability.CVSS}`}
                         />
-                        {!loading && insights[vulnerability.nvtOid] && (
-                            <Box mt={2}>
+                        {/* Show loading indicator or button depending on whether insight is available */}
+                        <Box mt={2}>
+                            {loading[vulnerability.nvtOid] ? (
+                                <CircularProgress size={20} />
+                            ) : (
                                 <Button variant="outlined" color="primary" onClick={() => handleClickOpen(vulnerability.nvtOid)}>
                                     View Insight
                                 </Button>
-                                <Dialog open={open[vulnerability.nvtOid]} onClose={() => handleClose(vulnerability.nvtOid)}>
-                                    <DialogTitle>Insight for {vulnerability.nvtName}</DialogTitle>
-                                    <DialogContent>
-                                        <Typography
-                                            variant="body2"
-                                            component="div"
-                                            dangerouslySetInnerHTML={{ __html: marked(insights[vulnerability.nvtOid]) }}
-                                        />
-                                    </DialogContent>
-                                </Dialog>
-                            </Box>
-                        )}
+                            )}
+                            <Dialog open={open[vulnerability.nvtOid]} onClose={() => handleClose(vulnerability.nvtOid)}>
+                                <DialogTitle>Insight for {vulnerability.nvtName}</DialogTitle>
+                                <DialogContent>
+                                    <Typography
+                                        variant="body2"
+                                        component="div"
+                                        dangerouslySetInnerHTML={{ __html: marked(insights[vulnerability.nvtOid] || '') }}
+                                    />
+                                </DialogContent>
+                            </Dialog>
+                        </Box>
                     </ListItem>
                 ))}
             </List>

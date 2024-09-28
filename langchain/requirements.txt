@@ -10,3 +10,4 @@ python-dotenv
 openai
 PyJWT
 cryptography
+gunicorn

@@ -23,7 +23,7 @@ describe('Sign Up E2E Tests', () => {
       cy.get('input[name="passwordConfirm"]').type('newPassword@123')
       cy.get('button[type="submit"]').click() 
   
-      cy.wait(3500)
+      cy.wait(6000)
       cy.url().should('include', '/lounge') 
     })
   

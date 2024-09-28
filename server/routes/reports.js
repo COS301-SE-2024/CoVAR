@@ -479,7 +479,7 @@ router.get('/reports/executive/:report_id', authenticateToken, async (req, res) 
         // Add the footer on the cover page
         doc.moveDown(4);
         const disclosureText = `Disclosure Classification: Confidential`;
-        const revisionText = `2022 Revision: 1.0`;
+        const revisionText = `${creationDate} Revision: 1.0`;
 
         const pageWidth = doc.page.width; // Get the width of the page
         const revisionX = pageWidth - doc.widthOfString(revisionText) - 20; // Calculate X position for right alignment with some padding
@@ -491,51 +491,76 @@ router.get('/reports/executive/:report_id', authenticateToken, async (req, res) 
         doc.text(revisionText, revisionX, doc.y, { align: 'left' }); // Keep align as left since we are positioning it manually
 
 
-        // Function to add header and footer to each page
         const addHeader = () => {
-            doc.fontSize(10).fillColor('gray').text(`Cyber Security Vulnerability Report ${creationDate}`, 50, 40);
-            doc.text(`BlueVision ITM (Pty) Limited`, { align: 'right' });
-            doc.moveDown();
+            const leftText = `Cyber Security Vulnerability Report ${creationDate}`;
+            const rightText = `BlueVision ITM (Pty) Limited`;
+
+            // Draw the left text aligned to the left side
+            doc.fontSize(10).text(leftText, 50, 40, {
+                width: doc.page.width / 2 - 50, // Leave space for the right text
+                align: 'left'
+            });
+
+            // Draw the right text aligned to the right side
+            doc.fontSize(10).text(rightText, 0, 40, {
+                width: doc.page.width - 100,  // Ensures padding on both sides
+                align: 'right'
+            });
         };
+        
         let pagenumber = 1;
         const addFooter = () => {
-            doc.fontSize(8).fillColor('gray').text(`Cyber Security Vulnerability Report ${creationDate} Revision: 1.0`, 50, doc.page.height - 90);
-            doc.text(`Disclosure Classification: Confidential`);
-            doc.text(`© Copyright BlueVision ITM (PTY) Limited – All Rights Reserved.`);
-            doc.text(`Page ${pagenumber++}`, { align: 'right' });
+            const footerText = `Cyber Security Vulnerability Report ${creationDate} Revision: 1.0 | Disclosure Classification: Confidential | © Copyright BlueVision ITM (PTY) Limited – All Rights Reserved. | Page ${pagenumber++}`;
+            doc.fontSize(8).fillColor('gray').text(footerText, 50, doc.page.height - 90, {
+                width: doc.page.width - 100, // Leaves some padding on both sides
+                align: 'center' // Center align the footer text
+            });
         };
 
-        // Function to add a new page with header and footer
         const addNewPage = () => {
-            if (doc.pageNumber > 0) {
-                addFooter();
-                doc.addPage();
-            } else {
-                doc.addPage();
+            if (pagenumber > 0) {          
+                addFooter(); 
             }
-            addHeader();
+            doc.addPage(); 
+            addHeader();    
         };
 
         // Add the first content page
         addNewPage();
 
         // Add content to the PDF
+        doc.moveDown();
+        doc.moveDown();
         doc.fontSize(20).text('Executive Report', { align: 'center' });
         doc.moveDown();
-        doc.text(`Date Created: ${new Date(report.created_at).toLocaleDateString()}`);
+        // Date Created Section
+        doc.text(`Date Created: ${new Date(report.created_at).toLocaleDateString()}`, { indent: 20 }); // Move Date Created slightly to the right
         doc.moveDown();
 
         // Vulnerability Manager Section
-        doc.fontSize(18).fillColor('black').text('Vulnerability Manager', { align: 'left' });
-        doc.fontSize(12).text('Greenbone Vulnerability Manager is proprietary software used to perform vulnerability scans on network devices. Greenbone Vulnerability Manager is used for all Andile Solutions vulnerability scanning.', { align: 'left' });
-
+        doc.fontSize(18).fillColor('black').text('Vulnerability Manager', { align: 'left', indent: 20 }); // Move slightly to the right with indent
+        doc.fontSize(12).text(
+            'Greenbone Vulnerability Manager is proprietary software used to perform vulnerability scans on ', 
+            { align: 'left', indent: 20, paragraphIndent: 20 } // Apply indent and paragraphIndent to wrap the text correctly
+        );
+        doc.fontSize(12).text(
+            'network devices. Greenbone Vulnerability Manager is used for all Andile Solutions vulnerability ', 
+            { align: 'left', indent: 20, paragraphIndent: 20 } // Apply indent and paragraphIndent to wrap the text correctly
+        );
+        doc.fontSize(12).text(
+            'scanning', 
+            { align: 'left', indent: 20, paragraphIndent: 20 } // Apply indent and paragraphIndent to wrap the text correctly
+        );
+        doc.moveDown();
         // Risk Profile Section
-        doc.fontSize(18).text('Risk Profile', { align: 'left' });
-        doc.fontSize(12).text('A system’s risk profile is constructed by considering the results by severity class of all known common vulnerabilities. The information below respectively shows the system’s risk profile of the number of affected hosts by severity class as well as vulnerability per identified category.', { align: 'left' });
+        doc.fontSize(18).text('Risk Profile', { align: 'left' ,indent: 20});
+        doc.fontSize(12).text('A system’s risk profile is constructed by considering the results by severity class of all known ', { align: 'left' , indent: 20});
+        doc.fontSize(12).text('common vulnerabilities. The information below respectively shows the system’s risk profile of ', { align: 'left' , indent: 20});
+        doc.fontSize(12).text('the number of affected hosts by severity class as well as vulnerability per identified category.', { align: 'left' , indent: 20});
         doc.moveDown();
 
         // Add the Vulnerability Summary Table
-        doc.fontSize(14).text('Vulnerability Summary', { align: 'left' });
+        doc.fontSize(14).text('Vulnerability Summary', { align: 'left' ,indent: 20});
         doc.moveDown(0.5);
 
         // Define table dimensions and position
@@ -821,7 +846,7 @@ router.get('/reports/tech/:report_id', authenticateToken, async (req, res) => {
 
         doc.moveDown(4);
         doc.fontSize(8).fillColor('gray').text(`Disclosure Classification: Confidential`, { align: 'left' });
-        doc.text(`2022 Revision: 1.0`, { align: 'right' });
+        doc.text(`${creationDate} Revision: 1.0`, { align: 'right' });
 
         const addHeader = () => {
             const leftText = `Cyber Security Vulnerability Report ${creationDate}`;

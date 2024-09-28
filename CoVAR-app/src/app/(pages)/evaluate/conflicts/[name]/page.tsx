@@ -87,13 +87,11 @@ const UserConflicts = () => {
     }
         , [finalReport]);
 
-    useEffect(() => {
-        // Only trigger when aiInsight is true
-        if (aiInsight) {
-
-            const fetchAllRecommendations = async () => {
-                try {
-
+        useEffect(() => {
+            // Only trigger when aiInsight is true
+            if (aiInsight) {
+        
+                const fetchAllRecommendations = async () => {
                     // const scrollFixedDistance = () => {
                     //     const reportsContainer = document.querySelector('#reportsContainer');
                     //     if (reportsContainer) {
@@ -103,126 +101,132 @@ const UserConflicts = () => {
                     //         });
                     //     }
                     // };
+                    try {
+                        let broken = "false";
+        
+                        // Process matched reports first
+                        for (const [index, report] of matchedReports.entries()) {
+                            try {
+                                const result = await matchedRecomendations(report);
+        
+                                // Log the result to verify it's in the expected format
+                                console.log("Recommendation result for matched report:", result);
+        
+                                // Check if the result has the 'result' property and if it's a string
+                                if (result && typeof result.result === 'string') {
+                                    const recommendation = result.result;
+        
+                                    // Get the first word of the recommendation
+                                    const firstWord = recommendation.split(/\s+/)[0];
+                                        setMatchedReportReccomendations(prev => [...prev, recommendation.split(' ').slice(1).join(' ')]);
 
-
-                    // Process matched reports first
-                    for (const [index, report] of matchedReports.entries()) {
-
-                        try {
-                            const result = await matchedRecomendations(report);
-
-                            // Log the result to verify it's in the expected format
-                            console.log("Recommendation result for matched report:", result);
-
-                            // Check if the result has the 'result' property and if it's a string
-                            if (result && typeof result.result === 'string') {
-                                const recommendation = result.result;
-
-                                // Get the first word of the recommendation
-                                const firstWord = recommendation.split(/\s+/)[0];
-                                setMatchedReportReccomendations(prev => [...prev, recommendation.split(' ').slice(1).join(' ')]);
-
-                                // Automatically select based on the first word
-                                if (firstWord === "Both") {
-                                    handleButtonClick('acceptBoth', index, true);
-                                } else if (firstWord === "Vulnerability-1") {
-                                    handleButtonClick('acceptLeft', index, true);
-                                } else if (firstWord === "Vulnerability-2") {
-                                    handleButtonClick('acceptRight', index, true);;
+                                    // Automatically select based on the first word
+                                    if (firstWord === "Both") {
+                                        handleButtonClick('acceptBoth', index, true);
+                                    } else if (firstWord === "Vulnerability-1") {
+                                        handleButtonClick('acceptLeft', index, true);
+                                    } else if (firstWord === "Vulnerability-2") {
+                                        handleButtonClick('acceptRight', index, true);
+                                    } else {
+                                        handleButtonClick('acceptNone', index, true);
+                                    }
                                 } else {
+                                    console.warn("Unexpected result format for matched report:", result);
                                     handleButtonClick('acceptNone', index, true);
                                 }
-                            } else {
-                                // Handle cases where result is not in the expected format
-                                console.warn("Unexpected result format for matched report:", result);
-                                handleButtonClick('acceptNone', index, true);
+                            } catch (error: any) {
+                                // Check if the error status is 502 or 500 and break out of the loop
+                                if (error.response && (error.response.status === 502 || error.response.status === 500)) {
+                                    console.error(`${error.response.status} error encountered. Exiting the process.`);
+                                    broken = "true";
+                                    break; // Break out of the loop if a 502 or 500 error is encountered
+                                }
+                                console.error("Error fetching recommendation for matched report:", report, error);
                             }
-                            // if (aiScroll) {
-                            //     scrollFixedDistance();
-                            // }
-                        } catch (error) {
-                            console.error("Error fetching recommendation for matched report:", report, error);
+        
+                            await sleep(200);
                         }
+        
+                        if (broken === "true") {
+                            return;
+                        }
+        
+                        // After completing the matched reports, process the unmatched ones
+                        for (const [index, report] of unmatchedList1.entries()) {
+                            try {
+                                const result = await unmatchedRecomendations(report);
+        
+                                // Log the result to verify it's in the expected format
+                                console.log("Recommendation result for unmatched report:", result);
+        
 
-                        await sleep(200);
-                    }
-
-                    // After completing the matched reports, process the unmatched ones
-                    for (const [index, report] of unmatchedList1.entries()) {
-                        try {
-                            const result = await unmatchedRecomendations(report);
-
-                            // Log the result to verify it's in the expected format
-                            console.log("Recommendation result for unmatched report:", result);
-
-
-                            // Check if the result has the 'result' property and if it's a string
-                            if (result && typeof result.result === 'string') {
-                                const recommendation = result.result;
-                                const firstWord = recommendation.split(/\s+/)[0];
-
+                                // Check if the result has the 'result' property and if it's a string
+                                if (result && typeof result.result === 'string') {
+                                    const recommendation = result.result;
+                                    const firstWord = recommendation.split(/\s+/)[0];
+    
                                 setUnmatchedReportReccomendations1(prev => [...prev, recommendation.split(' ').slice(1).join(' ')]);
 
-                                if (firstWord == "Keep") {
-                                    // Handle the recommendation for unmatched reports (customize as needed)
-                                    handleUnmatchedReport('add', index, 'list1', true)  // You can customize logic here
+                                if (firstWord === "Keep") {
+                                        handleUnmatchedReport('add', index, 'list1', true);
+                                    }
+                                } else {
+                                    console.warn("Unexpected result format for unmatched report:", result);
+                                    handleButtonClick('acceptNone', index);
                                 }
-                            } else {
-                                // Handle cases where result is not in the expected format
-                                console.warn("Unexpected result format for unmatched report:", result);
-                                handleButtonClick('acceptNone', index);
+                            } catch (error: any) {
+                                if (error.response && (error.response.status === 502 || error.response.status === 500)) {
+                                    console.error(`${error.response.status} error encountered. Exiting the process.`);
+                                    broken = "true";
+                                    break; // Break out of the loop if a 502 or 500 error is encountered
+                                }
+                                console.error("Error fetching recommendation for unmatched report:", report, error);
                             }
-                            // if (aiScroll) {
-                            //     scrollFixedDistance();
-                            // }
-                        } catch (error) {
-                            console.error("Error fetching recommendation for unmatched report:", report, error);
+        
+                            await sleep(200);
                         }
-
-
-                        await sleep(200);
-                    }
-
-                    // Process the second unmatched list, unmatchedList2 (if required)
-                    for (const [index, report] of unmatchedList2.entries()) {
-                        try {
-                            const result = await unmatchedRecomendations(report);
-
-                            // Log the result to verify it's in the expected format
-                            console.log("Recommendation result for unmatched report 2:", result);
-
-                            const recommendation = result.result;
-                            const firstWord = recommendation.split(/\s+/)[0];
+        
+                        if (broken === "true") {
+                            return;
+                        }
+        
+                        // Process the second unmatched list, unmatchedList2 (if required)
+                        for (const [index, report] of unmatchedList2.entries()) {
+                            try {
+                                const result = await unmatchedRecomendations(report);
+        
+                                // Log the result to verify it's in the expected format
+                                console.log("Recommendation result for unmatched report 2:", result);
+        
+                                const recommendation = result.result;
+                                const firstWord = recommendation.split(/\s+/)[0];
 
                             setUnmatchedReportReccomendations2(prev => [...prev, recommendation.split(' ').slice(1).join(' ')]);
 
-                            if (firstWord == "Keep") {
-                                // Handle the recommendation for unmatched reports (customize as needed)
-                                handleUnmatchedReport('add', index, 'list2', true);  // You can customize logic here
+                                if (firstWord === "Keep") {
+                                    handleUnmatchedReport('add', index, 'list2', true);
+                                }
+                            } catch (error: any) {
+                                if (error.response && (error.response.status === 502 || error.response.status === 500)) {
+                                    console.error(`${error.response.status} error encountered. Exiting the process.`);
+                                    break; // Break out of the loop if a 502 or 500 error is encountered
+                                }
+                                console.error("Error fetching recommendation for unmatched report 2:", report, error);
                             }
-                        } catch (error) {
-                            console.error("Error fetching recommendation for unmatched report 2:", report, error);
+        
+                            await sleep(200);
                         }
-
-
-                        await sleep(200);
+                    } catch (error) {
+                        console.error("Error during fetching recommendations:", error);
+                    } finally {
+                        setLoading(false); // Set loading to false after the process is complete
                     }
-
-                    // if (aiScroll) {
-                    //     scrollFixedDistance();
-                    // }
-                } catch (error) {
-                    console.error("Error during fetching recommendations:", error);
-                } finally {
-                    setLoading(false); // Set loading to false after the process is complete
-                }
-            };
-
-            fetchAllRecommendations(); // Call the function
-        }
-    }, [aiInsight, matchedReports, unmatchedList1, unmatchedList2]);
-
-
+                };
+        
+                fetchAllRecommendations(); // Call the function
+            }
+        }, [aiInsight, matchedReports, unmatchedList1, unmatchedList2]);
+    
 
     const fetchUploadIDsForReport = async () => {
         try {

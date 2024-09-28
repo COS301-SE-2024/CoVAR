@@ -2,7 +2,7 @@
 import { fetchAndMatchReports, fetchUploadsClient, fetchUploadsOrganization, generateReportRequest } from "@/functions/requests";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
-import { CardContent, Typography, Box, Button, CircularProgress, Backdrop, keyframes, styled, Card } from '@mui/material';
+import { CardContent, Typography, Box, Button, CircularProgress, Backdrop, keyframes, styled, Card, Popover, Tooltip } from '@mui/material';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
@@ -10,6 +10,8 @@ import CancelIcon from '@mui/icons-material/Cancel';
 import { Loader, ReportsContainer, MatchedPair, ReportCard, ButtonGroup, UnmatchedReports, UnmatchedButtonGroup } from '../../../../../styles/conflictStyle';
 import { matchedRecomendations, unmatchedRecomendations } from '@/functions/requests';
 import { mainContentStyles } from '../../../../../styles/evaluateStyle';
+
+import InfoIcon from '@mui/icons-material/Info';
 
 import Image from 'next/image';
 import AIImage from '../../../../../assets/AIImage.png';
@@ -57,6 +59,12 @@ const UserConflicts = () => {
     const [unmatchedAiSelections2, setUnmatchedAiSelections2] = useState<{ [index: number]: boolean }>({});
     const [matchedReportsExist, setMatchedReportsExist] = useState(false);
 
+    const [matchedReportReccomendations, setMatchedReportReccomendations] = useState<string[]>([]);
+    const [unmatchedReportReccomendations1, setUnmatchedReportReccomendations1] = useState<string[]>([]);
+    const [unmatchedReportReccomendations2, setUnmatchedReportReccomendations2] = useState<string[]>([]);
+
+
+
 
     const [canGenerteReport, setCanGenerateReport] = useState(false);
 
@@ -75,6 +83,7 @@ const UserConflicts = () => {
     useEffect(() => {
         console.log('final report:', finalReport);
         console.log('aiSelect:', aiSelections);
+        console.log('reccomendations:', matchedReportReccomendations);
     }
         , [finalReport]);
 
@@ -111,6 +120,7 @@ const UserConflicts = () => {
 
                                 // Get the first word of the recommendation
                                 const firstWord = recommendation.split(/\s+/)[0];
+                                setMatchedReportReccomendations(prev => [...prev, recommendation.split(' ').slice(1).join(' ')]);
 
                                 // Automatically select based on the first word
                                 if (firstWord === "Both") {
@@ -145,10 +155,14 @@ const UserConflicts = () => {
                             // Log the result to verify it's in the expected format
                             console.log("Recommendation result for unmatched report:", result);
 
+
                             // Check if the result has the 'result' property and if it's a string
                             if (result && typeof result.result === 'string') {
                                 const recommendation = result.result;
                                 const firstWord = recommendation.split(/\s+/)[0];
+
+                                setUnmatchedReportReccomendations1(prev => [...prev, recommendation.split(' ').slice(1).join(' ')]);
+
                                 if (firstWord == "Keep") {
                                     // Handle the recommendation for unmatched reports (customize as needed)
                                     handleUnmatchedReport('add', index, 'list1', true)  // You can customize logic here
@@ -179,6 +193,9 @@ const UserConflicts = () => {
 
                             const recommendation = result.result;
                             const firstWord = recommendation.split(/\s+/)[0];
+
+                            setUnmatchedReportReccomendations2(prev => [...prev, recommendation.split(' ').slice(1).join(' ')]);
+
                             if (firstWord == "Keep") {
                                 // Handle the recommendation for unmatched reports (customize as needed)
                                 handleUnmatchedReport('add', index, 'list2', true);  // You can customize logic here
@@ -281,6 +298,7 @@ const UserConflicts = () => {
         handleAdd: () => void;
         handleRemove: () => void;
         aiselected: boolean;
+        listType: 'list1' | 'list2';
     };
 
     const UnmatchedReportCard = styled(Card, {
@@ -309,6 +327,7 @@ const UserConflicts = () => {
                     </Typography>
                 ))}
                 <UnmatchedButtonGroup>
+
                     <Button variant="contained" color="primary" onClick={handleAdd}>
                         <CheckCircleIcon />
                     </Button>
@@ -403,6 +422,8 @@ const UserConflicts = () => {
                     handleAdd={() => handleUnmatchedReport('add', index, 'list1')}
                     handleRemove={() => handleUnmatchedReport('remove', index, 'list1')}
                     aiselected={unmatchedAiSelections1[index]}
+                    listType="list1"
+
                 />
             ))}
         </>
@@ -425,6 +446,7 @@ const UserConflicts = () => {
                     handleAdd={() => handleUnmatchedReport('add', index, 'list2')}
                     handleRemove={() => handleUnmatchedReport('remove', index, 'list2')}
                     aiselected={unmatchedAiSelections2[index]}
+                    listType="list2"
                 />
             ))}
         </>
@@ -587,6 +609,8 @@ const UserConflicts = () => {
         setSelectedUnmatchedReports(updatedSelectedUnmatchedReports);
     };
 
+
+
     const renderedMatchedReports = useMemo(
         () => (
             <>
@@ -630,6 +654,20 @@ const UserConflicts = () => {
                         <Box display="flex" width="100%" justifyContent="space-between" alignItems="center">
                             {renderReport(report1, selectedReports.left.includes(index), index)}
                             <ButtonGroup>
+
+                                {aiInsight && (
+
+                                    <Tooltip title={matchedReportReccomendations[index]} arrow>
+                                        <Button
+                                            variant="contained"
+                                            color="primary"
+                                        >
+                                            A
+                                            <InfoIcon />
+                                        </Button>
+                                    </Tooltip>
+                                )}
+
                                 <Button
                                     variant="contained"
                                     color="primary"

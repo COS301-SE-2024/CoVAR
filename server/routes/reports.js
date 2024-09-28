@@ -9,7 +9,7 @@ const { ChartJSNodeCanvas } = require('chartjs-node-canvas');
 router.post('/reports/getReports', authenticateToken, async (req, res) => {
     try {
         const user = req.user;
-        console.log(user);
+        
 
         const userResult = await pgClient.query(
             'SELECT user_id, organization_id FROM users WHERE user_id = $1',
@@ -17,7 +17,7 @@ router.post('/reports/getReports', authenticateToken, async (req, res) => {
         );
 
         if (userResult.rows.length === 0) {
-            console.log('User not found');
+            
             return res.status(500).json({ error: 'User not found' });
         }
 
@@ -37,14 +37,14 @@ router.post('/reports/getReports', authenticateToken, async (req, res) => {
         const reportIdsResult = await pgClient.query(reportsQuery, queryParams);
 
         if (reportIdsResult.rows.length === 0) {
-            console.log('No reports found');
+            
             return res.status(500).json({ error: 'No reports found' });
         }
 
         const reportIds = reportIdsResult.rows.map(row => row.report_id);
 
         if (reportIds.length === 0) {
-            console.log('No reports found');
+            
             return res.status(500).json({ error: 'No reports found' });
         }
 
@@ -54,17 +54,16 @@ router.post('/reports/getReports', authenticateToken, async (req, res) => {
         );
         
 
-        // console.log(reportResult.rows);
+        
         let reports = reportsResult.rows.map(report => {
             const content = report.content.finalReport; // Accessing the 'reports' array within the content object
-            //console.log("Report Content:", content); // Log the entire content to see its structure
             let criticalCount = 0;
             let mediumCount = 0;
             let lowCount = 0;
 
             content.forEach(reportItem => {
 
-                //console.log("Item:", item); // Log the entire item to examine its structure
+                
                 let severity = reportItem.Severity || reportItem.severity; // Check for both 'Severity' and 'severity'
 
                 // Ensure that the severity is trimmed and in a consistent case
@@ -72,7 +71,7 @@ router.post('/reports/getReports', authenticateToken, async (req, res) => {
                     severity = severity.trim().toLowerCase();
                 }
 
-                //console.log("Item Severity:", severity); // Log the severity to see what it returns
+                
 
                 switch (severity) {
                     case 'high':
@@ -85,7 +84,7 @@ router.post('/reports/getReports', authenticateToken, async (req, res) => {
                         lowCount++;
                         break;
                     default:
-                        console.log("Unknown severity:", severity); // Log any severity that doesn't match expected values
+                        
                         break;
                 }
 
@@ -99,8 +98,6 @@ router.post('/reports/getReports', authenticateToken, async (req, res) => {
                 lowCount
             };
         });
-
-        console.log(reports);
         res.json({ reports });
 
     } catch (error) {
@@ -112,7 +109,6 @@ router.post('/reports/getReports', authenticateToken, async (req, res) => {
 router.post('/reports/getReportsPerClient', authenticateToken, async (req, res) => {
     try {
         const user = req.user; // Get the logged-in VA user
-        console.log('VA user:', user);
 
         // Query to get the clients assigned to the logged-in VA
         const assignedClientsQuery = `
@@ -124,7 +120,6 @@ router.post('/reports/getReportsPerClient', authenticateToken, async (req, res) 
         const assignedClientsResult = await pgClient.query(assignedClientsQuery, [user.user_id]);
 
         if (assignedClientsResult.rows.length === 0) {
-            console.log('No assigned clients found');
             return res.status(404).json({ error: 'No assigned clients found' });
         }
 
@@ -241,7 +236,6 @@ router.get('/reports/executive/:report_id', authenticateToken, async (req, res) 
                         lowVulnerabilities.add(vulnerabilityIdentifier); // Add to low vulnerabilities set
                         break;
                     default:
-                        console.log("Unknown severity:", severity);
                         break;
                 }
 
@@ -258,9 +252,6 @@ router.get('/reports/executive/:report_id', authenticateToken, async (req, res) 
         // Convert the Map to an array of categories and their counts
         const vulnerabilityTypes = Array.from(vulnerabilityCategories.keys());
         const vulnerabilityCounts = Array.from(vulnerabilityCategories.values());
-        // console.log("Unique Critical Hosts:", uniqueCriticalHostsCount);
-        // console.log("Unique Medium Hosts:", uniqueMediumHostsCount);
-        // console.log("Unique Low Hosts:", uniqueLowHostsCount);
         // Initialize counts
         let criticalCount = 0;
         let mediumCount = 0;
@@ -335,9 +326,7 @@ router.get('/reports/executive/:report_id', authenticateToken, async (req, res) 
                  ORDER BY created_at ASC`,
                 [new Date(report.created_at).toISOString(), req.user.user_id] // Convert date to ISO string for proper casting
             );
-            console.log('report created at', report.created_at);
             graphData = reportsResult.rows;
-            console.log('graph data', graphData);
         } else {
             // Select all reports from the database associated with the organization that are earlier than the current report
             const reportsResult = await pgClient.query(
@@ -351,7 +340,6 @@ router.get('/reports/executive/:report_id', authenticateToken, async (req, res) 
                 [new Date(report.created_at).toISOString(), userResult.rows[0].organization_id] // Convert date to ISO string for proper casting
             );
             graphData = reportsResult.rows;
-            console.log('graph data', graphData);
         }
         // Prepare data for trend graph
         const trendData = graphData.map((report) => {
@@ -390,7 +378,6 @@ router.get('/reports/executive/:report_id', authenticateToken, async (req, res) 
                 lowCount: currentLowCount,
             };
         });
-        console.log('trend data', trendData);
         // Generate trend graph using chart.js-node-canvas
         const labels = trendData.map((data) => data.date);
         const criticalCounts = trendData.map((data) => data.criticalCount);
@@ -491,62 +478,97 @@ router.get('/reports/executive/:report_id', authenticateToken, async (req, res) 
 
         // Add the footer on the cover page
         doc.moveDown(4);
-        doc.fontSize(8).fillColor('gray').text(`Disclosure Classification: Confidential`, { align: 'left' });
-        doc.text(`2022 Revision: 1.0`, { align: 'right' });
+        const disclosureText = `Disclosure Classification: Confidential`;
+        const revisionText = `${creationDate} Revision: 1.0`;
 
-        // Function to add header and footer to each page
+        const pageWidth = doc.page.width; // Get the width of the page
+        const revisionX = pageWidth - doc.widthOfString(revisionText) - 20; // Calculate X position for right alignment with some padding
+
+        // Write the disclosure text
+        doc.fontSize(8).fillColor('gray').text(disclosureText, { align: 'left' });
+
+        // Write the revision text at calculated position
+        doc.text(revisionText, revisionX, doc.y, { align: 'left' }); // Keep align as left since we are positioning it manually
+
+
         const addHeader = () => {
-            doc.fontSize(10).text(`Cyber Security Vulnerability Report ${creationDate}`, 50, 40);
-            doc.text(`BlueVision ITM (Pty) Limited`, { align: 'right' });
-            doc.moveDown();
+            const leftText = `Cyber Security Vulnerability Report ${creationDate}`;
+            const rightText = `BlueVision ITM (Pty) Limited`;
+
+            // Draw the left text aligned to the left side
+            doc.fontSize(10).text(leftText, 50, 40, {
+                width: doc.page.width / 2 - 50, // Leave space for the right text
+                align: 'left'
+            });
+
+            // Draw the right text aligned to the right side
+            doc.fontSize(10).text(rightText, 0, 40, {
+                width: doc.page.width - 100,  // Ensures padding on both sides
+                align: 'right'
+            });
         };
+        
         let pagenumber = 1;
         const addFooter = () => {
-            doc.fontSize(8).fillColor('gray').text(`Cyber Security Vulnerability Report ${creationDate} Revision: 1.0`, 50, doc.page.height - 90);
-            doc.text(`Disclosure Classification: Confidential`);
-            doc.text(`© Copyright BlueVision ITM (PTY) Limited – All Rights Reserved.`);
-            doc.text(`Page ${pagenumber++}`, { align: 'right' });
+            const footerText = `Cyber Security Vulnerability Report ${creationDate} Revision: 1.0 | Disclosure Classification: Confidential | © Copyright BlueVision ITM (PTY) Limited – All Rights Reserved. | Page ${pagenumber++}`;
+            doc.fontSize(8).fillColor('gray').text(footerText, 50, doc.page.height - 90, {
+                width: doc.page.width - 100, // Leaves some padding on both sides
+                align: 'center' // Center align the footer text
+            });
         };
 
-        // Function to add a new page with header and footer
         const addNewPage = () => {
-            if (doc.pageNumber > 0) {
-                addFooter();
-                doc.addPage();
-            } else {
-                doc.addPage();
+            if (pagenumber > 0) {          
+                addFooter(); 
             }
-            addHeader();
+            doc.addPage(); 
+            addHeader();    
         };
 
         // Add the first content page
         addNewPage();
 
         // Add content to the PDF
+        doc.moveDown();
+        doc.moveDown();
         doc.fontSize(20).text('Executive Report', { align: 'center' });
         doc.moveDown();
-        doc.text(`Date Created: ${new Date(report.created_at).toLocaleDateString()}`);
+        // Date Created Section
+        doc.text(`Date Created: ${new Date(report.created_at).toLocaleDateString()}`, { indent: 20 }); // Move Date Created slightly to the right
         doc.moveDown();
 
         // Vulnerability Manager Section
-        doc.fontSize(18).fillColor('black').text('Vulnerability Manager', { align: 'left' });
-        doc.fontSize(12).text('Greenbone Vulnerability Manager is proprietary software used to perform vulnerability scans on network devices. Greenbone Vulnerability Manager is used for all Andile Solutions vulnerability scanning.', { align: 'left' });
-
+        doc.fontSize(18).fillColor('black').text('Vulnerability Manager', { align: 'left', indent: 20 }); // Move slightly to the right with indent
+        doc.fontSize(12).text(
+            'Greenbone Vulnerability Manager is proprietary software used to perform vulnerability scans on ', 
+            { align: 'left', indent: 20, paragraphIndent: 20 } // Apply indent and paragraphIndent to wrap the text correctly
+        );
+        doc.fontSize(12).text(
+            'network devices. Greenbone Vulnerability Manager is used for all Andile Solutions vulnerability ', 
+            { align: 'left', indent: 20, paragraphIndent: 20 } // Apply indent and paragraphIndent to wrap the text correctly
+        );
+        doc.fontSize(12).text(
+            'scanning', 
+            { align: 'left', indent: 20, paragraphIndent: 20 } // Apply indent and paragraphIndent to wrap the text correctly
+        );
+        doc.moveDown();
         // Risk Profile Section
-        doc.fontSize(18).text('Risk Profile', { align: 'left' });
-        doc.fontSize(12).text('A system’s risk profile is constructed by considering the results by severity class of all known common vulnerabilities. The information below respectively shows the system’s risk profile of the number of affected hosts by severity class as well as vulnerability per identified category.', { align: 'left' });
+        doc.fontSize(18).text('Risk Profile', { align: 'left' ,indent: 20});
+        doc.fontSize(12).text('A system’s risk profile is constructed by considering the results by severity class of all known ', { align: 'left' , indent: 20});
+        doc.fontSize(12).text('common vulnerabilities. The information below respectively shows the system’s risk profile of ', { align: 'left' , indent: 20});
+        doc.fontSize(12).text('the number of affected hosts by severity class as well as vulnerability per identified category.', { align: 'left' , indent: 20});
         doc.moveDown();
 
         // Add the Vulnerability Summary Table
-        doc.fontSize(14).text('Vulnerability Summary', { align: 'left' });
+        doc.fontSize(14).text('Vulnerability Summary', { align: 'left' ,indent: 20});
         doc.moveDown(0.5);
 
         // Define table dimensions and position
-        const tableTop = doc.y;
+        let tableTop = doc.y;
         const tableLeft = 50;
         const tableWidth = 500;
         const cellPadding = 5;
-        const columnWidths = [150, 175, 175];
+        let columnWidths = [150, 175, 175];
         const rowHeight = 25;
 
         // Draw table header background
@@ -775,6 +797,376 @@ router.get('/reports/executive/:report_id', authenticateToken, async (req, res) 
         res.status(500).json({ error: 'Internal Server Error' });
     }
 });
+router.get('/reports/tech/:report_id', authenticateToken, async (req, res) => {
+    try {
+        const { report_id } = req.params;
+
+        // Fetch the report data by ID
+        const reportResult = await pgClient.query(
+            'SELECT report_id, created_at, content FROM reports WHERE report_id = $1',
+            [report_id]
+        );
+
+        if (reportResult.rows.length === 0) {
+            return res.status(404).json({ error: 'Report not found' });
+        }
+        const report = reportResult.rows[0];
+
+        const clientName = report.title || 'UnknownClient';
+        const reportCreationDate = new Date(report.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+        const doc = new PDFDocument({
+            size: 'A4',
+            margin: 50,
+            autoFirstPage: false
+        });
+
+        const sanitizedClientName = clientName.replace(/[^a-zA-Z0-9]/g, '_');
+        let filename = `CoVarExecutive-${sanitizedClientName}-${reportCreationDate}.pdf`;
+        filename = encodeURIComponent(filename);
+        res.setHeader('Content-disposition', `attachment; filename="${filename}"`);
+        res.setHeader('Content-type', 'application/pdf');
+
+        doc.pipe(res);
+
+        const creationDate = new Date(report.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long' });
+
+        // Cover Page Setup (same as before)
+        doc.addPage();
+        const imagePath = path.join(__dirname, '../routes/assets/4546131_3922.jpg');
+        doc.image(imagePath, { fit: [500, 500], align: 'center', valign: 'center' });
+        doc.moveDown(35);
+
+        doc.rect(50, doc.y, 500, 70).fill('darkblue');
+        doc.fontSize(24).fillColor('white').text('Cyber Security Vulnerability Report', 60, doc.y, { align: 'left' });
+        doc.text(reportCreationDate, 60, doc.y + 10, { align: 'left' });
+
+        doc.rect(50, doc.y, 500, 30).fill('gray');
+        doc.fontSize(12).fillColor('white').text('BlueVision ITM (Pty) Limited', 60, doc.y + 10, { align: 'left' });
+
+        doc.moveDown(4);
+        doc.fontSize(8).fillColor('gray').text(`Disclosure Classification: Confidential`, { align: 'left' });
+        doc.text(`${creationDate} Revision: 1.0`, { align: 'right' });
+
+        const addHeader = () => {
+            const leftText = `Cyber Security Vulnerability Report ${creationDate}`;
+            const rightText = `BlueVision ITM (Pty) Limited`;
+
+            // Draw the left text aligned to the left side
+            doc.fontSize(10).text(leftText, 50, 40, {
+                width: doc.page.width / 2 - 50, // Leave space for the right text
+                align: 'left'
+            });
+
+            // Draw the right text aligned to the right side
+            doc.fontSize(10).text(rightText, 0, 40, {
+                width: doc.page.width - 100,  // Ensures padding on both sides
+                align: 'right'
+            });
+        };
+        
+        let pagenumber = 1;
+        const addFooter = () => {
+            const footerText = `Cyber Security Vulnerability Report ${creationDate} Revision: 1.0 | Disclosure Classification: Confidential | © Copyright BlueVision ITM (PTY) Limited – All Rights Reserved. | Page ${pagenumber++}`;
+            doc.fontSize(8).fillColor('gray').text(footerText, 50, doc.page.height - 90, {
+                width: doc.page.width - 100, // Leaves some padding on both sides
+                align: 'center' // Center align the footer text
+            });
+        };
+
+        const addNewPage = () => {
+            if (pagenumber > 0) {          
+                addFooter(); 
+            }
+            doc.addPage(); 
+            addHeader();    
+        };
+        
+
+        addNewPage();
+        doc.moveDown();
+        doc.moveDown();
+        doc.moveDown();
+        doc.fontSize(20).text('Technical Report', { align: 'center' });
+        doc.moveDown();
+
+        // Date Created Section
+        doc.text(`Date Created: ${new Date(report.created_at).toLocaleDateString()}`, { indent: 20 }); // Move Date Created slightly to the right
+        doc.moveDown();
+
+       // Vulnerability Manager Section
+       doc.fontSize(18).fillColor('black').text('Vulnerability Manager', { align: 'left', indent: 20 }); // Move slightly to the right with indent
+        doc.fontSize(12).text(
+            'Greenbone Vulnerability Manager is proprietary software used to perform vulnerability scans on ', 
+            { align: 'left', indent: 20, paragraphIndent: 20 } // Apply indent and paragraphIndent to wrap the text correctly
+        );
+        doc.fontSize(12).text(
+            'network devices. Greenbone Vulnerability Manager is used for all Andile Solutions vulnerability ', 
+            { align: 'left', indent: 20, paragraphIndent: 20 } // Apply indent and paragraphIndent to wrap the text correctly
+        );
+        doc.fontSize(12).text(
+            'scanning', 
+            { align: 'left', indent: 20, paragraphIndent: 20 } // Apply indent and paragraphIndent to wrap the text correctly
+        );
+        doc.moveDown();
+
+        // Updated Table of Contents
+        doc.fontSize(14).text('Table of Contents', { align: 'left', indent: 20 }); // Move Table of Contents slightly to the right
+        doc.moveDown(0.5);
+
+        const tableTop = doc.y;
+        const tableLeft = 50;
+        const tableWidth = 450;  // Reduced total width for the table
+        const cellPadding = 5;
+        let columnWidths = [50, 100, 100, 200];  // Updated column widths for smaller size
+        const rowHeight = 25;
+
+        // Table header background
+        doc.rect(tableLeft, tableTop, tableWidth, rowHeight).fillAndStroke('darkblue', 'black');
+
+        // Table headers with 4th column "Hosts"
+        doc.fillColor('white').fontSize(10).text('No.', tableLeft + cellPadding, tableTop + cellPadding, { width: columnWidths[0], align: 'center' });
+        doc.text('Vulnerability', tableLeft + columnWidths[0] + cellPadding, tableTop + cellPadding, { width: columnWidths[1], align: 'center' });
+        doc.text('CVSS Score', tableLeft + columnWidths[0] + columnWidths[1] + cellPadding, tableTop + cellPadding, { width: columnWidths[2], align: 'center' });
+        doc.text('Hosts', tableLeft + columnWidths[0] + columnWidths[1] + columnWidths[2] + cellPadding, tableTop + cellPadding, { width: columnWidths[3], align: 'center' });
+
+        doc.fillColor('black');
+
+        // Updated drawRow function to include the 4th column "Hosts"
+        const drawRow = (y, index, vulnerability, cvss, hosts) => {
+            const textOptions = { width: columnWidths[1] - 2 * cellPadding, align: 'left' };
+            
+            // Calculate the height needed for the vulnerability text
+            const vulnerabilityHeight = doc.heightOfString(vulnerability, textOptions);
+            const rowHeightAdjusted = Math.max(vulnerabilityHeight + 2 * cellPadding, rowHeight);  // Ensure the row height is at least the default rowHeight
+        
+            // Draw table cells
+            doc.rect(tableLeft, y, columnWidths[0], rowHeightAdjusted).stroke();
+            doc.rect(tableLeft + columnWidths[0], y, columnWidths[1], rowHeightAdjusted).stroke();
+            doc.rect(tableLeft + columnWidths[0] + columnWidths[1], y, columnWidths[2], rowHeightAdjusted).stroke();
+            doc.rect(tableLeft + columnWidths[0] + columnWidths[1] + columnWidths[2], y, columnWidths[3], rowHeightAdjusted).stroke();
+        
+            // Write text inside the cells
+            doc.text(index.toString(), tableLeft + cellPadding, y + cellPadding, { width: columnWidths[0], align: 'center' });
+            doc.text(vulnerability, tableLeft + columnWidths[0] + cellPadding, y + cellPadding, textOptions);
+            doc.text(cvss, tableLeft + columnWidths[0] + columnWidths[1] + cellPadding, y + cellPadding, { width: columnWidths[2], align: 'center' });
+            doc.text(hosts.join(', '), tableLeft + columnWidths[0] + columnWidths[1] + columnWidths[2] + cellPadding, y + cellPadding, { width: columnWidths[3], align: 'center' });
+        
+            // Return the adjusted row height for positioning the next row
+            return rowHeightAdjusted;
+        };
+
+        // Fetch and loop through the report TOC data
+        try {
+            const reportTOCResult = await pgClient.query(
+                `
+                WITH final_report AS (
+                    SELECT 
+                        json_array_elements(content->'finalReport') AS report_element 
+                    FROM reports 
+                    WHERE report_id = $1
+                )
+                SELECT 
+                    report_element ->> 'nvtName' AS nvt_name, 
+                    json_agg(report_element ->> 'IP') AS hosts, 
+                    report_element ->> 'CVSS' AS cvss_score
+                FROM final_report 
+                GROUP BY nvt_name, cvss_score;
+                `,
+                [report_id]
+            );
+           
+            let currentY = tableTop + rowHeight;  // Initial Y position for the first row
+
+            // Draw rows dynamically
+            reportTOCResult.rows.forEach((row, index) => {
+                const adjustedRowHeight = drawRow(currentY, index + 1, row.nvt_name, row.cvss_score, row.hosts);
+                currentY += adjustedRowHeight;  // Move Y position for the next row
+            });
+
+        } catch (error) {
+            console.error("Error fetching report TOC:", error);
+            if (!res.headersSent) {  // Check if headers were already sent
+                res.status(500).send('Error fetching reports');
+            }
+        }
+
+        const TechreportResult = await pgClient.query(`
+            WITH final_report AS (
+                SELECT 
+                    json_array_elements(content->'finalReport') AS report_element 
+                FROM reports 
+                WHERE report_id = $1
+            )
+            SELECT 
+                report_element ->> 'nvtName' AS Title, 
+                json_agg(report_element ->> 'IP') AS IP, 
+                report_element ->> 'CVSS' AS cvss_score,
+                report_element ->> 'Severity' AS Level,
+                report_element ->> 'Summary' AS Description,
+                report_element ->> 'CVEs' AS CVEs,
+                report_element ->> 'Impact' AS Impact,
+                report_element ->> 'vulnerabilityInsight' AS Details,
+                report_element ->> 'Solution' AS Recommendation,
+                report_element ->> 'Hostname' AS Hostname,
+                report_element ->> 'Port' AS PortNumber,
+                report_element ->> 'portProtocol' AS PortProtocol,
+                report_element ->> 'vulnerabilityDetectionMethod' AS Result
+            FROM final_report 
+            GROUP BY 
+                report_element ->> 'nvtName', 
+                report_element ->> 'CVSS',
+                report_element ->> 'Severity',
+                report_element ->> 'Summary',
+                report_element ->> 'CVEs',
+                report_element ->> 'Impact',
+                report_element ->> 'vulnerabilityInsight',
+                report_element ->> 'Solution',
+                report_element ->> 'Hostname',
+                report_element ->> 'Port',
+                report_element ->> 'portProtocol',
+                report_element ->> 'vulnerabilityDetectionMethod';
+        `, [report_id]);
+        
+        
+        // Define column widths (adjusted for the new Result column)
+        const titleColumnWidth = 75; // Width for the title labels
+        const dataColumnWidth = 250; // Adjusted width for the Host name
+        const smallColumnWidth = 60;  // Smaller width for IP, Port, Protocol fields
+        const resultColumnWidth = 200; // Width for the Result (vulnerability detection method) field
+        const hostnameColumnWidth = 120;
+        TechreportResult.rows.forEach((row) => {
+            // Add a new page for each row
+            addNewPage();
+        
+            // Prepare the fields for the current row
+            const fields = [
+                { label: 'Title', value: row.title || 'N/A' },
+                { label: 'Level', value: row.level || 'N/A' },
+                { label: 'Description', value: row.description || 'N/A' },
+                { label: 'Impact', value: row.impact || 'N/A' },
+                { label: 'Recommendation', value: row.recommendation || 'N/A' },
+                { label: 'Details', value: row.details || 'N/A' },
+                { label: 'CVEs', value: row.cves || 'N/A' },
+                { label: 'CVSS Score', value: row.cvss_score || 'N/A' }
+            ];
+        
+            let currentY = 100; // Set starting position for the fields
+        
+            // Draw each field with its title label and background
+            fields.forEach((field) => {
+                const titleXPosition = 50; // Position for the title label on the left
+                const dataXPosition = titleXPosition + titleColumnWidth + 10; // Position for the data field
+        
+                const textOptions = { width: dataColumnWidth - 2 * cellPadding, align: 'left' };
+        
+                // Calculate height of the text (in case it needs to wrap)
+                const fieldHeight = doc.heightOfString(field.value, textOptions);
+                const adjustedRowHeight = Math.max(fieldHeight + 2 * cellPadding, rowHeight); // Ensure at least rowHeight
+        
+                // Draw the blue background for the title label
+                doc.rect(titleXPosition, currentY, titleColumnWidth, adjustedRowHeight).fill('darkblue');
+        
+                // Draw the title label text in white over the blue background
+                doc.font('Helvetica-Bold').fillColor('white');
+                doc.text(field.label, titleXPosition + cellPadding, currentY + cellPadding, { width: titleColumnWidth - 2 * cellPadding, align: 'left' });
+        
+                // Draw the data field next to the title with default color (black)
+                doc.font('Helvetica').fillColor('black');
+                doc.text(field.value, dataXPosition, currentY + cellPadding, textOptions);
+        
+                // Draw borders around the data field if needed
+                doc.rect(dataXPosition - cellPadding, currentY, dataColumnWidth, adjustedRowHeight).stroke();
+        
+                // Update Y position
+                currentY += adjustedRowHeight;
+            });
+        
+            // Add new table below each report with the headers: IP, Host name, Port number, Port protocol, and Result
+            currentY += 20; // Space between the fields and the new table
+        
+            // Define the table headers and data
+            const tableHeaders = ['IP', 'Host name', 'Port number', 'Port protocol', 'Result'];
+            const tableData = [row.ip || 'N/A', row.hostname || 'N/A', row.portnumber || 'N/A', row.portprotocol || 'N/A', row.result || 'N/A'];
+        
+            // Set the starting position of the table
+            let tableX = 50;
+        
+            // Draw the headers with a blue background and borders
+            tableHeaders.forEach((header, index) => {
+                // Adjust column width for the new Result field
+                let columnWidth;
+                switch (index) {
+                    case 1: columnWidth = hostnameColumnWidth; break; // Hostname gets the larger width
+                    case 4: columnWidth = resultColumnWidth; break; // Result column width
+                    default: columnWidth = smallColumnWidth; break; // IP, Port number, and Protocol get smaller width
+                }
+        
+                // Draw the header cell background and text
+                doc.rect(tableX, currentY, columnWidth, rowHeight).fill('darkblue');
+                doc.font('Helvetica-Bold').fillColor('white');
+                doc.text(header, tableX + cellPadding, currentY + cellPadding, { width: columnWidth - 2 * cellPadding, align: 'center' });
+        
+                // Draw the border around the header cell
+                doc.rect(tableX, currentY, columnWidth, rowHeight).stroke();
+        
+                tableX += columnWidth; // Move X position for the next header
+            });
+        
+            currentY += rowHeight; // Move Y for data row
+        
+            // Reset X position and draw the data for each header with dynamic row height
+            tableX = 50;
+        
+            // First, calculate the maximum row height based on the data in all cells of the row
+            let maxRowHeight = rowHeight; // Initialize with the default rowHeight
+            tableData.forEach((data, index) => {
+                let columnWidth;
+                switch (index) {
+                    case 1: columnWidth = hostnameColumnWidth; break; // Hostname gets the larger width
+                    case 4: columnWidth = resultColumnWidth; break; // Result column width
+                    default: columnWidth = smallColumnWidth; break; // IP, Port number, and Protocol get smaller width
+                }
+        
+                // Calculate the height of the text for each cell based on its column width
+                const textOptions = { width: columnWidth - 2 * cellPadding, align: 'center' };
+                const cellTextHeight = doc.heightOfString(data, textOptions);
+                
+                // Find the largest height among all the cells in this row
+                maxRowHeight = Math.max(maxRowHeight, cellTextHeight + 2 * cellPadding); 
+            });
+        
+            // Now that we know the maximum height, apply it uniformly to all cells in the row
+            tableX = 50; // Reset X position to draw data cells
+            tableData.forEach((data, index) => {
+                let columnWidth;
+                switch (index) {
+                    case 1: columnWidth = hostnameColumnWidth; break; // Hostname gets the larger width
+                    case 4: columnWidth = resultColumnWidth; break; // Result column width
+                    default: columnWidth = smallColumnWidth; break; // IP, Port number, and Protocol get smaller width
+                }
+        
+                // Draw the data cell and text
+                doc.font('Helvetica').fillColor('black');
+                doc.text(data, tableX + cellPadding, currentY + cellPadding, { width: columnWidth - 2 * cellPadding, align: 'center' });
+        
+                // Draw the border around the data cell with the maxRowHeight
+                doc.rect(tableX, currentY, columnWidth, maxRowHeight).stroke();
+        
+                tableX += columnWidth; // Move X position for the next cell
+            });
+        
+            currentY += maxRowHeight; // Move Y for the next row if needed
+        });
+
+        doc.end();
+    } catch (error) {
+        console.error('Error fetching reports:', error);
+        return res.status(500).json({ error: 'An error occurred while fetching reports' });
+    }
+});
+
+
 // const truncateToSecond = (date) => {
 //     const newDate = new Date(date);
 //     newDate.setMilliseconds(0);

@@ -76,7 +76,7 @@ jobs:
           docker network prune -f
 
       - name: Build and run Docker Compose services
-        run: docker-compose up --build -d
+        run: docker-compose up --build -d postgres nginx api client
 
       - name: Wait for services to be ready
         run: |

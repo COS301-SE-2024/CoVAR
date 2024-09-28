@@ -7,6 +7,7 @@ jobs:
   publish-containers:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    if: ${{ !contains(github.event.head_commit.message, 'from COS301-SE-2024/documentation') }}
     steps:
     - name: Checkout
       uses: actions/checkout@v2
@@ -99,6 +100,7 @@ jobs:
   deploy-containers:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    if: ${{ !contains(github.event.head_commit.message, 'from COS301-SE-2024/documentation') }}
     needs: publish-containers
     steps:
      - name: Deploy using ssh

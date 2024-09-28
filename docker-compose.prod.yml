@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: 'postgres:latest'
+    image: 'postgres:16'
     environment:
       - POSTGRES_PASSWORD=${PG_PASSWORD}
       - POSTGRES_USER=${PG_USER}
@@ -42,26 +42,6 @@ services:
       - NEXT_PUBLIC_MESSAGING_SENDER_ID=${NEXT_PUBLIC_MESSAGING_SENDER_ID}
       - NEXT_PUBLIC_APP_ID=${NEXT_PUBLIC_APP_ID}
       - NEXT_PUBLIC_MEASUREMENT_ID=${NEXT_PUBLIC_MEASUREMENT_ID}
-
-  langchain:
-    image: 211125691345.dkr.ecr.eu-west-2.amazonaws.com/covar_langchain:latest
-    environment:
-      - PG_USER=${PG_USER}
-      - PG_HOST=${PG_HOST}
-      - PG_DATABASE=${PG_DATABASE}
-      - PG_PASSWORD=${PG_PASSWORD}
-      - PG_PORT=${PG_PORT}
-      - FLASK_ENV=development
-      - MODEL_TYPE=${MODEL_TYPE}
-      - OPENAI_MODEL_NAME=${OPENAI_MODEL_NAME}
-      - API_KEY=${API_KEY}
-    ports:
-      - "6000:6000"
-    volumes:
-      - /app/node_modules
-      - ./langchain:/app
-    depends_on:
-      - postgres
 
 volumes:
   postgres_data:

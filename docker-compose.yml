@@ -15,7 +15,6 @@ services:
     depends_on:
       - api
       - client
-    restart: always
     build:
       dockerfile: Dockerfile.dev
       context: './nginx'
@@ -56,6 +55,28 @@ services:
     volumes:
       - /app/node_modules
       - ./CoVAR-app:/app
+
+  langchain:
+    build:
+      dockerfile: Dockerfile.dev
+      context: './langchain'
+    environment:
+      - PG_USER=${PG_USER}
+      - PG_HOST=${PG_HOST}
+      - PG_DATABASE=${PG_DATABASE}
+      - PG_PASSWORD=${PG_PASSWORD}
+      - PG_PORT=${PG_PORT}
+      - FLASK_ENV=development
+      - MODEL_TYPE=${MODEL_TYPE}
+      - OPENAI_MODEL_NAME=${OPENAI_MODEL_NAME}
+      - API_KEY=${API_KEY}
+    ports:
+      - "6000:6000"
+    volumes:
+      - /app/node_modules
+      - ./langchain:/app
+    depends_on:
+      - postgres
 
 volumes:
   postgres_data:

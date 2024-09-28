@@ -4,10 +4,13 @@ const { authenticateToken } = require('../lib/securityFunctions');
 const router = express.Router();
 
 function matchSentences(list1, list2) {
-    //remove duplicates.
-    list1 = list1.filter((item, index, self) => index === self.findIndex((t) => (t.nvtName === item.nvtName && t.port === item.port)));
-    list2 = list2.filter((item, index, self) => index === self.findIndex((t) => (t.nvtName === item.nvtName && t.port === item.port)));
-
+    // Remove duplicates based on nvtName, Port, and IP
+    list1 = list1.filter((item, index, self) =>
+        index === self.findIndex((t) => t.nvtName === item.nvtName && t.port === item.port && t.IP === item.IP)
+    );
+    list2 = list2.filter((item, index, self) =>
+        index === self.findIndex((t) => t.nvtName === item.nvtName && t.port === item.port && t.IP === item.IP)
+    );
 
     const matches = [];
     const unmatchedList1 = [];
@@ -18,11 +21,14 @@ function matchSentences(list1, list2) {
         let bestMatch = { target: null, score: 0 };
 
         unmatchedList2.forEach((item2) => {
-            const nvtName2 = item2.nvtName;
-            const similarity = stringSimilarity.compareTwoStrings(nvtName1, nvtName2);
+            // Check if both Port and IP match before comparing nvtName
+            if (item1.port === item2.port && item1.IP === item2.IP) {
+                const nvtName2 = item2.nvtName;
+                const similarity = stringSimilarity.compareTwoStrings(nvtName1, nvtName2);
 
-            if (similarity > bestMatch.score) {
-                bestMatch = { target: item2, score: similarity };
+                if (similarity > bestMatch.score) {
+                    bestMatch = { target: item2, score: similarity };
+                }
             }
         });
 
@@ -41,6 +47,7 @@ function matchSentences(list1, list2) {
         unmatchedList2
     };
 }
+
 
 router.post('/conflicts/match', authenticateToken, async (req, res) => {
     const { listUploads } = req.body;

@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Box, Button, Typography, List, ListItem, ListItemText, ListItemSecondaryAction, Paper } from '@mui/material';
-import { evaluateLaunchStyles } from '../../../styles/evaluateStyle';
+import { evaluateLaunchStyles, headingBoxStyles } from '../../../styles/evaluateStyle';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
 
@@ -73,47 +73,88 @@ const Evaluate: React.FC = () => {
 
   return (
     <Box sx={evaluateLaunchStyles}>
-      <Typography variant="h6" sx={{ marginTop: 4 }}>
-        Assigned Clients and Organizations
-      </Typography>
-      <Paper elevation={3} sx={{ padding: 2, marginTop: 2 }}>
+      {/* Heading Box */}
+      <Box sx={headingBoxStyles}>
+        <Typography variant="h4" sx={{ marginBottom: 2 }}>
+          Assigned Clients and Organisations
+        </Typography>
+      </Box>
+  
+      {/* Container for scrolling */}
+      <Box
+        sx={{
+          height: '80vh', // Controlled height
+          overflowY: 'auto', // Vertical scroll enabled
+          '&::-webkit-scrollbar': {
+            width: '0.2vw', // Scrollbar width
+          },
+          '&::-webkit-scrollbar-thumb': {
+            backgroundColor: 'gray', // Scrollbar color
+            borderRadius: '0.4vw', // Rounded scrollbar edges
+          },
+          '&::-webkit-scrollbar-track': {
+            backgroundColor: 'transparent', // Scrollbar track color
+          },
+          scrollbarWidth: 'thin', // Firefox scrollbar width
+          scrollbarColor: 'gray transparent', // Scrollbar color in Firefox
+        }}
+      >
+        {/* Loading condition */}
         {loading ? (
           <Typography>Loading...</Typography>
         ) : users.length === 0 && organizations.length === 0 ? (
-          <Typography>No assigned clients or organizations found.</Typography>
+          <Paper elevation={3} sx={{ marginBottom: 3, padding: 2 }}>
+          <Typography>No assigned clients or organisations found.</Typography>
+        </Paper>
         ) : (
           <List>
+            {/* Each user wrapped in a standalone Paper component */}
             {users.map(user => (
-              <ListItem key={user.user_id} sx={{ marginBottom: 1, padding: 1, borderRadius: 1, boxShadow: 1 }}>
-                <ListItemText primary={`User: ${user.username}`} />
-                <ListItemSecondaryAction>
-                  <Button
-                    variant="contained"
-                    onClick={() => handleUserButtonClick(user)}
-                  >
-                    Evaluate
-                  </Button>
-                </ListItemSecondaryAction>
-              </ListItem>
+              <Paper
+                key={user.user_id}
+                elevation={3}
+                sx={{ marginBottom: 3, padding: 1 }}
+              >
+                <ListItem sx={{ borderRadius: 1 }}>
+                  <ListItemText primary={`User: ${user.username}`} />
+                  <ListItemSecondaryAction>
+                    <Button
+                      variant="contained"
+                      onClick={() => handleUserButtonClick(user)}
+                    >
+                      Evaluate
+                    </Button>
+                  </ListItemSecondaryAction>
+                </ListItem>
+              </Paper>
             ))}
+  
+            {/* Each organization wrapped in a standalone Paper component */}
             {organizations.map(org => (
-              <ListItem key={org.organization_id} sx={{ marginBottom: 1, padding: 1, borderRadius: 1, boxShadow: 1 }}>
-                <ListItemText primary={`Organization: ${org.name}`} />
-                <ListItemSecondaryAction>
-                  <Button
-                    variant="contained"
-                    onClick={() => handleOrganizationButtonClick(org)}
-                  >
-                    Evaluate
-                  </Button>
-                </ListItemSecondaryAction>
-              </ListItem>
+              <Paper
+                key={org.organization_id}
+                elevation={3}
+                sx={{ marginBottom: 3, padding: 1 }}
+              >
+                <ListItem sx={{ borderRadius: 1 }}>
+                  <ListItemText primary={`Organisation: ${org.name}`} />
+                  <ListItemSecondaryAction>
+                    <Button
+                      variant="contained"
+                      onClick={() => handleOrganizationButtonClick(org)}
+                    >
+                      Evaluate
+                    </Button>
+                  </ListItemSecondaryAction>
+                </ListItem>
+              </Paper>
             ))}
           </List>
         )}
-      </Paper>
+      </Box>
     </Box>
   );
+  
 };
 
 export default Evaluate;

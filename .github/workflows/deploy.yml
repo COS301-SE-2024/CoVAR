@@ -39,6 +39,10 @@ jobs:
         echo NEXT_PUBLIC_MESSAGING_SENDER_ID=${{ secrets.NEXT_PUBLIC_MESSAGING_SENDER_ID }} >> .env
         echo NEXT_PUBLIC_APP_ID=${{ secrets.NEXT_PUBLIC_APP_ID }} >> .env
         echo NEXT_PUBLIC_MEASUREMENT_ID=${{ secrets.NEXT_PUBLIC_MEASUREMENT_ID }} >> .env
+        echo NEXT_PUBLIC_API_BASE_URL=${{ secrets.NEXT_PUBLIC_API_BASE_URL }} >> .env
+        echo MODEL_TYPE=${{ secrets.MODEL_TYPE }} >> .env
+        echo OPENAI_MODEL_NAME=${{ secrets.OPENAI_MODEL_NAME }} >> .env
+        echo API_KEY=${{ secrets.API_KEY }} >> .env
 
     - name: Create .env file
       run: |
@@ -56,6 +60,10 @@ jobs:
         echo NEXT_PUBLIC_MESSAGING_SENDER_ID=${{ secrets.NEXT_PUBLIC_MESSAGING_SENDER_ID }} >> CoVAR-app/.env
         echo NEXT_PUBLIC_APP_ID=${{ secrets.NEXT_PUBLIC_APP_ID }} >> CoVAR-app/.env
         echo NEXT_PUBLIC_MEASUREMENT_ID=${{ secrets.NEXT_PUBLIC_MEASUREMENT_ID }} >> CoVAR-app/.env
+        echo NEXT_PUBLIC_API_BASE_URL=${{ secrets.NEXT_PUBLIC_API_BASE_URL }} >> .env
+        echo MODEL_TYPE=${{ secrets.MODEL_TYPE }} >> .env
+        echo OPENAI_MODEL_NAME=${{ secrets.OPENAI_MODEL_NAME }} >> .env
+        echo API_KEY=${{ secrets.API_KEY }} >> .env
 
     - name: create-json
       id: create-json
@@ -70,6 +78,8 @@ jobs:
 
     - name: Create Pem Files
       run: |
+        echo ${{ secrets.PUBLIC }} > langchain/public.pem
+        echo ${{ secrets.PRIVATE }} > langchain/private.pem
         echo ${{ secrets.PUBLIC }} > server/public.pem
         echo ${{ secrets.PRIVATE }} > server/private.pem
         echo ${{ secrets.REFRESH_PUBLIC }} > server/refreshPublic.pem
@@ -81,9 +91,11 @@ jobs:
         docker build -t 211125691345.dkr.ecr.eu-west-2.amazonaws.com/covar_api:latest ./server
         docker build -t 211125691345.dkr.ecr.eu-west-2.amazonaws.com/covar_client:latest ./CoVAR-app
         docker build -t 211125691345.dkr.ecr.eu-west-2.amazonaws.com/covar_nginx:latest ./nginx
+        docker build -t 211125691345.dkr.ecr.eu-west-2.amazonaws.com/covar_langchain:latest ./langchain
         docker push 211125691345.dkr.ecr.eu-west-2.amazonaws.com/covar_api:latest
         docker push 211125691345.dkr.ecr.eu-west-2.amazonaws.com/covar_client:latest
         docker push 211125691345.dkr.ecr.eu-west-2.amazonaws.com/covar_nginx:latest
+        docker push 211125691345.dkr.ecr.eu-west-2.amazonaws.com/covar_langchain:latest
   
   deploy-containers:
     runs-on: ubuntu-latest

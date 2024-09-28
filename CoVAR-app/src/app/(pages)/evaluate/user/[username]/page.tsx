@@ -1,13 +1,18 @@
 'use client';
 import React, { useState, useEffect, useCallback } from 'react';
 import { Box, Typography, Paper, Container, List, ListItem, ListItemText, Button, Grid, Snackbar } from '@mui/material';
+import DownloadIcon from '@mui/icons-material/Download';
+import DeleteIcon from '@mui/icons-material/Delete';
+import AddIcon from '@mui/icons-material/Add';
+import RemoveIcon from '@mui/icons-material/Remove';
 import { usePathname } from 'next/navigation';
-import { mainContentStyles } from '../../../../../styles/evaluateStyle';
+import { mainContentStyles, buttonStyles } from '../../../../../styles/evaluateStyle';
 import FileUpload from '../../components/fileUpload';
 import { handleDownloadFile } from '../../../../../functions/requests';
 import ReportPreview from '../../components/reportPreview';
 import { fetchUploadsClient, fetchReports, handleRemoveFile, handleToggleReport } from '../../../../../functions/requests';
 import { useRouter } from 'next/navigation';
+
 interface FileUpload {
   upload_id: number;
   va: number;
@@ -25,6 +30,7 @@ const UserEvaluation: React.FC = () => {
   const redirectToLogin = useCallback(() => {
     router.replace('/login');
   }, [router]);
+
   const pathname = usePathname();
   const username = pathname.split('/').pop();
 
@@ -32,10 +38,13 @@ const UserEvaluation: React.FC = () => {
   const [reportIds, setReportIds] = useState<number[]>([]);
   const [reports, setReports] = useState<any[][]>([]);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [reportNames, setReportNames] = useState<string[]>([]);
+  const [snackbarOpenInvalid, setSnackbarOpenInvalid] = useState(false);
 
   useEffect(() => {
     const fetchInitialUploads = async () => {
       try {
+
         if (username) {
           const data = await fetchUploadsClient(username);
           setUploads(data);
@@ -43,7 +52,6 @@ const UserEvaluation: React.FC = () => {
           setReportIds(inReportIds);
         }
       } catch (error: any) {
-        //console.error('Error fetching uploads:', error);
         if (error.response?.status === 403) {
           redirectToLogin();
         }
@@ -62,6 +70,7 @@ const UserEvaluation: React.FC = () => {
           setReports([]);
         }
       } catch (error) {
+        setSnackbarOpenInvalid(true);
         console.error('Error generating reports:', error);
       }
     };
@@ -77,47 +86,56 @@ const UserEvaluation: React.FC = () => {
         setReportIds(inReportIds);
       }
     } catch (error: any) {
-      //console.error('Error fetching uploads:', error);
       if (error.response?.status === 403) {
         redirectToLogin();
       }
     }
   };
 
-  const handleRemove = async (upload_id: number) => {
+  const handleRemove = async (upload_id: number, fileName: string) => {
     try {
       await handleRemoveFile(upload_id);
+      setReportNames(reportNames.filter(name => name !== fileName));
       setUploads(uploads.filter(upload => upload.upload_id !== upload_id));
       setReportIds(reportIds.filter(id => id !== upload_id));
     } catch (error: any) {
-      //console.error('Error removing upload:', error);
       if (error.response?.status === 403) {
         redirectToLogin();
       }
     }
   };
 
-  const handleToggle = async (upload_id: number) => {
+  const handleToggle = async (upload_id: number, fileName: string) => {
     try {
-      await handleToggleReport(upload_id);
       if (reportIds.includes(upload_id)) {
+        await handleToggleReport(upload_id);
+        setReportNames(reportNames.filter(name => name !== fileName));
         setReportIds(reportIds.filter(id => id !== upload_id));
       } else {
         if (reportIds.length < 2) {
+          await handleToggleReport(upload_id);
+          setReportNames([...reportNames, fileName]);
           setReportIds([...reportIds, upload_id]);
         } else {
           setSnackbarOpen(true);
         }
       }
     } catch (error) {
+      setSnackbarOpenInvalid(true);
       console.error('Error updating report status:', error);
     }
   };
+
   const handleCloseSnackbar = () => {
     setSnackbarOpen(false);
   };
-  return (
 
+  const handleCloseSnackbarInvalid = () => {
+    setSnackbarOpenInvalid(false);
+  };
+
+
+  return (
     <Container maxWidth={false} sx={{ ...mainContentStyles, paddingTop: 8, width: '100vw' }}>
       <Snackbar
         sx={{
@@ -127,13 +145,25 @@ const UserEvaluation: React.FC = () => {
         open={snackbarOpen}
         autoHideDuration={1000}
         onClose={handleCloseSnackbar}
-        message="Cannot add more than 2 report IDs"
+        message="Cannot add more than 2 reports"
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-      >
-      </Snackbar>
+      />
+
+      <Snackbar
+        sx={{
+          width: '100%',
+          position: 'absolute',
+        }}
+        open={snackbarOpenInvalid}
+        autoHideDuration={1000}
+        onClose={handleCloseSnackbarInvalid}
+        message="Invalid Report Format"
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      />
+
       <Grid container spacing={2}>
         <Grid item xs={6}>
-          <Paper sx={{ padding: 4, textAlign: 'center', overflowY: 'auto', maxHeight: '80vh' }}>
+          <Paper sx={{ padding: 4, textAlign: 'center', overflowY: 'auto', height: '40vh' }}>
             <Typography variant="h4" gutterBottom>
               Evaluate User
             </Typography>
@@ -143,61 +173,82 @@ const UserEvaluation: React.FC = () => {
               </Typography>
             )}
             <FileUpload onFileSubmit={handleFileSubmit} client={username ?? undefined} />
-            <Box mt={4}>
-              <Typography variant="h6">Uploaded Files</Typography>
-              <List>
-                {uploads.map((upload) => (
-                  <ListItem key={upload.upload_id}>
-                    <ListItemText
-                      primary={`File Name: ${upload.filename}, Uploaded At: ${new Date(upload.created_at).toLocaleString()}`}
-                    />
-                    <Button
-                      variant="outlined"
-                      color="primary"
-                      onClick={() => handleDownloadFile(upload.loid, `${upload.filename}`)}
-                      sx={{ marginRight: 2 }}
-                    >
-                      Download
-                    </Button>
-                    <Button
-                      variant="outlined"
-                      color="secondary"
-                      onClick={() => handleRemove(upload.upload_id)}
-                    >
-                      Remove
-                    </Button>
-                    <Button
-                      variant="outlined"
-                      color="primary"
-                      onClick={() => handleToggle(upload.upload_id)}
-                      sx={{ marginLeft: 2 }}
-                    >
-                      {reportIds.includes(upload.upload_id) ? 'Remove from Report' : 'Add to Report'}
-                    </Button>
-                  </ListItem>
-                ))}
-              </List>
-            </Box>
+          </Paper>
+          <Box mt={2} /> {/* Gap between the upload files and uploaded files */}
+          <Paper sx={{ padding: 4, textAlign: 'center', overflowY: 'auto', height: '40vh' }}>
+            <Typography variant="h6">Uploaded Files</Typography>
+            <List>
+              {uploads.map((upload) => (
+                <ListItem key={upload.upload_id}>
+                  <ListItemText
+                    primary={`File Name: ${upload.filename}, Uploaded At: ${new Date(upload.created_at).toLocaleString()}`}
+                  />
+                  <Button
+                    data-testid="delete-button"
+                    variant="outlined"
+                    sx={{
+                      backgroundColor: 'transparent',
+                      color: '#8B0000',
+                      borderColor: '#8B0000',
+                      '&:hover': {
+                        borderColor: '#A52A2A',
+                        color: '#A52A2A',
+                      },
+                      marginLeft: 1
+                    }}
+                    onClick={() => handleRemove(upload.upload_id, upload.filename)}
+                  >
+                    <DeleteIcon />
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    color="primary"
+                    onClick={() => handleDownloadFile(upload.loid, `${upload.filename}`)}
+                    sx={{ marginLeft: 1 }}
+                  >
+                    <DownloadIcon />
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    color="primary"
+                    onClick={() => handleToggle(upload.upload_id, upload.filename)}
+                    sx={{ marginLeft: 1 }}
+                  >
+                    {reportIds.includes(upload.upload_id) ? <RemoveIcon /> : <AddIcon />}
+                  </Button>
+                </ListItem>
+              ))}
+            </List>
           </Paper>
         </Grid>
         <Grid item xs={6}>
-          <Paper sx={{ textAlign: 'center', overflowY: 'scroll', maxHeight: '80vh' }}>
-            <ReportPreview reports={reports} reportIds={reportIds} client={username ?? ''} />
+          <Paper sx={{ overflowY: 'scroll', height: 'calc(80vh + 16px)' }}>
+
+            <ReportPreview reports={reports} reportIds={reportIds} client={username ?? ''} reportNames={reportNames} />
+
           </Paper>
-          <Button style={{
-            left: '45%', marginTop: 5, position: 'relative'
-          }} variant='outlined' color="primary" onClick={() => router.push(`/evaluate/conflicts/${username}?type=client`)}>
-            Next
-          </Button>
         </Grid>
       </Grid>
-
+      <Box display="flex" justifyContent="center" mt={2}>
+        <Button
+          color="primary"
+          disabled={reports.length === 0}
+          onClick={() => router.push(`/evaluate/conflicts/${username}?type=client`)}
+          sx={{
+            ...buttonStyles,
+            marginTop: '3vh',
+            width: '150px',
+            ...(reports.length === 0 && {
+              backgroundColor: 'lightgrey',
+              color: 'grey',
+              borderColor: 'grey',
+            }),
+          }}
+        >
+          Next
+        </Button>
+      </Box>
     </Container>
-
-
-
-
-
   );
 };
 

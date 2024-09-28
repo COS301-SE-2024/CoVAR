@@ -733,3 +733,14 @@ export const getOwner = async (orgId: string, accessToken: string) => {
     };
     return await handleRequest(request);
 };
+
+
+// Function to fetch all invites
+export const fetchAllInvites = async (accessToken: string) => {
+    const request = {
+        method: 'get',
+        url: `/api/invites`,
+        headers: { Authorization: `Bearer ${accessToken}` },
+    };
+    return await handleRequest(request);
+};

@@ -2,50 +2,65 @@ const express = require('express');
 const { authenticateToken } = require('../lib/securityFunctions');
 const axios = require('axios');
 const router = express.Router();
+
+// Helper function to safely stringify the error request
+const safeStringify = (obj) => {
+    const cache = new Set();
+    return JSON.stringify(obj, (key, value) => {
+        if (typeof value === 'object' && value !== null) {
+            if (cache.has(value)) {
+                return undefined; // Circular reference found
+            }
+            cache.add(value);
+        }
+        return value;
+    });
+};
+
 router.post('/unmatchedRecommendations', authenticateToken, async (req, res) => {
-    // Log the entire request body to verify what is being sent
-    console.log('Request Body:', req.body);
-    
-    // Extract the chain_prompt directly from the request body
-    const { chain_prompt_1} = req.body;
+    const { chain_prompt_1 } = req.body;
 
     if (!chain_prompt_1) {
-        return res.status(400).json({ error: 'chain_prompt is required' });
+        return res.status(400).json({ error: 'chain_prompt_1 is required' });
     }
 
     try {
         const token = req.headers.authorization;
-        console.log('Token:', token);
-
-        // Make sure chain_prompt is correctly passed in the request to langchain server
-        const response = await axios.post('http://langchain:6000/unmatchedRecomendations', 
-            { chain_prompt_1 }, 
+        const response = await axios.post('http://langchain:6000/unmatchedRecomendations',
+            { chain_prompt_1 },
             { headers: { Authorization: token } }
         );
 
         res.status(200).json(response.data);
     } catch (error) {
         console.error('Error occurred during /unmatchedRecomendations POST request:');
-        console.error(`Request Data: ${JSON.stringify({ chain_prompt_1 })}`);
+        console.error(`Request Data: ${safeStringify({ chain_prompt_1 })}`);
 
         if (error.response) {
-            // Server responded with a status other than 2xx
             console.error(`Response Status: ${error.response.status}`);
-            console.error(`Response Data: ${JSON.stringify(error.response.data)}`);
+            console.error(`Response Data: ${safeStringify(error.response.data)}`);
+
+            // Break out of the loop if it's a 502 Bad Gateway error
+            if (error.response.status === 502) {
+                return res.status(502).json({
+                    message: 'Bad Gateway',
+                    error: error.response.data
+                });
+            }
+
             res.status(500).json({
                 message: 'Internal Server Error',
                 error: error.response.data
             });
         } else if (error.request) {
-            // Request was made but no response was received
             console.error('No response received from the chain server.');
-            console.error(`Request Details: ${JSON.stringify(error.request)}`);
+            console.error(`Request Details: ${safeStringify(error.request)}`);
+
             res.status(500).json({
                 message: 'No response from the chain server',
                 error: 'No response received'
             });
         } else {
-            // Something else happened while setting up the request
             console.error(`Error Message: ${error.message}`);
             res.status(500).json({
                 message: 'Internal Server Error',
@@ -64,29 +79,36 @@ router.post('/matchedRecommendations', authenticateToken, async (req, res) => {
 
     try {
         const token = req.headers.authorization;
-        console.log('Token:', token);
-
-        // Send both prompts to the LangChain server in a single request
-        const response = await axios.post('http://langchain:6000/matchedRecommendations', 
-            { chain_prompt_1, chain_prompt_2 }, 
+        const response = await axios.post('http://langchain:6000/matchedRecommendations',
+            { chain_prompt_1, chain_prompt_2 },
             { headers: { Authorization: token } }
         );
 
         res.status(200).json(response.data);
     } catch (error) {
         console.error('Error occurred during /matchedRecommendations POST request:');
-        console.error(`Request Data: ${JSON.stringify({ chain_prompt_1, chain_prompt_2 })}`);
+        console.error(`Request Data: ${safeStringify({ chain_prompt_1, chain_prompt_2 })}`);
 
         if (error.response) {
             console.error(`Response Status: ${error.response.status}`);
-            console.error(`Response Data: ${JSON.stringify(error.response.data)}`);
+            console.error(`Response Data: ${safeStringify(error.response.data)}`);
+
+            // Break out of the loop if it's a 502 Bad Gateway error
+            if (error.response.status === 502) {
+                return res.status(502).json({
+                    message: 'Bad Gateway',
+                    error: error.response.data
+                });
+            }
+
             res.status(500).json({
                 message: 'Internal Server Error',
                 error: error.response.data
             });
         } else if (error.request) {
             console.error('No response received from the chain server.');
-            console.error(`Request Details: ${JSON.stringify(error.request)}`);
+            console.error(`Request Details: ${safeStringify(error.request)}`);
+
             res.status(500).json({
                 message: 'No response from the chain server',
                 error: 'No response received'
@@ -101,37 +123,44 @@ router.post('/matchedRecommendations', authenticateToken, async (req, res) => {
     }
 });
 
-router.post('/topVulChain', authenticateToken ,async (req, res) => {
+router.post('/topVulChain', authenticateToken, async (req, res) => {
     const { chain_prompt } = req.body;
 
     try {
-        //carry jwt through to chain server
+        // Carry JWT through to chain server
         const token = req.headers.authorization;
-        console.log('Token', token);
         const response = await axios.post('http://langchain:6000/topVulChain', { chain_prompt }, { headers: { Authorization: token } });
+
         res.status(200).json(response.data);
     } catch (error) {
-        console.error('Error occurred during /chain POST request:');
-        console.error(`Request Data: ${JSON.stringify({ chain_prompt })}`);
-        
+        console.error('Error occurred during /topVulChain POST request:');
+        console.error(`Request Data: ${safeStringify({ chain_prompt })}`);
+
         if (error.response) {
-            // Server responded with a status other than 2xx
             console.error(`Response Status: ${error.response.status}`);
-            console.error(`Response Data: ${JSON.stringify(error.response.data)}`);
+            console.error(`Response Data: ${safeStringify(error.response.data)}`);
+
+            // Break out of the loop if it's a 502 Bad Gateway error
+            if (error.response.status === 502) {
+                return res.status(502).json({
+                    message: 'Bad Gateway',
+                    error: error.response.data
+                });
+            }
+
             res.status(500).json({
                 message: 'Internal Server Error',
                 error: error.response.data
             });
         } else if (error.request) {
-            // Request was made but no response was received
             console.error('No response received from the chain server.');
-            console.error(`Request Details: ${JSON.stringify(error.request)}`);
+            console.error(`Request Details: ${safeStringify(error.request)}`);
+
             res.status(500).json({
                 message: 'No response from the chain server',
                 error: 'No response received'
             });
         } else {
-            // Something else happened while setting up the request
             console.error(`Error Message: ${error.message}`);
             res.status(500).json({
                 message: 'Internal Server Error',

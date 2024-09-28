@@ -32,8 +32,12 @@ const conflicts = require('./routes/conflicts');
 
 const dashboard = require('./routes/dashboard');
 
+const chain = require('./routes/chain');
+
 const invites = require('./routes/invites');
 
+
+app.use(chain);
 app.use(authentication);
 app.use(users);
 app.use(organizations);

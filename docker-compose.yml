@@ -38,7 +38,6 @@ services:
       - REFRESH_SECRET=${REFRESH_SECRET}
     depends_on:
       - postgres
-      - langchain
 
   client:
     stdin_open: true

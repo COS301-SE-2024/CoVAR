@@ -26,7 +26,7 @@ router.post('/unmatchedRecommendations', authenticateToken, async (req, res) => 
 
     try {
         const token = req.headers.authorization;
-        const response = await axios.post('http://langchain:6000/unmatchedRecomendations',
+        const response = await axios.post('http://13.60.34.133/topVulChain',
             { chain_prompt_1 },
             { headers: { Authorization: token } }
         );
@@ -79,7 +79,7 @@ router.post('/matchedRecommendations', authenticateToken, async (req, res) => {
 
     try {
         const token = req.headers.authorization;
-        const response = await axios.post('http://langchain:6000/matchedRecommendations',
+        const response = await axios.post('http://13.60.34.133/topVulChain',
             { chain_prompt_1, chain_prompt_2 },
             { headers: { Authorization: token } }
         );
@@ -129,7 +129,7 @@ router.post('/topVulChain', authenticateToken, async (req, res) => {
     try {
         // Carry JWT through to chain server
         const token = req.headers.authorization;
-        const response = await axios.post('http://langchain:6000/topVulChain', { chain_prompt }, { headers: { Authorization: token } });
+        const response = await axios.post('http://13.60.34.133/topVulChain', { chain_prompt }, { headers: { Authorization: token } });
 
         res.status(200).json(response.data);
     } catch (error) {

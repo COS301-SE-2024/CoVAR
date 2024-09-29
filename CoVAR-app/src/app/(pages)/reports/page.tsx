@@ -4,7 +4,7 @@ import { CircularProgress, Box, Table, TableBody, TableCell, TableContainer, Tab
 import { populateReportsTable, fetchExecReport, fetchTechReport } from '@/functions/requests'; 
 import DownloadIcon from '@mui/icons-material/Download';
 import { mainContentStyles } from '@/styles/evaluateStyle';
-import { useTheme } from '@mui/material/styles'; // Import useTheme
+import { useTheme } from '@mui/material/styles';
 
 type Report = {
     report_id: string;
@@ -23,7 +23,6 @@ const ReportsPage = () => {
         const fetchReports = async () => {
             try {
                 const response = await populateReportsTable();
-                console.log('API Response.data:', response.reports);
                 if (response.reports) {
                     setReports(response.reports);
                 }
@@ -59,19 +58,14 @@ const ReportsPage = () => {
     const handleFetchExecReport = async (reportId: string) => {
         try {
             const blob = await fetchExecReport(reportId); 
-
             const url = window.URL.createObjectURL(new Blob([blob]));
-
             const link = document.createElement('a');
             link.href = url;
             link.setAttribute('download', `executive_report_${reportId}.pdf`);
-
             document.body.appendChild(link);
             link.click();
-
             link.parentNode?.removeChild(link);
             window.URL.revokeObjectURL(url);
-
         } catch (error) {
             console.error('Error fetching executive report:', error);
         }
@@ -80,19 +74,14 @@ const ReportsPage = () => {
     const handleFetchTechReport = async (reportId: string) => {
         try {
             const blob = await fetchTechReport(reportId); 
-
             const url = window.URL.createObjectURL(new Blob([blob]));
-
             const link = document.createElement('a');
             link.href = url;
             link.setAttribute('download', `technical_report_${reportId}.pdf`);
-
             document.body.appendChild(link);
             link.click();
-
             link.parentNode?.removeChild(link);
             window.URL.revokeObjectURL(url);
-
         } catch (error) {
             console.error('Error fetching technical report:', error);
         }
@@ -108,33 +97,26 @@ const ReportsPage = () => {
             </Typography>
             <TableContainer component={Paper} sx={{ ...mainContentStyles, border: '1px solid #ccc', maxHeight: '80vh', overflowY: 'auto' }}>
                 <Table stickyHeader>
-                    <TableHead sx={{ backgroundColor: tableHeaderBackground }}> {/* Darker shade for light mode */}
-                        <TableRow sx={{ backgroundColor: tableHeaderBackground }}>
-                            <TableCell sx={{ backgroundColor: tableHeaderBackground,color: 'text.primary', fontWeight: 'bold' }}>Report ID</TableCell>
-                            <TableCell sx={{ backgroundColor: tableHeaderBackground,color: 'text.primary', fontWeight: 'bold' }}>Date Created</TableCell>
-                            <TableCell sx={{ backgroundColor: tableHeaderBackground,color: 'error.main', fontWeight: 'bold' }}>Critical Count</TableCell>
-                            <TableCell sx={{ backgroundColor: tableHeaderBackground,color: 'orange', fontWeight: 'bold' }}>Medium Count</TableCell>
-                            <TableCell sx={{ backgroundColor: tableHeaderBackground,color: 'success.main' , fontWeight: 'bold' }}>Low Count</TableCell>
-                            <TableCell sx={{ backgroundColor: tableHeaderBackground,color: 'text.primary', fontWeight: 'bold' }}>Technical Report</TableCell>
-                            <TableCell sx={{ backgroundColor: tableHeaderBackground,color: 'text.primary', fontWeight: 'bold' }}>Executive Report</TableCell>
+                    <TableHead sx={{ backgroundColor: tableHeaderBackground }}>
+                        <TableRow>
+                            <TableCell sx={{ backgroundColor: tableHeaderBackground, color: 'text.primary', fontWeight: 'bold' }}>Report ID</TableCell>
+                            <TableCell sx={{ backgroundColor: tableHeaderBackground, color: 'text.primary', fontWeight: 'bold' }}>Date Created</TableCell>
+                            <TableCell sx={{ backgroundColor: tableHeaderBackground, color: 'error.main', fontWeight: 'bold' }}>Critical Count</TableCell>
+                            <TableCell sx={{ backgroundColor: tableHeaderBackground, color: 'orange', fontWeight: 'bold' }}>Medium Count</TableCell>
+                            <TableCell sx={{ backgroundColor: tableHeaderBackground, color: 'success.main', fontWeight: 'bold' }}>Low Count</TableCell>
+                            <TableCell sx={{ backgroundColor: tableHeaderBackground, color: 'text.primary', fontWeight: 'bold' }}>Technical Report</TableCell>
+                            <TableCell sx={{ backgroundColor: tableHeaderBackground, color: 'text.primary', fontWeight: 'bold' }}>Executive Report</TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
                         {reports.map((report) => (
                             <TableRow key={report.report_id}>
-                                <TableCell sx={{ backgroundColor: tableHeaderBackground}}>{report.report_id}</TableCell>
-                                <TableCell sx={{ backgroundColor: tableHeaderBackground}}>{new Date(report.created_at).toLocaleString()}</TableCell>
-                                <TableCell sx={{ backgroundColor: tableHeaderBackground, color: report.criticalCount > 0 ? 'error.main' : 'inherit' }}>
-                                    {report.criticalCount}
-                                </TableCell>
-                                <TableCell sx={{ backgroundColor: tableHeaderBackground,color: report.mediumCount > 0 ? 'orange' : 'inherit' }}>
-                                    {report.mediumCount}
-                                </TableCell>
-                                <TableCell sx={{ backgroundColor: tableHeaderBackground, color: report.lowCount > 0 ?  'success.main'  : 'inherit' }}>
-                                    {report.lowCount}
-                                </TableCell>
-
-                                <TableCell sx={{ backgroundColor: tableHeaderBackground}}>
+                                <TableCell>{report.report_id}</TableCell>
+                                <TableCell>{new Date(report.created_at).toLocaleString()}</TableCell>
+                                <TableCell sx={{ color: report.criticalCount > 0 ? 'error.main' : 'inherit' }}>{report.criticalCount}</TableCell>
+                                <TableCell sx={{ color: report.mediumCount > 0 ? 'orange' : 'inherit' }}>{report.mediumCount}</TableCell>
+                                <TableCell sx={{ color: report.lowCount > 0 ? 'success.main' : 'inherit' }}>{report.lowCount}</TableCell>
+                                <TableCell>
                                     <Button
                                         variant="contained"
                                         color="secondary"
@@ -151,8 +133,7 @@ const ReportsPage = () => {
                                         Download
                                     </Button>
                                 </TableCell>
-
-                                <TableCell sx={{ backgroundColor: tableHeaderBackground}}>
+                                <TableCell>
                                     <Button
                                         variant="contained"
                                         color="primary"

@@ -46,5 +46,6 @@ async function getAllReportIds(pgClient, UserId) {
 module.exports = {
     isOwner,
     isAdmin,
-    getAllReportIds
+    getAllReportIds,
+    getOrganizationId
 };

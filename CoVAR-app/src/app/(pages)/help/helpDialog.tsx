@@ -150,6 +150,30 @@ const HelpDialog: React.FC<HelpDialogProps> = ({ open, onClose }) => {
 
       </>
     ),
+    '/vendorGraph': (
+      <>
+        <Typography variant="h4" gutterBottom>
+          Vendor Graph
+        </Typography>
+        <Typography variant="body1" paragraph>
+          The Vendor Graph page provides a visual representation of vulnerabilities associated with various software vendors and their respective fixes. This page allows you to explore how many vulnerabilities are tied to each vendor and version, as well as the specific CVEs related to them.
+          Key Features Include:
+        </Typography>
+        <Typography variant="body1" paragraph>
+          <strong>Select Report:</strong> Use the dropdown menu to choose a specific report date. The data visualisation will update accordingly, allowing you to track changes over time.
+        </Typography>
+        <Typography variant="body1" paragraph>
+          <strong>Vendor Fixes Visualisation:</strong> The tree graph displays the vendors and the versions of their software that have vulnerabilities. Each node represents a vendor, with child nodes representing specific versions and further branching into the related CVEs.
+        </Typography>
+        <Typography variant="body1" paragraph>
+          Clicking on a CVE node will redirect you to its detailed page on the CVE Details website, providing you with comprehensive information about the vulnerability.
+        </Typography>
+        <Typography variant="body1" paragraph>
+          By reviewing the vendor graph, you can gain insights into the vulnerabilities affecting your systems and make informed decisions about necessary updates or patches.
+        </Typography>
+      </>
+    ),
+
     '/organisation': (
       <>
         <Typography variant="h4" gutterBottom>

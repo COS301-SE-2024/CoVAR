@@ -609,7 +609,7 @@ router.get('/reports/executive/:report_id', authenticateToken, async (req, res) 
         const checkPageOverflow = (requiredSpace) => {
             const currentY = doc.y;
             const pageHeight = doc.page.height;
-            
+            doc.moveDown(5);
             // Check if there's enough space remaining for the required space
             if (currentY + requiredSpace > pageHeight - 100) {  // Leave some space for footer
                 addNewPage();

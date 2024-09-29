@@ -10,6 +10,8 @@ import { Height } from '@mui/icons-material';
 import { mainContentStyles } from '@/styles/sidebarStyle';
 import SeverityDistribution from './severityDistribution';
 import { chartContainerStyles } from '@/styles/dashboardStyle';
+import InviteList from './InviteList'; // Import the new component
+
 
 type User = {
     user_id: string;
@@ -160,49 +162,47 @@ const AdminPage: React.FC = () => {
         { name: 'Clients', value: userMetrics.clients },
       ];
 
-    return (
+      return (
+        <Box sx={mainContentStyles}>
+            <Box sx={{ marginBottom: '2vh' }}>
+                <Typography variant="h5" color="text.primary">
+                    User Metrics
+                </Typography>
+            </Box>
 
-            <Box sx={mainContentStyles}>
-                <Box sx = {{marginBottom : '2vh'}}>
-                    <Typography variant="h5" color="text.primary">
-                        User Metrics
-                    </Typography>
-                </Box>
+            <Paper sx={{ padding: 2 }}>
+                <Typography>Total Users: {userMetrics.total}</Typography>
+                <Typography>Admins: {userMetrics.admins}</Typography>
+                <Typography>VAs: {userMetrics.vas}</Typography>
+                <Typography>Clients: {userMetrics.clients}</Typography>
 
-
-                <Paper sx={{ padding: 2 }}>
-                    <Typography>Total Users: {userMetrics.total}</Typography>
-                    <Typography>Admins: {userMetrics.admins}</Typography>
-                    <Typography>VAs: {userMetrics.vas}</Typography>
-                    <Typography>Clients: {userMetrics.clients}</Typography>
-                    <Paper sx={chartContainerStyles}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', marginTop: 2 }}>
+                    <Paper sx={{ ...chartContainerStyles, width: '48%' }}>
                         <Typography variant="h6">Role Distribution</Typography>
                         <SeverityDistribution data={roleData} />
                     </Paper>
-                </Paper>
 
+                    <Paper sx={{ ...chartContainerStyles, width: '48%' }}>
+                        <InviteList />
+                    </Paper>
+                </Box>
+            </Paper>
 
-
-                    <Box sx = {{marginBottom : '2vh', marginTop : '2vh'}}>
-                        <Typography variant="h5" color="text.primary">
-                            Unauthorised Users (Last Week)
-                        </Typography>                    
-                    </Box>
-
-
+            <Box sx={{ marginBottom: '2vh', marginTop: '2vh' }}>
+                <Typography variant="h5" color="text.primary">
+                    Unauthorised Users (Last Week)
+                </Typography>
+            </Box>
 
             {loading ? (
                 <CircularProgress />
             ) : (
-
-                    <DataGrid
-                        rows={users}
-                        columns={columns}
-                        getRowId={(row) => row.user_id}
-                        sx = {{...dataGridStyles, 
-                            height : '50vh'
-                        }}
-                    />
+                <DataGrid
+                    rows={users}
+                    columns={columns}
+                    getRowId={(row) => row.user_id}
+                    sx={{ ...dataGridStyles, height: '50vh' }}
+                />
             )}
 
             <ConfirmAuthorizeDialog

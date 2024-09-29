@@ -1,12 +1,9 @@
 const express = require('express');
-
-const { authenticateToken} = require('../lib/securityFunctions');
-
+const { authenticateToken } = require('../lib/securityFunctions');
 const pgClient = require('../lib/postgres');
-
 const router = express.Router();
 
-// Fetch invites for a user
+// Fetch invites for a specific user
 router.get('/invites/:username', authenticateToken, async (req, res) => {
     const { username } = req.params;
 
@@ -19,7 +16,7 @@ router.get('/invites/:username', authenticateToken, async (req, res) => {
 
         const userId = userResult.rows[0].user_id;
 
-        // Fetch invites for the user
+        // Fetch pending invites for the user
         const invitesQuery = `
             SELECT i.invite_id, o.name as organization_name, i.invite_status 
             FROM organization_invites i
@@ -76,6 +73,24 @@ router.patch('/invites/:inviteId/reject', authenticateToken, async (req, res) =>
         await pgClient.query('UPDATE organization_invites SET invite_status = $1 WHERE invite_id = $2', ['rejected', inviteId]);
 
         res.send('Invite rejected successfully');
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
+});
+
+// Fetch all invites
+router.get('/invites', authenticateToken, async (req, res) => {
+    try {
+        const invitesQuery = `
+            SELECT i.invite_id, u.username, o.name as organization_name, i.invite_status 
+            FROM organization_invites i
+            JOIN organizations o ON i.organization_id = o.organization_id
+            JOIN users u ON i.user_id = u.user_id
+        `;
+        const invitesResult = await pgClient.query(invitesQuery);
+
+        res.json(invitesResult.rows);
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server Error');

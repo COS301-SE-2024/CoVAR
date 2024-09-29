@@ -87,7 +87,7 @@ useEffect(() => {
                 throw new Error('Access token not found');
             }
             const users = await fetchUsers(accessToken);
-            console.log(users);
+
             setUsers(users);
             setLoading(false);
         } catch (error: any) {

@@ -94,8 +94,20 @@ const HelpDialog: React.FC<HelpDialogProps> = ({ open, onClose }) => {
         )}
         {role === 'client' && (
           <>
+             <Typography variant="body1" paragraph>
+              The Client Dashboard provides a comprehensive view of your system&#39;s security posture by summarising vulnerabilities and their severities. Key features include:
+            </Typography>
             <Typography variant="body1" paragraph>
-              The Client Dashboard provides insights into your assessments and ongoing activities. Key features include:
+              <strong>Severity Distribution:</strong> At a glance, the dashboard displays the distribution of vulnerabilities across different severity levels: Critical, High, Medium, and Low. This visual representation allows you to quickly assess the overall risk landscape and prioritise remediation efforts accordingly.
+            </Typography>
+            <Typography variant="body1" paragraph>
+              <strong>Vulnerabilities Over Time:</strong> The Vulnerabilities Over Time graph illustrates the trend of vulnerabilities across reports, enabling you to track improvements or identify recurring issues over specific periods. Each report is clearly labelled, allowing you to correlate vulnerability changes with remediation activities or changes in your environment.
+            </Typography>
+            <Typography variant="body1" paragraph>
+              <strong>Top Vulnerabilities:</strong> The dashboard highlights the most critical vulnerabilities impacting your systems. By focusing on these top vulnerabilities, you can take immediate action to enhance your security measures.
+            </Typography>
+            <Typography variant="body1" paragraph>
+              <strong>Filter by Severity:</strong> To streamline your review process, you can filter vulnerabilities based on their severity. This feature allows you to customise your view and concentrate on the vulnerabilities that matter most to your organisation, ensuring that your security efforts are targeted and efficient.
             </Typography>
           </>
         )}
@@ -152,6 +164,25 @@ const HelpDialog: React.FC<HelpDialogProps> = ({ open, onClose }) => {
 
       </>
     ),
+    '/reports': (
+        <>
+          <Typography variant="h4" gutterBottom>
+            Reports
+          </Typography>
+          <Typography variant="body1" paragraph>
+            The Reports page provides an overview of all vulnerability assessment reports generated for your systems. Each report includes essential information to help you understand your security posture. Key features include:
+          </Typography>
+          <Typography variant="body1" paragraph>
+            <strong>Report Overview:</strong> Each report is displayed in a table format, showing key details such as the Report ID, Date Created, and the counts of vulnerabilities categorised by severity (Critical, Medium, Low). This allows you to quickly assess the status of each report at a glance.
+          </Typography>
+          <Typography variant="body1" paragraph>
+            <strong>Actions:</strong> For each report, you have the option to download both the Technical Report and the Executive Report. The Technical Report provides detailed findings and recommendations, while the Executive Report summarises the key risks and necessary actions for stakeholders.
+          </Typography>
+          <Typography variant="body1" paragraph>
+            By regularly reviewing your reports, you can ensure that you stay informed about your organisation&#39;s vulnerabilities and take proactive measures to enhance your security posture.
+          </Typography>
+        </>
+      ),
     '/adminTools': (
       <>
         <Typography variant="h4" gutterBottom>

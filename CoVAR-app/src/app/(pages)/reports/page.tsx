@@ -1,10 +1,12 @@
 'use client';
 import React, { useEffect, useState } from 'react';
-import { CircularProgress, Box, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Typography, Button } from '@mui/material';
+import {  Box, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Typography, Button } from '@mui/material';
 import { populateReportsTable, fetchExecReport, fetchTechReport } from '@/functions/requests'; 
 import DownloadIcon from '@mui/icons-material/Download';
 import { mainContentStyles } from '@/styles/evaluateStyle';
 import { useTheme } from '@mui/material/styles';
+import { boxStylesOrg} from '../../../styles/organisationStyle';
+import { Loader } from '@/styles/conflictStyle';
 
 type Report = {
     report_id: string;
@@ -39,18 +41,19 @@ const ReportsPage = () => {
     if (loading) {
         return (
             <Box sx={{
-                ...mainContentStyles,
+                ...boxStylesOrg,
                 position: 'absolute',
                 top: '50%',
-                left: '57%',
+                left: '50%',
                 transform: 'translate(-50%, -50%)',
                 display: 'flex',
                 justifyContent: 'center',
                 alignItems: 'center',
-                width: '90%',
+                width: '100%',
                 height: '100%',
+
             }}>
-                <CircularProgress />
+                <Loader />
             </Box>
         );
     }
@@ -99,14 +102,6 @@ const ReportsPage = () => {
                 <Table stickyHeader>
                     <TableHead sx={{ backgroundColor: tableHeaderBackground }}>
                         <TableRow>
-
-                            <TableCell sx={{ color: 'text.primary', fontWeight: 'bold' }}>Report ID</TableCell>
-                            <TableCell sx={{ color: 'text.primary', fontWeight: 'bold' }}>Date Created</TableCell>
-                            <TableCell sx={{ color: 'text.primary', fontWeight: 'bold' }}>High Count</TableCell>
-                            <TableCell sx={{ color: 'text.primary', fontWeight: 'bold' }}>Medium Count</TableCell>
-                            <TableCell sx={{ color: 'text.primary', fontWeight: 'bold' }}>Low Count</TableCell>
-                            <TableCell sx={{ color: 'text.primary', fontWeight: 'bold' }}>Actions</TableCell>
-
                             <TableCell sx={{ backgroundColor: tableHeaderBackground, color: 'text.primary', fontWeight: 'bold' }}>Report ID</TableCell>
                             <TableCell sx={{ backgroundColor: tableHeaderBackground, color: 'text.primary', fontWeight: 'bold' }}>Date Created</TableCell>
                             <TableCell sx={{ backgroundColor: tableHeaderBackground, color: 'error.main', fontWeight: 'bold' }}>High Count</TableCell>
@@ -114,7 +109,6 @@ const ReportsPage = () => {
                             <TableCell sx={{ backgroundColor: tableHeaderBackground, color: 'success.main', fontWeight: 'bold' }}>Low Count</TableCell>
                             <TableCell sx={{ backgroundColor: tableHeaderBackground, color: 'text.primary', fontWeight: 'bold' }}>Technical Report</TableCell>
                             <TableCell sx={{ backgroundColor: tableHeaderBackground, color: 'text.primary', fontWeight: 'bold' }}>Executive Report</TableCell>
-
                         </TableRow>
                     </TableHead>
                     <TableBody>

@@ -26,7 +26,7 @@ router.post('/unmatchedRecommendations', authenticateToken, async (req, res) => 
 
     try {
         const token = req.headers.authorization;
-        const response = await axios.post('http://13.60.34.133/topVulChain',
+        const response = await axios.post('http://13.60.34.133/unmatchedRecomendations',
             { chain_prompt_1 },
             { headers: { Authorization: token } }
         );
@@ -79,7 +79,7 @@ router.post('/matchedRecommendations', authenticateToken, async (req, res) => {
 
     try {
         const token = req.headers.authorization;
-        const response = await axios.post('http://13.60.34.133/topVulChain',
+        const response = await axios.post('http://13.60.34.133/matchedRecommendations',
             { chain_prompt_1, chain_prompt_2 },
             { headers: { Authorization: token } }
         );

@@ -77,6 +77,7 @@ const retryRequestWithNewToken = async (originalRequest: AxiosRequestConfig) => 
 
 const handleRequest = async (request: AxiosRequestConfig) => {
     try {
+        console.log(request);
         const response = await axios(request);
 
         // Check if the URL ends with 'change_name', 'delete', or 'remove_user'

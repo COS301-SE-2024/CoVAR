@@ -9,7 +9,6 @@ import ReportsList from './components/reportsList';
 import TopVulnerabilities from './components/topVulnerabilities';
 import { fetchLastReportDates, getAllReports, getUserRole, fetchClientsAssigned, fetchOrganisationsAssigned } from '@/functions/requests';
 import { useRouter } from 'next/navigation';
-import axios from 'axios';
 import { evaluateLaunchStyles } from '../../../styles/evaluateStyle';
 import { fetchReportsPerClient } from '@/functions/requests';
 import ReportsPerClient from './components/reportsPerClient';
@@ -148,7 +147,6 @@ const Dashboard: React.FC = () => {
 
     const calculateSeverityDistribution = (reports: VulnerabilityReport[]) => {
         const distribution: { [key: string]: number } = {
-            Critical: 0,
             High: 0,
             Medium: 0,
             Low: 0
@@ -156,7 +154,7 @@ const Dashboard: React.FC = () => {
 
         reports.forEach(vulnerability => {
             const severity = vulnerability.Severity;
-            if (severity === 'Critical' || severity === 'High' || severity === 'Medium' || severity === 'Low') {
+            if (severity === 'High' || severity === 'Medium' || severity === 'Low') {
                 distribution[severity]++;
             }
         });

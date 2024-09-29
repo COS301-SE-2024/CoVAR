@@ -78,8 +78,6 @@ jobs:
 
     - name: Create Pem Files
       run: |
-        echo ${{ secrets.PUBLIC }} > langchain/public.pem
-        echo ${{ secrets.PRIVATE }} > langchain/private.pem
         echo ${{ secrets.PUBLIC }} > server/public.pem
         echo ${{ secrets.PRIVATE }} > server/private.pem
         echo ${{ secrets.REFRESH_PUBLIC }} > server/refreshPublic.pem
@@ -91,11 +89,9 @@ jobs:
         docker build -t 211125691345.dkr.ecr.eu-west-2.amazonaws.com/covar_api:latest ./server
         docker build -t 211125691345.dkr.ecr.eu-west-2.amazonaws.com/covar_client:latest ./CoVAR-app
         docker build -t 211125691345.dkr.ecr.eu-west-2.amazonaws.com/covar_nginx:latest ./nginx
-        docker build -t 211125691345.dkr.ecr.eu-west-2.amazonaws.com/covar_langchain:latest ./langchain
         docker push 211125691345.dkr.ecr.eu-west-2.amazonaws.com/covar_api:latest
         docker push 211125691345.dkr.ecr.eu-west-2.amazonaws.com/covar_client:latest
         docker push 211125691345.dkr.ecr.eu-west-2.amazonaws.com/covar_nginx:latest
-        docker push 211125691345.dkr.ecr.eu-west-2.amazonaws.com/covar_langchain:latest
   
   deploy-containers:
     runs-on: ubuntu-latest

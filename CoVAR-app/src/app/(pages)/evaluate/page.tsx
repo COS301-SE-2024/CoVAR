@@ -2,9 +2,10 @@
 
 import React, { useEffect, useState } from 'react';
 import { Box, Button, Typography, List, ListItem, ListItemText, ListItemSecondaryAction, Paper } from '@mui/material';
-import { evaluateLaunchStyles, headingBoxStyles } from '../../../styles/evaluateStyle';
+import { boxStyles, evaluateLaunchStyles, headingBoxStyles } from '../../../styles/evaluateStyle';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
+import { Loader } from '@/styles/conflictStyle';
 
 interface User {
   user_id: number;
@@ -79,7 +80,7 @@ const Evaluate: React.FC = () => {
           Assigned Clients and Organisations
         </Typography>
       </Box>
-  
+
       {/* Container for scrolling */}
       <Box
         sx={{
@@ -101,11 +102,26 @@ const Evaluate: React.FC = () => {
       >
         {/* Loading condition */}
         {loading ? (
-          <Typography>Loading...</Typography>
+          <Box
+            sx={{
+              ...boxStyles,
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              width: '100%',
+              height: '100%',
+            }}
+          >
+            <Loader />
+          </Box>
         ) : users.length === 0 && organizations.length === 0 ? (
           <Paper elevation={3} sx={{ marginBottom: 3, padding: 2 }}>
-          <Typography>No assigned clients or organisations found.</Typography>
-        </Paper>
+            <Typography>No assigned clients or organisations found.</Typography>
+          </Paper>
         ) : (
           <List>
             {/* Each user wrapped in a standalone Paper component */}
@@ -128,7 +144,7 @@ const Evaluate: React.FC = () => {
                 </ListItem>
               </Paper>
             ))}
-  
+
             {/* Each organization wrapped in a standalone Paper component */}
             {organizations.map(org => (
               <Paper
@@ -154,7 +170,7 @@ const Evaluate: React.FC = () => {
       </Box>
     </Box>
   );
-  
+
 };
 
 export default Evaluate;

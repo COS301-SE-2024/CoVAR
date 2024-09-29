@@ -390,6 +390,7 @@ router.get('/uploads/client/:clientName', authenticateToken, async (req, res) =>
 // Endpoint to generate report
 router.post('/uploads/generateReport', authenticateToken, async (req, res) => {
     const { finalReport, name, type } = req.body;
+    console.log("finalReport:",finalReport, "name:", name, "type:", type);
 
     if (!finalReport || finalReport.length === 0) {
         return res.status(400).json({ error: 'Reports or report IDs are missing' });

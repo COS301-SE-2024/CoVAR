@@ -222,7 +222,24 @@ const UserEvaluation: React.FC = () => {
           </Paper>
         </Grid>
         <Grid item xs={6}>
-          <Paper sx={{ overflowY: 'scroll', height: 'calc(80vh + 16px)' }}>
+          <Paper sx={{ 
+            overflowY: 'scroll', 
+            height: 'calc(80vh + 16px)',
+            '&::-webkit-scrollbar': {
+                width: '0.2vw', 
+            },
+            '&::-webkit-scrollbar-thumb': {
+                backgroundColor: 'gray', 
+                borderRadius: '0.4vw',
+            },
+            '&::-webkit-scrollbar-track': {
+                backgroundColor: 'transparent', 
+            },
+            scrollbarWidth: 'thin', 
+            scrollbarColor: 'gray transparent', 
+
+
+          }}>
 
             <ReportPreview reports={reports} reportIds={reportIds} client={username ?? ''} reportNames={reportNames} />
 

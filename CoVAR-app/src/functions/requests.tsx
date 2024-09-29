@@ -77,6 +77,7 @@ const retryRequestWithNewToken = async (originalRequest: AxiosRequestConfig) => 
 
 const handleRequest = async (request: AxiosRequestConfig) => {
     try {
+        console.log(request);
         const response = await axios(request);
 
         // Check if the URL ends with 'change_name', 'delete', or 'remove_user'
@@ -517,8 +518,8 @@ export const fetchAndMatchReports = async (reportIds: number[]) => {
 export const generateReportRequest = async (finalReport: any[], name: string | undefined, type: string | null) => {
     try {
         const token = localStorage.getItem('accessToken');
-
-
+        name = decodeURIComponent(name || '');
+        console.log(name)
         const request: AxiosRequestConfig = {
             method: 'post',
             url: '/api/uploads/generateReport',
@@ -729,6 +730,17 @@ export const getOwner = async (orgId: string, accessToken: string) => {
     const request = {
         method: 'get',
         url: `/api/organizations/${orgId}/owner`,
+        headers: { Authorization: `Bearer ${accessToken}` },
+    };
+    return await handleRequest(request);
+};
+
+
+// Function to fetch all invites
+export const fetchAllInvites = async (accessToken: string) => {
+    const request = {
+        method: 'get',
+        url: `/api/invites`,
         headers: { Authorization: `Bearer ${accessToken}` },
     };
     return await handleRequest(request);

@@ -47,7 +47,7 @@ const OrganizationEvaluation: React.FC = () => {
   }, [router]);
 
   const pathname = usePathname();
-  const organizationName = pathname.split('/').pop();
+  const organizationName = decodeURIComponent(pathname.split('/').pop() || '');
 
   const [uploads, setUploads] = useState<FileUpload[]>([]);
   const [reportIds, setReportIds] = useState<number[]>([]);
@@ -238,7 +238,22 @@ const OrganizationEvaluation: React.FC = () => {
           </Paper>
         </Grid>
         <Grid item xs={6}>
-          <Paper sx={{ overflowY: 'scroll', height: 'calc(80vh + 16px)' }}>
+          <Paper sx={{ 
+            overflowY: 'scroll', 
+            height: 'calc(80vh + 16px)',
+            '&::-webkit-scrollbar': {
+                width: '0.2vw', 
+            },
+            '&::-webkit-scrollbar-thumb': {
+                backgroundColor: 'gray', 
+                borderRadius: '0.4vw',
+            },
+            '&::-webkit-scrollbar-track': {
+                backgroundColor: 'transparent', 
+            },
+            scrollbarWidth: 'thin', 
+            scrollbarColor: 'gray transparent', 
+            }}>
 
             <ReportPreview reports={reports.slice(0, 3)} reportIds={reportIds} client={organizationName ?? ''} reportNames={reportNames} />
 

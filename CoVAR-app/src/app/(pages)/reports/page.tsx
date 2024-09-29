@@ -1,10 +1,11 @@
 'use client';
 import React, { useEffect, useState } from 'react';
 import { CircularProgress, Box, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Typography, Button } from '@mui/material';
-import { populateReportsTable, fetchExecReport, fetchTechReport } from '@/functions/requests'; // Assume fetchTechReport is a new function in your requests file
+import { populateReportsTable, fetchExecReport, fetchTechReport } from '@/functions/requests'; 
 import DownloadIcon from '@mui/icons-material/Download';
 import { mainContentStyles } from '@/styles/evaluateStyle';
-import {headingBoxStyles} from '../../../styles/organisationStyle';
+import { useTheme } from '@mui/material/styles';
+
 type Report = {
     report_id: string;
     created_at: string;
@@ -14,14 +15,14 @@ type Report = {
 };
 
 const ReportsPage = () => {
-    const [reports, setReports] = useState<Report[]>([]); // State to store reports data
-    const [loading, setLoading] = useState<boolean>(true); // State to handle loading
+    const [reports, setReports] = useState<Report[]>([]); 
+    const [loading, setLoading] = useState<boolean>(true); 
+    const theme = useTheme(); 
 
     useEffect(() => {
         const fetchReports = async () => {
             try {
                 const response = await populateReportsTable();
-                console.log('API Response.data:', response.reports); // Add this line to log the API response
                 if (response.reports) {
                     setReports(response.reports);
                 }
@@ -56,26 +57,15 @@ const ReportsPage = () => {
 
     const handleFetchExecReport = async (reportId: string) => {
         try {
-            const blob = await fetchExecReport(reportId); // Fetch the PDF blob for executive report
-
-            // Create a URL for the blob
+            const blob = await fetchExecReport(reportId); 
             const url = window.URL.createObjectURL(new Blob([blob]));
-
-            // Create a link element
             const link = document.createElement('a');
             link.href = url;
-            link.setAttribute('download', `executive_report_${reportId}.pdf`); // Set the file name
-
-            // Append the link to the document body
+            link.setAttribute('download', `executive_report_${reportId}.pdf`);
             document.body.appendChild(link);
-
-            // Programmatically click the link to trigger the download
             link.click();
-
-            // Clean up by removing the link and revoking the object URL
             link.parentNode?.removeChild(link);
             window.URL.revokeObjectURL(url);
-
         } catch (error) {
             console.error('Error fetching executive report:', error);
         }
@@ -83,30 +73,22 @@ const ReportsPage = () => {
 
     const handleFetchTechReport = async (reportId: string) => {
         try {
-            const blob = await fetchTechReport(reportId); // Fetch the PDF blob for technical report
-
-            // Create a URL for the blob
+            const blob = await fetchTechReport(reportId); 
             const url = window.URL.createObjectURL(new Blob([blob]));
-
-            // Create a link element
             const link = document.createElement('a');
             link.href = url;
-            link.setAttribute('download', `technical_report_${reportId}.pdf`); // Set the file name
-
-            // Append the link to the document body
+            link.setAttribute('download', `technical_report_${reportId}.pdf`);
             document.body.appendChild(link);
-
-            // Programmatically click the link to trigger the download
             link.click();
-
-            // Clean up by removing the link and revoking the object URL
             link.parentNode?.removeChild(link);
             window.URL.revokeObjectURL(url);
-
         } catch (error) {
             console.error('Error fetching technical report:', error);
         }
     };
+
+    // Determine header background color based on light/dark mode
+    const tableHeaderBackground = theme.palette.mode === 'light' ? '#b0b0b0' : theme.palette.background.paper;
 
     return (
         <Box sx={{ ...mainContentStyles, padding: 3, width: '100%' }}>
@@ -115,14 +97,24 @@ const ReportsPage = () => {
             </Typography>
             <TableContainer component={Paper} sx={{ ...mainContentStyles, border: '1px solid #ccc', maxHeight: '80vh', overflowY: 'auto' }}>
                 <Table stickyHeader>
-                    <TableHead sx={{ backgroundColor: '#52796F' }}>
+                    <TableHead sx={{ backgroundColor: tableHeaderBackground }}>
                         <TableRow>
+
                             <TableCell sx={{ color: 'text.primary', fontWeight: 'bold' }}>Report ID</TableCell>
                             <TableCell sx={{ color: 'text.primary', fontWeight: 'bold' }}>Date Created</TableCell>
-                            <TableCell sx={{ color: 'text.primary', fontWeight: 'bold' }}>Critical Count</TableCell>
+                            <TableCell sx={{ color: 'text.primary', fontWeight: 'bold' }}>High Count</TableCell>
                             <TableCell sx={{ color: 'text.primary', fontWeight: 'bold' }}>Medium Count</TableCell>
                             <TableCell sx={{ color: 'text.primary', fontWeight: 'bold' }}>Low Count</TableCell>
                             <TableCell sx={{ color: 'text.primary', fontWeight: 'bold' }}>Actions</TableCell>
+
+                            <TableCell sx={{ backgroundColor: tableHeaderBackground, color: 'text.primary', fontWeight: 'bold' }}>Report ID</TableCell>
+                            <TableCell sx={{ backgroundColor: tableHeaderBackground, color: 'text.primary', fontWeight: 'bold' }}>Date Created</TableCell>
+                            <TableCell sx={{ backgroundColor: tableHeaderBackground, color: 'error.main', fontWeight: 'bold' }}>High Count</TableCell>
+                            <TableCell sx={{ backgroundColor: tableHeaderBackground, color: 'orange', fontWeight: 'bold' }}>Medium Count</TableCell>
+                            <TableCell sx={{ backgroundColor: tableHeaderBackground, color: 'success.main', fontWeight: 'bold' }}>Low Count</TableCell>
+                            <TableCell sx={{ backgroundColor: tableHeaderBackground, color: 'text.primary', fontWeight: 'bold' }}>Technical Report</TableCell>
+                            <TableCell sx={{ backgroundColor: tableHeaderBackground, color: 'text.primary', fontWeight: 'bold' }}>Executive Report</TableCell>
+
                         </TableRow>
                     </TableHead>
                     <TableBody>
@@ -130,26 +122,41 @@ const ReportsPage = () => {
                             <TableRow key={report.report_id}>
                                 <TableCell>{report.report_id}</TableCell>
                                 <TableCell>{new Date(report.created_at).toLocaleString()}</TableCell>
-                                <TableCell>{report.criticalCount}</TableCell>
-                                <TableCell>{report.mediumCount}</TableCell>
-                                <TableCell>{report.lowCount}</TableCell>
+                                <TableCell sx={{ color: report.criticalCount > 0 ? 'error.main' : 'inherit' }}>{report.criticalCount}</TableCell>
+                                <TableCell sx={{ color: report.mediumCount > 0 ? 'orange' : 'inherit' }}>{report.mediumCount}</TableCell>
+                                <TableCell sx={{ color: report.lowCount > 0 ? 'success.main' : 'inherit' }}>{report.lowCount}</TableCell>
+                                <TableCell>
+                                    <Button
+                                        variant="contained"
+                                        color="secondary"
+                                        onClick={() => handleFetchTechReport(report.report_id)}
+                                        startIcon={<DownloadIcon />} 
+                                        sx={{
+                                            color: '#fff',
+                                            fontWeight: 'bold',
+                                            '&:hover': {
+                                                backgroundColor: '#01579b',
+                                            },
+                                        }}
+                                    >
+                                        Download
+                                    </Button>
+                                </TableCell>
                                 <TableCell>
                                     <Button
                                         variant="contained"
                                         color="primary"
                                         onClick={() => handleFetchExecReport(report.report_id)}
-                                        startIcon={<DownloadIcon />} // Icon for Executive Report
+                                        startIcon={<DownloadIcon />} 
+                                        sx={{
+                                            color: '#fff',
+                                            fontWeight: 'bold',
+                                            '&:hover': {
+                                                backgroundColor: '#01579b',
+                                            },
+                                        }}
                                     >
-                                        Download Executive Report
-                                    </Button>
-                                    <Button
-                                        variant="contained"
-                                        color="secondary"
-                                        onClick={() => handleFetchTechReport(report.report_id)}
-                                        startIcon={<DownloadIcon />} // Icon for Technical Report
-                                        sx={{ marginLeft: 2 }}
-                                    >
-                                        Download Technical Report
+                                        Download
                                     </Button>
                                 </TableCell>
                             </TableRow>
@@ -159,7 +166,6 @@ const ReportsPage = () => {
             </TableContainer>
         </Box>
     );
-    
 };
 
 export default ReportsPage;

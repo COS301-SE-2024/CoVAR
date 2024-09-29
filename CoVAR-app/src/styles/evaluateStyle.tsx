@@ -54,6 +54,14 @@ export const mainContentStyles: SxProps<Theme> = {
   color: (theme) => theme.palette.text.primary,
 };
 
+
+export const boxStyles: SxProps<Theme> = {
+
+  backgroundColor: (theme) => theme.palette.background.default,
+  color: (theme) => theme.palette.text.primary,
+
+};
+
 export const evaluateLaunchStyles: SxProps<Theme> = (theme) => ({
   flexGrow: 1,
   backgroundColor: theme.palette.background.default,

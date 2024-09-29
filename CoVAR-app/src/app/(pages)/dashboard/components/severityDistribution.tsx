@@ -2,7 +2,7 @@
 import React from 'react';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
-const COLOURS = ['#ff0000', '#ffa500', '#82ca9d', '#8884d8'];
+const COLOURS = ['#ff8c00', '#ffd700', '#32cd32'];
 
 interface SeverityDistributionProps {
     data: { name: string; value: number }[];

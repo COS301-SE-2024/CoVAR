@@ -18,8 +18,9 @@ const InviteList: React.FC = () => {
         const loadInvites = async () => {
             try {
                 const token = localStorage.getItem('accessToken');
-                const invites = await fetchAllInvites(token as string);
-                setInvites(invites);
+                const allInvites = await fetchAllInvites(token as string);
+                const pendingInvites = allInvites.filter((invite: Invite) => invite.invite_status === 'pending'); // Filter pending invites
+                setInvites(pendingInvites);
                 setLoading(false);
             } catch (error) {
                 console.error('Error fetching invites:', error);
@@ -38,7 +39,24 @@ const InviteList: React.FC = () => {
             ) : invites.length === 0 ? (
                 <Typography>No pending invites at the moment.</Typography>
             ) : (
-                <List>
+                <List
+                    sx={{
+                        maxHeight: '300px', // Adjust maxHeight as needed
+                        overflowY: 'auto',   // Enable vertical scroll when needed
+                        '&::-webkit-scrollbar': {
+                            width: '0.2vw', 
+                        },
+                        '&::-webkit-scrollbar-thumb': {
+                            backgroundColor: 'gray', 
+                            borderRadius: '0.4vw',
+                        },
+                        '&::-webkit-scrollbar-track': {
+                            backgroundColor: 'transparent', 
+                        },
+                        scrollbarWidth: 'thin', 
+                        scrollbarColor: 'gray transparent', 
+                    }}
+                >
                     {invites.map((invite) => (
                         <ListItem key={invite.invite_id}>
                             <ListItemText

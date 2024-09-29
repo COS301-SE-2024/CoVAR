@@ -19,7 +19,7 @@ const Filters: React.FC<FiltersProps> = ({ selectedSeverity, handleSeverityChang
                     onChange={handleSeverityChange}
                 >
                     <MenuItem value="">All Severities</MenuItem>
-                    <MenuItem value="Critical">Critical</MenuItem>
+                    <MenuItem value="High">High</MenuItem>
                     <MenuItem value="Medium">Medium</MenuItem>
                     <MenuItem value="Low">Low</MenuItem>
                 </Select>

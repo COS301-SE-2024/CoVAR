@@ -879,28 +879,6 @@ router.get('/reports/tech/:report_id', authenticateToken, async (req, res) => {
             // Return the IP range
             return `${smallestIp}-${largestIp}`;
         };
-        // const truncateIPsToRange = (hosts) => {
-        //     // Convert the IP addresses into a form like '10.242.111.111-10.243.000.000'
-        //     return hosts
-        //         .map(ip => {
-        //             const parts = ip.split('.');
-        //             if (parts.length === 4) {
-        //                 // Return the IP address range based on the first two octets, with the remaining octets in range format
-        //                 return `${parts[0]}.${parts[1]}.111.111-${parts[0]}.${parts[1]}.000.000`;
-        //             }
-        //             return ip; // In case the IP format is not as expected, return it unchanged
-        //         })
-        //         // Sort the IPs in descending order
-        //         .sort((a, b) => {
-        //             const ipA = a.split('.').map(Number);
-        //             const ipB = b.split('.').map(Number);
-        //             // Compare from largest octet to smallest
-        //             for (let i = 0; i < 4; i++) {
-        //                 if (ipA[i] !== ipB[i]) return ipB[i] - ipA[i];
-        //             }
-        //             return 0;
-        //         });
-        // };
         // Fetch the report data by ID
         const reportResult = await pgClient.query(
             'SELECT report_id, created_at, content FROM reports WHERE report_id = $1',
@@ -996,7 +974,7 @@ router.get('/reports/tech/:report_id', authenticateToken, async (req, res) => {
 
        // Vulnerability Manager Section
        doc.fontSize(18).fillColor('black').text('Vulnerability Manager', { align: 'left', indent: 20 }); // Move slightly to the right with indent
-        doc.fontSize(12).text(
+        doc.fontSize(12).text(-
             'Greenbone Vulnerability Manager is proprietary software used to perform vulnerability scans on ', 
             { align: 'left', indent: 20, paragraphIndent: 20 } // Apply indent and paragraphIndent to wrap the text correctly
         );

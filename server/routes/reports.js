@@ -590,10 +590,6 @@ router.get('/reports/executive/:report_id', authenticateToken, async (req, res) 
             'network devices.', 
             { align: 'left', indent: 20, paragraphIndent: 20 } // Apply indent and paragraphIndent to wrap the text correctly
         );
-        doc.fontSize(12).text(
-            'scanning', 
-            { align: 'left', indent: 20, paragraphIndent: 20 } // Apply indent and paragraphIndent to wrap the text correctly
-        );
         doc.moveDown();
         // Risk Profile Section
         doc.fontSize(18).text('Risk Profile', { align: 'left' ,indent: 20});
@@ -974,16 +970,12 @@ router.get('/reports/tech/:report_id', authenticateToken, async (req, res) => {
 
        // Vulnerability Manager Section
        doc.fontSize(18).fillColor('black').text('Vulnerability Manager', { align: 'left', indent: 20 }); // Move slightly to the right with indent
-        doc.fontSize(12).text(-
+        doc.fontSize(12).text(
             'Greenbone Vulnerability Manager is proprietary software used to perform vulnerability scans on ', 
             { align: 'left', indent: 20, paragraphIndent: 20 } // Apply indent and paragraphIndent to wrap the text correctly
         );
         doc.fontSize(12).text(
             'network devices. ', 
-            { align: 'left', indent: 20, paragraphIndent: 20 } // Apply indent and paragraphIndent to wrap the text correctly
-        );
-        doc.fontSize(12).text(
-            'scanning', 
             { align: 'left', indent: 20, paragraphIndent: 20 } // Apply indent and paragraphIndent to wrap the text correctly
         );
         doc.moveDown();

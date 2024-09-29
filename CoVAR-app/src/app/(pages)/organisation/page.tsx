@@ -4,11 +4,12 @@ import { Button, Card, CardContent, CircularProgress, TextField, Typography, Ico
 import { Box } from '@mui/system';
 import { DataGrid, GridColDef, GridRenderCellParams, GridAlignment } from '@mui/x-data-grid';
 import { getUserRole, fetchUsersByOrg, removeUser, deleteOrganisation, createOrganisation, changeOrganisationName, leaveOrganisation, inviteMember, fetchInvites, acceptInvite, rejectInvite, getOwner } from '../../../functions/requests';
-import { buttonStyles, cardStyles, headingBoxStyles, mainContentStyles, textFieldStyles } from '../../../styles/organisationStyle';
+import { boxStylesOrg, buttonStyles, cardStyles, headingBoxStyles, mainContentStyles, textFieldStyles } from '../../../styles/organisationStyle';
 import { useRouter } from 'next/navigation';
 import AcceptIcon from '@mui/icons-material/Check'; 
 import RejectIcon from '@mui/icons-material/Close';
 import { useTheme } from '@mui/material/styles';
+import { Loader } from '@/styles/conflictStyle';
 
 type User = {
     id: string;
@@ -460,10 +461,20 @@ const Organisation = () => {
 
     if (loading) {
         return (
-            <Box sx={mainContentStyles}>
-                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-                    <CircularProgress />
-                </Box>
+            <Box sx={{
+                ...boxStylesOrg,
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                width: '100%',
+                height: '100%',
+
+            }}>
+                <Loader />
             </Box>
         );
     }

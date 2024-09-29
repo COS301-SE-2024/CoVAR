@@ -12,6 +12,14 @@ export const mainContentStyles: SxProps<Theme> = {
     overflow: 'hidden',
 };
 
+
+export const boxStylesOrg: SxProps<Theme> = {
+
+    backgroundColor: (theme) => theme.palette.background.default,
+    color: (theme) => theme.palette.text.primary,
+  
+  };
+
 export const cardStyles: SxProps<Theme> = {
     width: 450,
     height: 250,

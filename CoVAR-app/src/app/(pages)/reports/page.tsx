@@ -119,7 +119,7 @@ const ReportsPage = () => {
                         <TableRow>
                             <TableCell sx={{ color: 'text.primary', fontWeight: 'bold' }}>Report ID</TableCell>
                             <TableCell sx={{ color: 'text.primary', fontWeight: 'bold' }}>Date Created</TableCell>
-                            <TableCell sx={{ color: 'text.primary', fontWeight: 'bold' }}>Critical Count</TableCell>
+                            <TableCell sx={{ color: 'text.primary', fontWeight: 'bold' }}>High Count</TableCell>
                             <TableCell sx={{ color: 'text.primary', fontWeight: 'bold' }}>Medium Count</TableCell>
                             <TableCell sx={{ color: 'text.primary', fontWeight: 'bold' }}>Low Count</TableCell>
                             <TableCell sx={{ color: 'text.primary', fontWeight: 'bold' }}>Actions</TableCell>

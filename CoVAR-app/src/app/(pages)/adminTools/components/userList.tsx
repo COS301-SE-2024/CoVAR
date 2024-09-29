@@ -87,6 +87,7 @@ useEffect(() => {
                 throw new Error('Access token not found');
             }
             const users = await fetchUsers(accessToken);
+            console.log(users);
             setUsers(users);
             setLoading(false);
         } catch (error: any) {
@@ -311,8 +312,12 @@ const handleConfirmUnassignVA = async () => {
     };
 
     const filteredUsers = users.filter(user =>
-        user.username.toLowerCase().includes(searchTerm.toLowerCase()) && user.role !== 'va'
+        user.username.toLowerCase().includes(searchTerm.toLowerCase()) &&
+        user.role !== 'va' &&
+        user.organization == null ||
+        user.organization == ""
     );
+    
 
     const filteredOrganizations = organizations.filter(org =>
         org.name.toLowerCase().includes(searchTerm.toLowerCase())

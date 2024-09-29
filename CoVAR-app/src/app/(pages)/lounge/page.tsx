@@ -13,11 +13,11 @@ const Lounge: React.FC = () => {
     const pollingRef = useRef<NodeJS.Timeout | null>(null);
 
     // Clear the cookie on component mount
-    useEffect(() => {
-        console.log("chicken");
-        // Clear the accessToken cookie
-        document.cookie = 'accessToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-    }, []);
+    // useEffect(() => {
+    //     console.log("chicken");
+    //     // Clear the accessToken cookie
+    //     document.cookie = 'accessToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+    // }, []);
 
     const handleSignOut = async () => {
         try {

@@ -579,7 +579,7 @@ export const unmatchedRecomendations = async (data: any) => {
     const chain_prompt_1_stringified = JSON.stringify(chain_prompt_1);
     const request: AxiosRequestConfig = {
         method: 'post',
-        url: 'http://localhost:3050/api/unmatchedRecommendations',
+        url: '/api/unmatchedRecommendations',
         data: {
             chain_prompt_1: chain_prompt_1_stringified,
         },
@@ -664,7 +664,7 @@ export const matchedRecomendations = async (data: any) => {
     // Build the request
     const request: AxiosRequestConfig = {
         method: 'post',
-        url: 'http://localhost:3050/api/matchedRecommendations',
+        url: '/api/matchedRecommendations',
         data: {
             chain_prompt_1: chain_prompt_1_stringified,
             chain_prompt_2: chain_prompt_2_stringified

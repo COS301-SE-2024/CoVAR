@@ -21,8 +21,8 @@ export const boxStylesOrg: SxProps<Theme> = {
   };
 
 export const cardStyles: SxProps<Theme> = {
-    width: 450,
-    height: 250,
+    width: '24vw',
+    height: '26vh',
     backgroundColor: (theme) => theme.palette.background.paper,
     color: (theme) => theme.palette.text.secondary,
     padding: (theme) => theme.spacing(2),

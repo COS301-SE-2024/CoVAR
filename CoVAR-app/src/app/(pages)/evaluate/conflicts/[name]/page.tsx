@@ -745,6 +745,7 @@ const UserConflicts = () => {
                 alignItems: 'center',
                 width: '100%',
                 height: '100%',
+                
 
             }}>
                 <Loader />
@@ -756,7 +757,21 @@ const UserConflicts = () => {
 
     return (
 
-        <ReportsContainer sx={mainContentStyles} id="reportsContainer">
+        <ReportsContainer sx={{... mainContentStyles, 
+            overflowY: 'auto',
+            '&::-webkit-scrollbar': {
+                width: '0.2vw', 
+            },
+            '&::-webkit-scrollbar-thumb': {
+                backgroundColor: 'gray', 
+                borderRadius: '0.4vw',
+            },
+            '&::-webkit-scrollbar-track': {
+                backgroundColor: 'transparent', 
+            },
+            scrollbarWidth: 'thin', 
+            scrollbarColor: 'gray transparent', 
+        }} id="reportsContainer">
             {matchedReports.length > 0 && (
                 <Box>
                     {renderedMatchedReports}

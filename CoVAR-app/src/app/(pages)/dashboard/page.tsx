@@ -316,13 +316,13 @@ const Dashboard: React.FC = () => {
                         <ReportsPerClient reportsPerClient={reportsPerClient} />
                     )}
                 </Paper>
-                <Paper elevation={3} sx={{ padding: 2, marginBottom: 2 }}>
                     {users.length === 0 && organizations.length === 0 ? (
                         <Typography>No assigned clients or organisations found.</Typography>
                     ) : (
                         <List>
-                            {users.map((user) => (
-                                <ListItem key={user.user_id} sx={{ marginBottom: 1, padding: 1, borderRadius: 1, boxShadow: 1 }}>
+                        {users.map((user) => (
+                            <Paper key={user.user_id} sx={{ padding: 1, marginBottom: 2 }}>
+                                <ListItem key={user.user_id} sx={{ marginBottom: 1, padding: 1, borderRadius: 1 }}>
                                     <ListItemText
                                         primary={`User: ${user.username}`}
                                         secondary={`Last Report: ${formatDate(lastReportDatesClients.find(c => c.client_name === user.username)?.last_report_date as string) || 'No report'}`}
@@ -333,12 +333,14 @@ const Dashboard: React.FC = () => {
                                         </Button>
                                     </ListItemSecondaryAction>
                                 </ListItem>
-                            ))}
-                            {organizations.map((org) => (
-                                <ListItem key={org.organization_id} sx={{ marginBottom: 1, padding: 1, borderRadius: 1, boxShadow: 1 }}>
+                            </Paper>
+                        ))}
+                        {organizations.map((org) => (
+                            <Paper key={org.organization_id} sx={{ padding: 1, marginBottom: 2 }}>
+                                <ListItem key={org.organization_id} sx={{ marginBottom: 1, padding: 1, borderRadius: 1 }}>
                                     <ListItemText
                                         primary={`Organisation: ${org.name}`}
-                                        secondary={`Last Report: ${formatDate(lastReportDatesOrgs.find(o => o.organization_name === org.name)?.last_report_date as string) || 'No report'}`}
+                                        secondary={`Last Report: ${formatDate(lastReportDatesOrgs.find(o => o.organization_name === org.name)?.last_report_date as string) || 'No report' }`}
                                     />
                                     <ListItemSecondaryAction>
                                         <Button variant="contained" onClick={() => handleOrganizationButtonClick(org)}>
@@ -346,10 +348,11 @@ const Dashboard: React.FC = () => {
                                         </Button>
                                     </ListItemSecondaryAction>
                                 </ListItem>
-                            ))}
-                        </List>
+                            </Paper>
+                        ))}
+                    </List>
+
                     )}
-                </Paper>
             </Box>
         );
     }

@@ -99,13 +99,22 @@ const ReportsPage = () => {
                 <Table stickyHeader>
                     <TableHead sx={{ backgroundColor: tableHeaderBackground }}>
                         <TableRow>
+
+                            <TableCell sx={{ color: 'text.primary', fontWeight: 'bold' }}>Report ID</TableCell>
+                            <TableCell sx={{ color: 'text.primary', fontWeight: 'bold' }}>Date Created</TableCell>
+                            <TableCell sx={{ color: 'text.primary', fontWeight: 'bold' }}>High Count</TableCell>
+                            <TableCell sx={{ color: 'text.primary', fontWeight: 'bold' }}>Medium Count</TableCell>
+                            <TableCell sx={{ color: 'text.primary', fontWeight: 'bold' }}>Low Count</TableCell>
+                            <TableCell sx={{ color: 'text.primary', fontWeight: 'bold' }}>Actions</TableCell>
+
                             <TableCell sx={{ backgroundColor: tableHeaderBackground, color: 'text.primary', fontWeight: 'bold' }}>Report ID</TableCell>
                             <TableCell sx={{ backgroundColor: tableHeaderBackground, color: 'text.primary', fontWeight: 'bold' }}>Date Created</TableCell>
-                            <TableCell sx={{ backgroundColor: tableHeaderBackground, color: 'error.main', fontWeight: 'bold' }}>Critical Count</TableCell>
+                            <TableCell sx={{ backgroundColor: tableHeaderBackground, color: 'error.main', fontWeight: 'bold' }}>High Count</TableCell>
                             <TableCell sx={{ backgroundColor: tableHeaderBackground, color: 'orange', fontWeight: 'bold' }}>Medium Count</TableCell>
                             <TableCell sx={{ backgroundColor: tableHeaderBackground, color: 'success.main', fontWeight: 'bold' }}>Low Count</TableCell>
                             <TableCell sx={{ backgroundColor: tableHeaderBackground, color: 'text.primary', fontWeight: 'bold' }}>Technical Report</TableCell>
                             <TableCell sx={{ backgroundColor: tableHeaderBackground, color: 'text.primary', fontWeight: 'bold' }}>Executive Report</TableCell>
+
                         </TableRow>
                     </TableHead>
                     <TableBody>

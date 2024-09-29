@@ -523,7 +523,8 @@ router.get('/reports/executive/:report_id', authenticateToken, async (req, res) 
             }
             doc.addPage(); 
             addHeader();    
-        };
+            doc.y = 50; // Reset the vertical position to the top of the page
+        }
 
         // Add the first content page
         addNewPage();
@@ -544,7 +545,7 @@ router.get('/reports/executive/:report_id', authenticateToken, async (req, res) 
             { align: 'left', indent: 20, paragraphIndent: 20 } // Apply indent and paragraphIndent to wrap the text correctly
         );
         doc.fontSize(12).text(
-            'network devices. Greenbone Vulnerability Manager is used for all Andile Solutions vulnerability ', 
+            'network devices.', 
             { align: 'left', indent: 20, paragraphIndent: 20 } // Apply indent and paragraphIndent to wrap the text correctly
         );
         doc.fontSize(12).text(
@@ -605,12 +606,20 @@ router.get('/reports/executive/:report_id', authenticateToken, async (req, res) 
         doc.text((ReportscriticalCount + ReportsmediumCount + ReportslowCount).toString(), tableLeft + columnWidths[0] + cellPadding, totalRowY + cellPadding, { width: columnWidths[1], align: 'center' });
         doc.text((uniqueCriticalHostsCount + uniqueMediumHostsCount + uniqueLowHostsCount).toString(), tableLeft + columnWidths[0] + columnWidths[1] + cellPadding, totalRowY + cellPadding, { width: columnWidths[2], align: 'center' });
 
-        // Add any other content here...
+        const checkPageOverflow = (requiredSpace) => {
+            const currentY = doc.y;
+            const pageHeight = doc.page.height;
+            
+            // Check if there's enough space remaining for the required space
+            if (currentY + requiredSpace > pageHeight - 100) {  // Leave some space for footer
+                addNewPage();
+            }
+        };
         addFooter();
         doc.moveDown();
         doc.fontSize(16).text('Vulnerability Distribution', { align: 'center' });
         doc.moveDown(2);
-
+        checkPageOverflow(300); // Adjust the required space for your chart size
         doc.image(pieChartBuffer, {
             fit: [500, 300],
             align: 'center',
@@ -619,6 +628,7 @@ router.get('/reports/executive/:report_id', authenticateToken, async (req, res) 
         doc.moveDown(17);
         // Add the trend graph
         // addNewPage();
+        checkPageOverflow(300); // Adjust for the trend graph size
         doc.fontSize(16).text('Trend Graph', { align: 'center' });
         doc.moveDown(1);
 
@@ -629,6 +639,7 @@ router.get('/reports/executive/:report_id', authenticateToken, async (req, res) 
             valign: 'center'
         });
         addFooter();
+        checkPageOverflow(300); // Adjust for the trend graph size
         doc.fontSize(16).text('Vulnerabilities Detail Table', { align: 'center' });
         doc.moveDown();
         let vulnerabilityTableData = Array.from(aggregatedVulnerabilities.values()).map(entry => {
@@ -780,7 +791,6 @@ router.get('/reports/executive/:report_id', authenticateToken, async (req, res) 
         };
 
         const image = await chartJSNodeCanvas.renderToBuffer(tableconfiguration);
-
         // Add the table to the PDF
         doc.image(image, {
             fit: [500, 300],
@@ -801,6 +811,54 @@ router.get('/reports/tech/:report_id', authenticateToken, async (req, res) => {
     try {
         const { report_id } = req.params;
 
+        const ipToInteger = (ip) => {
+            return ip.split('.').reduce((acc, octet) => (acc << 8) + parseInt(octet), 0);
+        };
+
+        const integerToIp = (int) => {
+            return [
+                (int >>> 24) & 255,
+                (int >>> 16) & 255,
+                (int >>> 8) & 255,
+                int & 255
+            ].join('.');
+        };
+        const calculateIpRange = (hosts) => {
+            // Convert IPs to integers
+            const ipIntegers = hosts.map(ip => ipToInteger(ip));
+            
+            // Sort IPs in ascending order
+            ipIntegers.sort((a, b) => a - b);
+            
+            // Get the smallest and largest IPs
+            const smallestIp = integerToIp(ipIntegers[0]);
+            const largestIp = integerToIp(ipIntegers[ipIntegers.length - 1]);
+            
+            // Return the IP range
+            return `${smallestIp}-${largestIp}`;
+        };
+        const truncateIPsToRange = (hosts) => {
+            // Convert the IP addresses into a form like '10.242.111.111-10.243.000.000'
+            return hosts
+                .map(ip => {
+                    const parts = ip.split('.');
+                    if (parts.length === 4) {
+                        // Return the IP address range based on the first two octets, with the remaining octets in range format
+                        return `${parts[0]}.${parts[1]}.111.111-${parts[0]}.${parts[1]}.000.000`;
+                    }
+                    return ip; // In case the IP format is not as expected, return it unchanged
+                })
+                // Sort the IPs in descending order
+                .sort((a, b) => {
+                    const ipA = a.split('.').map(Number);
+                    const ipB = b.split('.').map(Number);
+                    // Compare from largest octet to smallest
+                    for (let i = 0; i < 4; i++) {
+                        if (ipA[i] !== ipB[i]) return ipB[i] - ipA[i];
+                    }
+                    return 0;
+                });
+        };
         // Fetch the report data by ID
         const reportResult = await pgClient.query(
             'SELECT report_id, created_at, content FROM reports WHERE report_id = $1',
@@ -901,7 +959,7 @@ router.get('/reports/tech/:report_id', authenticateToken, async (req, res) => {
             { align: 'left', indent: 20, paragraphIndent: 20 } // Apply indent and paragraphIndent to wrap the text correctly
         );
         doc.fontSize(12).text(
-            'network devices. Greenbone Vulnerability Manager is used for all Andile Solutions vulnerability ', 
+            'network devices. ', 
             { align: 'left', indent: 20, paragraphIndent: 20 } // Apply indent and paragraphIndent to wrap the text correctly
         );
         doc.fontSize(12).text(
@@ -909,7 +967,7 @@ router.get('/reports/tech/:report_id', authenticateToken, async (req, res) => {
             { align: 'left', indent: 20, paragraphIndent: 20 } // Apply indent and paragraphIndent to wrap the text correctly
         );
         doc.moveDown();
-
+        addNewPage();
         // Updated Table of Contents
         doc.fontSize(14).text('Table of Contents', { align: 'left', indent: 20 }); // Move Table of Contents slightly to the right
         doc.moveDown(0.5);
@@ -931,14 +989,30 @@ router.get('/reports/tech/:report_id', authenticateToken, async (req, res) => {
         doc.text('Hosts', tableLeft + columnWidths[0] + columnWidths[1] + columnWidths[2] + cellPadding, tableTop + cellPadding, { width: columnWidths[3], align: 'center' });
 
         doc.fillColor('black');
-
-        // Updated drawRow function to include the 4th column "Hosts"
+        const checkPageOverflow = (rowHeight) => {
+            if (doc.y + rowHeight > doc.page.height - 100) {  // Reserve space for footer
+                addNewPage();
+                doc.y = 50;  
+            }
+        };
         const drawRow = (y, index, vulnerability, cvss, hosts) => {
             const textOptions = { width: columnWidths[1] - 2 * cellPadding, align: 'left' };
-            
-            // Calculate the height needed for the vulnerability text
+            const cvssOptions = { width: columnWidths[2] - 2 * cellPadding, align: 'center' };
+            const hostsOptions = { width: columnWidths[3] - 2 * cellPadding, align: 'center' };
+        
+            // Calculate the IP range instead of listing individual IPs
+            const hostsRange = calculateIpRange(hosts);
+        
+            // Calculate the height needed for the vulnerability, CVSS score, and hosts text
             const vulnerabilityHeight = doc.heightOfString(vulnerability, textOptions);
-            const rowHeightAdjusted = Math.max(vulnerabilityHeight + 2 * cellPadding, rowHeight);  // Ensure the row height is at least the default rowHeight
+            const cvssHeight = doc.heightOfString(cvss, cvssOptions);
+            const hostsHeight = doc.heightOfString(hostsRange, hostsOptions);
+        
+            // Determine the maximum height of the row based on the largest content
+            const rowHeightAdjusted = Math.max(vulnerabilityHeight, cvssHeight, hostsHeight) + 2 * cellPadding;
+        
+            // Check if there is enough space for the next row, and add a new page if needed
+            checkPageOverflow(rowHeightAdjusted);
         
             // Draw table cells
             doc.rect(tableLeft, y, columnWidths[0], rowHeightAdjusted).stroke();
@@ -949,8 +1023,8 @@ router.get('/reports/tech/:report_id', authenticateToken, async (req, res) => {
             // Write text inside the cells
             doc.text(index.toString(), tableLeft + cellPadding, y + cellPadding, { width: columnWidths[0], align: 'center' });
             doc.text(vulnerability, tableLeft + columnWidths[0] + cellPadding, y + cellPadding, textOptions);
-            doc.text(cvss, tableLeft + columnWidths[0] + columnWidths[1] + cellPadding, y + cellPadding, { width: columnWidths[2], align: 'center' });
-            doc.text(hosts.join(', '), tableLeft + columnWidths[0] + columnWidths[1] + columnWidths[2] + cellPadding, y + cellPadding, { width: columnWidths[3], align: 'center' });
+            doc.text(cvss, tableLeft + columnWidths[0] + columnWidths[1] + cellPadding, y + cellPadding, cvssOptions);
+            doc.text(hostsRange, tableLeft + columnWidths[0] + columnWidths[1] + columnWidths[2] + cellPadding, y + cellPadding, hostsOptions);
         
             // Return the adjusted row height for positioning the next row
             return rowHeightAdjusted;
@@ -978,11 +1052,17 @@ router.get('/reports/tech/:report_id', authenticateToken, async (req, res) => {
            
             let currentY = tableTop + rowHeight;  // Initial Y position for the first row
 
-            // Draw rows dynamically
-            reportTOCResult.rows.forEach((row, index) => {
-                const adjustedRowHeight = drawRow(currentY, index + 1, row.nvt_name, row.cvss_score, row.hosts);
-                currentY += adjustedRowHeight;  // Move Y position for the next row
-            });
+        // Draw rows dynamically
+        reportTOCResult.rows.forEach((row, index) => {
+            const adjustedRowHeight = drawRow(currentY, index + 1, row.nvt_name, row.cvss_score, row.hosts);
+            currentY += adjustedRowHeight;  // Move Y position for the next row
+            
+            // Check for page overflow and reset currentY if necessary
+            if (currentY + adjustedRowHeight > doc.page.height - 100) {  // If we need to add a new page
+                addNewPage();
+                currentY = 50;  // Reset currentY to start from the top of the new page
+            }
+        });
 
         } catch (error) {
             console.error("Error fetching report TOC:", error);

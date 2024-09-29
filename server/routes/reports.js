@@ -109,51 +109,93 @@ router.post('/reports/getReports', authenticateToken, async (req, res) => {
 router.post('/reports/getReportsPerClient', authenticateToken, async (req, res) => {
     try {
         const user = req.user; // Get the logged-in VA user
-
-        // Query to get the clients assigned to the logged-in VA
-        const assignedClientsQuery = `
-            SELECT u.user_id, u.username 
+        
+        // Query to get assigned organizations and clients for the VA
+        const assignedEntitiesQuery = `
+            SELECT a.organization, a.client
             FROM assignment a
-            INNER JOIN users u ON a.client = u.user_id
             WHERE a.va = $1
         `;
-        const assignedClientsResult = await pgClient.query(assignedClientsQuery, [user.user_id]);
+        
+        const assignedEntitiesResult = await pgClient.query(assignedEntitiesQuery, [user.user_id]);
 
-        if (assignedClientsResult.rows.length === 0) {
-            return res.status(404).json({ error: 'No assigned clients found' });
+        // Check if any clients or organizations are assigned to this VA
+        if (assignedEntitiesResult.rows.length === 0) {
+            return res.status(404).json({ error: 'No assigned clients or organizations found' });
         }
 
-        const assignedClients = assignedClientsResult.rows;
+        const assignedEntities = assignedEntitiesResult.rows;
 
-        // Initialize an array to store the number of reports per client
+        // Initialize array to store reports per client or organization
         const reportsPerClient = [];
 
-        // Loop through each assigned client and get the number of reports for each
-        for (let client of assignedClients) {
-            const clientReportsQuery = `
-                SELECT COUNT(ur.report_id) AS report_count
-                FROM user_reports ur
-                WHERE ur.user_id = $1
-            `;
-            const clientReportsResult = await pgClient.query(clientReportsQuery, [client.user_id]);
+        // Loop through each assigned entity and get the number of reports for each organization or client
+        for (let entity of assignedEntities) {
+            if (entity.organization) {
+                // Query to get the organization name from the organizations table
+                const orgNameQuery = `
+                    SELECT name
+                    FROM organizations
+                    WHERE organization_id = $1
+                `;
+                const orgNameResult = await pgClient.query(orgNameQuery, [entity.organization]);
 
-            const reportCount = clientReportsResult.rows[0]?.report_count || 0;
+                const orgName = orgNameResult.rows[0]?.name || `Organization ${entity.organization}`;
 
-            // Push the result into the reportsPerClient array
-            reportsPerClient.push({
-                client_id: client.user_id,
-                client_name: client.username,
-                report_count: reportCount
-            });
+                // Query to get the count of reports for the assigned organization
+                const orgReportsQuery = `
+                    SELECT COUNT(report_id) AS report_count
+                    FROM organization_reports
+                    WHERE organization_id = $1
+                `;
+                const orgReportsResult = await pgClient.query(orgReportsQuery, [entity.organization]);
+
+                const orgReportCount = orgReportsResult.rows[0]?.report_count || 0;
+
+                // Push the organization report count only if it's greater than 0
+                if (orgReportCount > 0) {
+                    reportsPerClient.push({
+                        client_id: entity.organization, // Using organization ID as client_id
+                        client_name: orgName, // Using the organization name from the query
+                        report_count: orgReportCount
+                    });
+                }
+            }
+
+            if (entity.client) {
+                // Query to get the count of reports for the assigned client
+                const clientReportsQuery = `
+                    SELECT u.username, COUNT(ur.report_id) AS report_count
+                    FROM user_reports ur
+                    INNER JOIN users u ON ur.user_id = u.user_id
+                    WHERE ur.user_id = $1
+                    GROUP BY u.username
+                `;
+                const clientReportsResult = await pgClient.query(clientReportsQuery, [entity.client]);
+
+                const clientReportCount = clientReportsResult.rows[0]?.report_count || 0;
+                const clientName = clientReportsResult.rows[0]?.username || 'Unknown Client';
+
+                // Push the client report count only if it's greater than 0
+                if (clientReportCount > 0) {
+                    reportsPerClient.push({
+                        client_id: entity.client, // Using client ID as client_id
+                        client_name: clientName, // Using client's username
+                        report_count: clientReportCount
+                    });
+                }
+            }
         }
 
         // Send the results as the response
         return res.status(200).json(reportsPerClient);
+
     } catch (err) {
-        console.error('Error fetching reports per client:', err);
-        return res.status(500).json({ error: 'An error occurred while fetching reports per client' });
+        console.error('Error fetching reports per entity:', err);
+        return res.status(500).json({ error: 'An error occurred while fetching reports per entity' });
     }
 });
+
 
 
 const width = 800; // Width of the canvas
@@ -837,28 +879,6 @@ router.get('/reports/tech/:report_id', authenticateToken, async (req, res) => {
             // Return the IP range
             return `${smallestIp}-${largestIp}`;
         };
-        const truncateIPsToRange = (hosts) => {
-            // Convert the IP addresses into a form like '10.242.111.111-10.243.000.000'
-            return hosts
-                .map(ip => {
-                    const parts = ip.split('.');
-                    if (parts.length === 4) {
-                        // Return the IP address range based on the first two octets, with the remaining octets in range format
-                        return `${parts[0]}.${parts[1]}.111.111-${parts[0]}.${parts[1]}.000.000`;
-                    }
-                    return ip; // In case the IP format is not as expected, return it unchanged
-                })
-                // Sort the IPs in descending order
-                .sort((a, b) => {
-                    const ipA = a.split('.').map(Number);
-                    const ipB = b.split('.').map(Number);
-                    // Compare from largest octet to smallest
-                    for (let i = 0; i < 4; i++) {
-                        if (ipA[i] !== ipB[i]) return ipB[i] - ipA[i];
-                    }
-                    return 0;
-                });
-        };
         // Fetch the report data by ID
         const reportResult = await pgClient.query(
             'SELECT report_id, created_at, content FROM reports WHERE report_id = $1',
@@ -954,7 +974,7 @@ router.get('/reports/tech/:report_id', authenticateToken, async (req, res) => {
 
        // Vulnerability Manager Section
        doc.fontSize(18).fillColor('black').text('Vulnerability Manager', { align: 'left', indent: 20 }); // Move slightly to the right with indent
-        doc.fontSize(12).text(
+        doc.fontSize(12).text(-
             'Greenbone Vulnerability Manager is proprietary software used to perform vulnerability scans on ', 
             { align: 'left', indent: 20, paragraphIndent: 20 } // Apply indent and paragraphIndent to wrap the text correctly
         );

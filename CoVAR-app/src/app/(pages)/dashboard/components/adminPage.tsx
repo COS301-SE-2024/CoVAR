@@ -44,10 +44,15 @@ const AdminPage: React.FC = () => {
                 const users: User[] = await fetchUsers(token as string);
                 const oneWeekAgo = moment().subtract(7, 'days').startOf('day'); // Get the exact start of the day for one week ago
     
-                // Filter unauthorized users created within the last week
-                const unauthorizedUsers = users.filter((user: User) =>
-                    user.role === 'unauthorised' && moment(user.created_at).isAfter(oneWeekAgo)
-                );
+                // Filter unauthorized users created within the last week and format the created_at field
+                const unauthorizedUsers = users
+                    .filter((user: User) =>
+                        user.role === 'unauthorised' && moment(user.created_at).isAfter(oneWeekAgo)
+                    )
+                    .map((user: User) => ({
+                        ...user,
+                        created_at: formatDate(user.created_at) // Format created_at
+                    }));
     
                 const metrics = {
                     total: users.length,
@@ -56,7 +61,7 @@ const AdminPage: React.FC = () => {
                     clients: users.filter((user: User) => user.role === 'client').length
                 };
     
-                setUsers(unauthorizedUsers);
+                setUsers(unauthorizedUsers); // Set formatted users
                 setUserMetrics(metrics);
                 setLoading(false);
             } catch (error) {
@@ -67,6 +72,26 @@ const AdminPage: React.FC = () => {
     
         loadUsers();
     }, []);
+    
+
+    const formatDate = (dateString: string) => {
+        if (!dateString) return 'No report';
+        const date = new Date(dateString);
+        
+        const formattedDate = date.toLocaleDateString('en-GB', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        });
+        
+        const formattedTime = date.toLocaleTimeString('en-GB', {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+        });
+
+        return `${formattedDate} ${formattedTime}`;
+    };
     
 
     const handleAuthorizeDialogOpen = (username: string) => {

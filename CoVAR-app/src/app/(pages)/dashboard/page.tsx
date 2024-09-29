@@ -9,10 +9,11 @@ import ReportsList from './components/reportsList';
 import TopVulnerabilities from './components/topVulnerabilities';
 import { fetchLastReportDates, getAllReports, getUserRole, fetchClientsAssigned, fetchOrganisationsAssigned } from '@/functions/requests';
 import { useRouter } from 'next/navigation';
-import { evaluateLaunchStyles } from '../../../styles/evaluateStyle';
+import { boxStyles, evaluateLaunchStyles } from '../../../styles/evaluateStyle';
 import { fetchReportsPerClient } from '@/functions/requests';
 import ReportsPerClient from './components/reportsPerClient';
 import AdminPage from './components/adminPage';
+import { Loader } from '@/styles/conflictStyle';
 
 interface VulnerabilityReport {
     IP: string;
@@ -131,7 +132,7 @@ const Dashboard: React.FC = () => {
             console.log(clients);
             console.log(orgs);
             console.log('Report Dates:', reportDates);
-    
+
             setUsers(clients);
             setOrganizations(orgs);
             setLastReportDatesClients(reportDates.clients);
@@ -142,8 +143,8 @@ const Dashboard: React.FC = () => {
             setLoading(false);
         }
     };
-    
-    
+
+
 
     const calculateSeverityDistribution = (reports: VulnerabilityReport[]) => {
         const distribution: { [key: string]: number } = {
@@ -193,13 +194,13 @@ const Dashboard: React.FC = () => {
     const formatDate = (dateString: string) => {
         if (!dateString) return 'No report';
         const date = new Date(dateString);
-        
+
         const formattedDate = date.toLocaleDateString('en-GB', {
             day: '2-digit',
             month: '2-digit',
             year: 'numeric'
         });
-        
+
         const formattedTime = date.toLocaleTimeString('en-GB', {
             hour: '2-digit',
             minute: '2-digit',
@@ -240,8 +241,21 @@ const Dashboard: React.FC = () => {
 
     if (role === null) {
         return (
-            <Box sx={mainContentStyles}>
-                <Typography variant="h6">Loading...</Typography>
+            <Box
+                sx={{
+                    ...boxStyles,
+                    position: 'absolute',
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    width: '100%',
+                    height: '100%',
+                }}
+            >
+                <Loader />
             </Box>
         );
     }
@@ -306,34 +320,34 @@ const Dashboard: React.FC = () => {
                     {users.length === 0 && organizations.length === 0 ? (
                         <Typography>No assigned clients or organisations found.</Typography>
                     ) : (
-                    <List>
-                        {users.map((user) => (
-                            <ListItem key={user.user_id} sx={{ marginBottom: 1, padding: 1, borderRadius: 1, boxShadow: 1 }}>
-                                <ListItemText
-                                    primary={`User: ${user.username}`}
-                                    secondary={`Last Report: ${formatDate(lastReportDatesClients.find(c => c.client_name === user.username)?.last_report_date as string) || 'No report'}`}
-                                />
-                                <ListItemSecondaryAction>
-                                    <Button variant="contained" onClick={() => handleUserButtonClick(user)}>
-                                        Evaluate
-                                    </Button>
-                                </ListItemSecondaryAction>
-                            </ListItem>
-                        ))}
-                        {organizations.map((org) => (
-                            <ListItem key={org.organization_id} sx={{ marginBottom: 1, padding: 1, borderRadius: 1, boxShadow: 1 }}>
-                                <ListItemText
-                                    primary={`Organisation: ${org.name}`}
-                                    secondary={`Last Report: ${formatDate(lastReportDatesOrgs.find(o => o.organization_name === org.name)?.last_report_date as string) || 'No report' }`}
-                                />
-                                <ListItemSecondaryAction>
-                                    <Button variant="contained" onClick={() => handleOrganizationButtonClick(org)}>
-                                        Evaluate
-                                    </Button>
-                                </ListItemSecondaryAction>
-                            </ListItem>
-                        ))}
-                    </List>
+                        <List>
+                            {users.map((user) => (
+                                <ListItem key={user.user_id} sx={{ marginBottom: 1, padding: 1, borderRadius: 1, boxShadow: 1 }}>
+                                    <ListItemText
+                                        primary={`User: ${user.username}`}
+                                        secondary={`Last Report: ${formatDate(lastReportDatesClients.find(c => c.client_name === user.username)?.last_report_date as string) || 'No report'}`}
+                                    />
+                                    <ListItemSecondaryAction>
+                                        <Button variant="contained" onClick={() => handleUserButtonClick(user)}>
+                                            Evaluate
+                                        </Button>
+                                    </ListItemSecondaryAction>
+                                </ListItem>
+                            ))}
+                            {organizations.map((org) => (
+                                <ListItem key={org.organization_id} sx={{ marginBottom: 1, padding: 1, borderRadius: 1, boxShadow: 1 }}>
+                                    <ListItemText
+                                        primary={`Organisation: ${org.name}`}
+                                        secondary={`Last Report: ${formatDate(lastReportDatesOrgs.find(o => o.organization_name === org.name)?.last_report_date as string) || 'No report'}`}
+                                    />
+                                    <ListItemSecondaryAction>
+                                        <Button variant="contained" onClick={() => handleOrganizationButtonClick(org)}>
+                                            Evaluate
+                                        </Button>
+                                    </ListItemSecondaryAction>
+                                </ListItem>
+                            ))}
+                        </List>
                     )}
                 </Paper>
             </Box>
@@ -347,7 +361,7 @@ const Dashboard: React.FC = () => {
             </Box>
         );
     }
-    
+
 
     return null;
 };

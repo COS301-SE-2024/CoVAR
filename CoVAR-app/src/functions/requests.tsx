@@ -518,8 +518,8 @@ export const fetchAndMatchReports = async (reportIds: number[]) => {
 export const generateReportRequest = async (finalReport: any[], name: string | undefined, type: string | null) => {
     try {
         const token = localStorage.getItem('accessToken');
-
-
+        name = decodeURIComponent(name || '');
+        console.log(name)
         const request: AxiosRequestConfig = {
             method: 'post',
             url: '/api/uploads/generateReport',

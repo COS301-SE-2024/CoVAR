@@ -302,13 +302,13 @@ const Dashboard: React.FC = () => {
                         <ReportsPerClient reportsPerClient={reportsPerClient} />
                     )}
                 </Paper>
-                <Paper elevation={3} sx={{ padding: 2, marginBottom: 2 }}>
                     {users.length === 0 && organizations.length === 0 ? (
                         <Typography>No assigned clients or organisations found.</Typography>
                     ) : (
                     <List>
                         {users.map((user) => (
-                            <ListItem key={user.user_id} sx={{ marginBottom: 1, padding: 1, borderRadius: 1, boxShadow: 1 }}>
+                            <Paper sx={{ padding: 1, marginBottom: 2 }}>
+                            <ListItem key={user.user_id} sx={{ marginBottom: 1, padding: 1, borderRadius: 1 }}>
                                 <ListItemText
                                     primary={`User: ${user.username}`}
                                     secondary={`Last Report: ${formatDate(lastReportDatesClients.find(c => c.client_name === user.username)?.last_report_date as string) || 'No report'}`}
@@ -319,9 +319,11 @@ const Dashboard: React.FC = () => {
                                     </Button>
                                 </ListItemSecondaryAction>
                             </ListItem>
+                            </Paper>
                         ))}
                         {organizations.map((org) => (
-                            <ListItem key={org.organization_id} sx={{ marginBottom: 1, padding: 1, borderRadius: 1, boxShadow: 1 }}>
+                            <Paper sx={{ padding: 1, marginBottom: 2 }}>
+                            <ListItem key={org.organization_id} sx={{ marginBottom: 1, padding: 1, borderRadius: 1}}>
                                 <ListItemText
                                     primary={`Organisation: ${org.name}`}
                                     secondary={`Last Report: ${formatDate(lastReportDatesOrgs.find(o => o.organization_name === org.name)?.last_report_date as string) || 'No report' }`}
@@ -332,10 +334,10 @@ const Dashboard: React.FC = () => {
                                     </Button>
                                 </ListItemSecondaryAction>
                             </ListItem>
+                            </Paper>
                         ))}
                     </List>
                     )}
-                </Paper>
             </Box>
         );
     }

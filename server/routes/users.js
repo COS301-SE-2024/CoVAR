@@ -1,6 +1,6 @@
 const express = require('express');
 const { authenticateToken, generateToken, verifyToken, generateRefreshToken , authenticateWhiteList} = require('../lib/securityFunctions');
-const { isOwner,isAdmin } = require('../lib/serverHelperFunctions');
+const { isOwner,isAdmin,isVA } = require('../lib/serverHelperFunctions');
 const pgClient = require('../lib/postgres');
 
 const router = express.Router();
@@ -359,6 +359,11 @@ router.get('/users/unauthorized', authenticateToken, async (req, res) => {
 
 // Endpoint to change role from unauthorized to client using username
 router.patch('/users/authorize', authenticateWhiteList, async (req, res) => {
+    const userId = req.user.user_id;
+    const adminResult =  await isAdmin(pgClient,userId);
+    if(!adminResult.isAdmin){
+        return res.status(403).send('Not authorized as admin');
+    }
     const { username } = req.body;
     try {
         // Check if the user exists and has the role 'unauthorised'
@@ -386,6 +391,11 @@ router.patch('/users/authorize', authenticateWhiteList, async (req, res) => {
 
 // Get all clients assigned to logged in VA
 router.get('/users/assigned_clients', authenticateToken, async (req, res) => {
+    const userId = req.user.user_id;
+    const VAResult =  await isVA(pgClient,userId);
+    if(!VAResult.isVA){
+        return res.status(403).send('Not authorized as VA');
+    }
     const token = req.headers['authorization'].split(' ')[1];
     const decodedToken = verifyToken(token);
     const id = decodedToken.user_id;

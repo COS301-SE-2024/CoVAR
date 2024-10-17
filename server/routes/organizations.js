@@ -1,6 +1,6 @@
 const express = require('express');
 const { authenticateToken, verifyToken } = require('../lib/securityFunctions');
-const { isOwner,isAdmin } = require('../lib/serverHelperFunctions');
+const { isOwner,isAdmin ,isVA} = require('../lib/serverHelperFunctions');
 
 const pgClient = require('../lib/postgres');
 
@@ -218,6 +218,11 @@ router.post('/organizations/users',  authenticateToken ,async (req, res) => {
 
 // Get all organizations assigned to logged in VA
 router.get('/users/assigned_organizations', authenticateToken, async (req, res) => {
+    const userId = req.user.user_id;
+    const VAResult =  await isVA(pgClient,userId);
+    if(!VAResult.isVA){
+        return res.status(403).send('Not authorized as VA');
+    }
     const token = req.headers['authorization'].split(' ')[1];
     const decodedToken = verifyToken(token);
     const id = decodedToken.user_id;

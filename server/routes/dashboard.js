@@ -2,7 +2,7 @@ const express = require('express');
 const { authenticateToken } = require('../lib/securityFunctions');
 const pgClient = require('../lib/postgres');
 const router = express.Router();
-const { getAllReportIds } = require('../lib/serverHelperFunctions'); 
+const { getAllReportIds,isVA } = require('../lib/serverHelperFunctions'); 
 
 // Return all reports for the user / organization if they are in one
 router.get('/reports/all', authenticateToken, async (req, res) => {
@@ -20,6 +20,11 @@ router.get('/reports/all', authenticateToken, async (req, res) => {
 
 // Route to get the last report date for each client or organization
 router.get('/reports/last_report_dates', authenticateToken, async (req, res) => {
+    const userId = req.user.user_id;
+    const VAResult =  await isVA(pgClient,userId);
+    if(!VAResult.isVA){
+        return res.status(403).send('Not authorized as VA');
+    }
     try {
         // Query to get last report date for assigned clients
         const clientReports = await pgClient.query(

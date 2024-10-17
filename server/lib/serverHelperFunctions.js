@@ -35,7 +35,7 @@ async function isClient(pgClient, UserId){
     if (ClientResult.rows.length === 0) {
         return { isClient: false, error: 'User not found' };
     }
-    if (ClientResult.rows[0].role !== 'va') {
+    if (ClientResult.rows[0].role !== 'client') {
         return { isClient: false, error: 'Not authorized as client' };
     }
     return { ClientResult: true };

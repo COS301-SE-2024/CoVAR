@@ -358,7 +358,7 @@ router.get('/users/unauthorized', authenticateToken, async (req, res) => {
 
 
 // Endpoint to change role from unauthorized to client using username
-router.patch('/users/authorize', authenticateWhiteList, async (req, res) => {
+router.patch('/users/authorize', authenticateToken, async (req, res) => {
     const userId = req.user.user_id;
     const adminResult =  await isAdmin(pgClient,userId);
     if(!adminResult.isAdmin){

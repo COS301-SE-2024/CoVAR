@@ -74,7 +74,9 @@ async function authenticateToken(req, res, next) {
             const VAResult = await isVA(pgClient, userId);
             const clientResult = await isClient(pgClient, userId);
             const adminResult = await isAdmin(pgClient, userId);
-
+            console.log("VA Result:", VAResult.isVA);
+            console.log("Client Result:", clientResult.isClient);
+            console.log("Admin Result:", adminResult.isAdmin);
             // Check if the user is a VA, client, or admin
             if (VAResult.isVA || clientResult.isClient || adminResult.isAdmin) {
                 // If any of the checks pass, continue to the next middleware or route

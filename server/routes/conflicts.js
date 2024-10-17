@@ -2,8 +2,8 @@ const express = require('express');
 const stringSimilarity = require('string-similarity');
 const { authenticateToken } = require('../lib/securityFunctions');
 const router = express.Router();
-const { isVA } = require('../lib/serverHelperFunctions');
-
+const { isVA,isAdmin } = require('../lib/serverHelperFunctions');
+const pgClient = require('../lib/postgres');
 function matchSentences(list1, list2) {
     // Remove duplicates based on nvtName, Port, and IP
     list1 = list1.filter((item, index, self) =>

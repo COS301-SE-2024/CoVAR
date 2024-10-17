@@ -38,7 +38,7 @@ async function isClient(pgClient, UserId){
     if (ClientResult.rows[0].role !== 'client') {
         return { isClient: false, error: 'Not authorized as client' };
     }
-    return { ClientResult: true };
+    return { isClient: true };
 }
 async function isUnauthorised(pgClient, UserId){
     const Unauthorised = await pgClient.query('SELECT role FROM users WHERE user_id = $1', [UserId]);

@@ -32,7 +32,7 @@ const Lounge: React.FC = () => {
     const checkUserStatus = useCallback(async () => {
         try {
             const response = await axios.post(
-                '/api/getUser',
+                '/api/UnauthgetUser',
                 { accessToken: localStorage.getItem('accessToken') },
                 { headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}` } }
             );
@@ -41,6 +41,7 @@ const Lounge: React.FC = () => {
             console.log("Role:", role);
 
             if (role !== 'unauthorised') {
+                console.log("NOT UNAUTH")
                 router.replace('/dashboard'); 
             }
 

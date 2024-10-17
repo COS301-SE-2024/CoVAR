@@ -20,7 +20,36 @@ async function isAdmin(pgClient, UserId){
     }
     return { isAdmin: true };
 }
-
+async function isVA(pgClient, UserId){
+    const VAResult = await pgClient.query('SELECT role FROM users WHERE user_id = $1', [UserId]);
+    if (VAResult.rows.length === 0) {
+        return { isVA: false, error: 'User not found' };
+    }
+    if (VAResult.rows[0].role !== 'va') {
+        return { isVA: false, error: 'Not authorized as va' };
+    }
+    return { isVA: true };
+}
+async function isClient(pgClient, UserId){
+    const ClientResult = await pgClient.query('SELECT role FROM users WHERE user_id = $1', [UserId]);
+    if (ClientResult.rows.length === 0) {
+        return { isClient: false, error: 'User not found' };
+    }
+    if (ClientResult.rows[0].role !== 'va') {
+        return { isClient: false, error: 'Not authorized as client' };
+    }
+    return { ClientResult: true };
+}
+async function isUnauthorised(pgClient, UserId){
+    const Unauthorised = await pgClient.query('SELECT role FROM users WHERE user_id = $1', [UserId]);
+    if (Unauthorised.rows.length === 0) {
+        return { isClient: false, error: 'User not found' };
+    }
+    if (Unauthorised.rows[0].role !== 'unauthorised') {
+        return { isClient: false, error: 'Not authorized' };
+    }
+    return { Unauthorised: true };
+}
 async function getOrganizationId(pgClient, UserId) {
     const organizationIdResult = await pgClient.query('SELECT organization_id FROM users WHERE user_id = $1', [UserId]);
     if (organizationIdResult.rows.length === 0) {
@@ -44,6 +73,10 @@ async function getAllReportIds(pgClient, UserId) {
 
 
 module.exports = {
+    isUnauthorised,
+    isClient,
+    isVA,
+    isAdmin,
     isOwner,
     isAdmin,
     getAllReportIds,

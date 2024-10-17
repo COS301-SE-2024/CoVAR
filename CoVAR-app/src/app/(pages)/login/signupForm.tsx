@@ -129,7 +129,7 @@ const Signup: React.FC<SignupProps> = ({ toggleForm }) => {
         let getUserResponse;
         try {
           getUserResponse = await axios.post(
-            '/api/getUser',
+            '/api/UnauthgetUser',
             { accessToken: localStorage.getItem('accessToken') },
             { headers: { Authorization: `Bearer ${loginResponse.data.accessToken}` } }
           );

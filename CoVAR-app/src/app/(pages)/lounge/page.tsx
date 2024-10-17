@@ -30,6 +30,7 @@ const Lounge: React.FC = () => {
 
     // Function to get the current user and check their role
     const checkUserStatus = useCallback(async () => {
+        console.log("getting UNAUTH");
         try {
             const response = await axios.post(
                 '/api/UnauthgetUser',

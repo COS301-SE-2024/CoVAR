@@ -2,6 +2,7 @@ const express = require('express');
 const stringSimilarity = require('string-similarity');
 const { authenticateToken } = require('../lib/securityFunctions');
 const router = express.Router();
+const { isVA } = require('../lib/serverHelperFunctions');
 
 function matchSentences(list1, list2) {
     // Remove duplicates based on nvtName, Port, and IP
@@ -50,6 +51,12 @@ function matchSentences(list1, list2) {
 
 
 router.post('/conflicts/match', authenticateToken, async (req, res) => {
+    const userId = req.user.user_id;
+    const VAResult =  await isVA(pgClient,userId);
+    const adminResult = await isAdmin(pgClient,userId);
+    if(!VAResult.isVA && !adminResult.isAdmin){
+        return res.status(403).send('Not authorized as VA or admin');
+    }
     const { listUploads } = req.body;
 
     if (!listUploads || listUploads.length === 0 || listUploads.length > 2) {
@@ -64,7 +71,7 @@ router.post('/conflicts/match', authenticateToken, async (req, res) => {
 
     const [list1, list2] = listUploads;
 
-    const { matches, unmatchedList1, unmatchedList2 } = matchSentences(list1, list2);
+    const { matches, unmatchedList1, unmatchedList2 } =  matchSentences(list1, list2);
     res.json({ matches, unmatchedList1, unmatchedList2 });
 });
 

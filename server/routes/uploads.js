@@ -1,7 +1,7 @@
 const express = require('express');
 const handleFileUpload = require('../lib/pipe');
 const { authenticateToken, verifyToken } = require('../lib/securityFunctions');
-
+const { isVA ,isAdmin} = require('../lib/serverHelperFunctions');
 const { parse } = require('csv-parse');
 const stream = require('stream');
 const pgClient = require('../lib/postgres');
@@ -13,8 +13,13 @@ const router = express.Router();
 
 // Get file content in raw_uploads table
 router.get('/uploads/file/:loid', authenticateToken, async (req, res) => {
+    const userId = req.user.user_id;
+    const VAResult =  await isVA(pgClient,userId);
+    const adminResult = await isAdmin(pgClient,userId);
+    if(!VAResult.isVA && !adminResult.isAdmin){
+        return res.status(403).send('Not authorized as VA or admin');
+    }
     const { loid } = req.params;
-
     try {
         await pgClient.query('BEGIN');
 
@@ -41,12 +46,23 @@ router.post('/uploads', authenticateToken, async (req, res) => {
     const token = req.headers['authorization'].split(' ')[1];
     const decodedToken = verifyToken(token);
     const vaId = decodedToken.user_id;
-
+    const userId = req.user.user_id;
+    const VAResult =  await isVA(pgClient,userId);
+    const adminResult = await isAdmin(pgClient,userId);
+    if(!VAResult.isVA && !adminResult.isAdmin){
+        return res.status(403).send('Not authorized as VA or admin');
+    }
     await handleFileUpload(req, res, vaId);
 });
 
 //remove file from raw_uploads table
 router.delete('/uploads/:upload_id', authenticateToken, async (req, res) => {
+    const userId = req.user.user_id;
+    const VAResult =  await isVA(pgClient,userId);
+    const adminResult = await isAdmin(pgClient,userId);
+    if(!VAResult.isVA && !adminResult.isAdmin){
+        return res.status(403).send('Not authorized as VA or admin');
+    }
     const { upload_id } = req.params;
 
     try {
@@ -77,6 +93,12 @@ router.delete('/uploads/:upload_id', authenticateToken, async (req, res) => {
 });
 
 router.get('/uploads/generateSingleReport/:upload_id', authenticateToken, async (req, res) => {
+    const userId = req.user.user_id;
+    const VAResult =  await isVA(pgClient,userId);
+    const adminResult = await isAdmin(pgClient,userId);
+    if(!VAResult.isVA && !adminResult.isAdmin){
+        return res.status(403).send('Not authorized as VA or admin');
+    }
     const { upload_id } = req.params;
 
     try {
@@ -283,6 +305,12 @@ router.get('/uploads/generateSingleReport/:upload_id', authenticateToken, async 
 
 // Toggle the value in_report to true/false for a specific file
 router.put('/uploads/inReport/:upload_id', authenticateToken, async (req, res) => {
+    const userId = req.user.user_id;
+    const VAResult =  await isVA(pgClient,userId);
+    const adminResult = await isAdmin(pgClient,userId);
+    if(!VAResult.isVA && !adminResult.isAdmin){
+        return res.status(403).send('Not authorized as VA or admin');
+    }
     const { upload_id } = req.params;
 
     try {
@@ -322,6 +350,12 @@ router.put('/uploads/inReport/:upload_id', authenticateToken, async (req, res) =
 
 // Get all uploads for a specific organization assigned to logged in VA
 router.get('/uploads/organization/:organizationName', authenticateToken, async (req, res) => {
+    const userId = req.user.user_id;
+    const VAResult =  await isVA(pgClient,userId);
+    const adminResult = await isAdmin(pgClient,userId);
+    if(!VAResult.isVA && !adminResult.isAdmin){
+        return res.status(403).send('Not authorized as VA or admin');
+    }
     const token = req.headers['authorization'].split(' ')[1];
     const decodedToken = verifyToken(token);
     const id = decodedToken.user_id;
@@ -355,6 +389,12 @@ router.get('/uploads/organization/:organizationName', authenticateToken, async (
 
 // Get all uploads for a specific client assigned to logged in VA
 router.get('/uploads/client/:clientName', authenticateToken, async (req, res) => {
+    const userId = req.user.user_id;
+    const VAResult =  await isVA(pgClient,userId);
+    const adminResult = await isAdmin(pgClient,userId);
+    if(!VAResult.isVA && !adminResult.isAdmin){
+        return res.status(403).send('Not authorized as VA or admin');
+    }
     const token = req.headers['authorization'].split(' ')[1];
     const decodedToken = verifyToken(token);
     const id = decodedToken.user_id;
@@ -389,6 +429,12 @@ router.get('/uploads/client/:clientName', authenticateToken, async (req, res) =>
 
 // Endpoint to generate report
 router.post('/uploads/generateReport', authenticateToken, async (req, res) => {
+    const userId = req.user.user_id;
+    const VAResult =  await isVA(pgClient,userId);
+    const adminResult = await isAdmin(pgClient,userId);
+    if(!VAResult.isVA && !adminResult.isAdmin){
+        return res.status(403).send('Not authorized as VA or admin');
+    }
     const { finalReport, name, type } = req.body;
     console.log("finalReport:",finalReport, "name:", name, "type:", type);
 

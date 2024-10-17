@@ -78,7 +78,6 @@ module.exports = {
     isVA,
     isAdmin,
     isOwner,
-    isAdmin,
     getAllReportIds,
     getOrganizationId
 };

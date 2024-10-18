@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTheme, ThemeProvider } from '@mui/material/styles';
-import { Container, Box, Typography, TextField, Button, Link, CssBaseline, Card } from '@mui/material';
+import { Container, Box, Typography, TextField, Button, Link, CssBaseline, Card, CircularProgress } from '@mui/material';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import GoogleIcon from "../../../assets/GoogleIcon";
 import { doCreateUserWithEmailAndPassword, doSignInWithGoogle } from '../../../functions/firebase/auth';
@@ -52,6 +52,7 @@ const Signup: React.FC<SignupProps> = ({ toggleForm }) => {
   const theme = useTheme();
   const router = useRouter();
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [emailError, setEmailError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -156,6 +157,7 @@ const Signup: React.FC<SignupProps> = ({ toggleForm }) => {
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setIsLoading(true);
     const data = new FormData(event.currentTarget);
     const email = data.get('email') as string;
     const password = data.get('password') as string;
@@ -176,13 +178,17 @@ const Signup: React.FC<SignupProps> = ({ toggleForm }) => {
       document.cookie = `accessToken=${response.data.accessToken}`;
       if (response.status === 201) {
         router.replace('/lounge');
+        setIsLoading(false);
       } else {
+        setIsLoading(false);
         throw new Error('Failed to create user in PostgreSQL');
       }
     } catch (error: any) {
       if (error.code === "auth/email-already-in-use") {
+        setIsLoading(false);
         setError('Email is already in use. Please use a different email address.');
       } else {
+        setIsLoading(false);
         setError('Error signing up. Please try again.');
       }
     }
@@ -355,7 +361,8 @@ const Signup: React.FC<SignupProps> = ({ toggleForm }) => {
                 }}
                 disabled={!isValidPassword || !doPasswordsMatch || !!emailError}
               >
-                Sign Up
+                {isLoading ?  <CircularProgress color="inherit" size={24} />: 'Sign Up'}
+                
               </Button>
               <Button
                 fullWidth

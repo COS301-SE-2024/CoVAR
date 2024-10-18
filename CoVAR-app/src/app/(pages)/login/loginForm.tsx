@@ -1,7 +1,7 @@
 'use client'
 import React, { useState, useEffect } from 'react';
 import { useTheme, ThemeProvider } from '@mui/material/styles';
-import { Container, Box, Typography, TextField, Button, Link, CssBaseline, Card } from '@mui/material';
+import { Container, Box, Typography, TextField, Button, Link, CssBaseline, Card, CircularProgress } from '@mui/material';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import GoogleIcon from "../../../assets/GoogleIcon";
 import { doSignInWithEmailAndPassword, doSignInWithGoogle} from '../../../functions/firebase/auth';
@@ -34,6 +34,7 @@ const Login: React.FC<LoginProps> = ({ toggleForm }) => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isSigningIn, setIsSigningIn] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
@@ -73,6 +74,7 @@ const Login: React.FC<LoginProps> = ({ toggleForm }) => {
   };
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    setIsLoading(true);
     e.preventDefault();
     if (!isSigningIn) {
       setIsSigningIn(true);
@@ -114,15 +116,19 @@ const Login: React.FC<LoginProps> = ({ toggleForm }) => {
 
           if (role === "unauthorised") {
             router.replace('/lounge'); // Navigate to lounge if unauthorised
+            setIsLoading(false);
           } else {
-            router.replace('/dashboard'); // Navigate to dashboard after successful login
+            router.replace('/dashboard'); // Navigate to dashboard after successful login            
+            setIsLoading(false);
           }
 
         } else {
+          setIsLoading(false);
           throw new Error('User not found in Firebase Auth');
         }
       } catch (error) {
         //console.error('login in with email error',error);
+        setIsLoading(false);
         setIsSigningIn(false);
         setError('Failed to sign in. Please check your credentials.');
       }
@@ -132,6 +138,7 @@ const Login: React.FC<LoginProps> = ({ toggleForm }) => {
   
 
   const signInWithGoogle = async () => {
+    console.log("THIS IS THE LOGIN GOOGLE BUTTON");
     if (!isSigningIn) {
       setIsSigningIn(true);
       try {
@@ -166,8 +173,9 @@ const Login: React.FC<LoginProps> = ({ toggleForm }) => {
         document.cookie = `accessToken=${response.data.accessToken}`;
         let getUserResponse;
         try {
+          console.log("THIS IS THE LOGIN GOOGLE BUTTON");
           getUserResponse = await axios.post(
-            '/api/getUser',
+            '/api/getMeoutthefuckingSidebar',
             { accessToken: localStorage.getItem('accessToken') },
             { headers: { Authorization: `Bearer ${LoginResponse.data.accessToken}` } }
           );
@@ -325,7 +333,7 @@ const Login: React.FC<LoginProps> = ({ toggleForm }) => {
                 variant="contained"
                 sx={{ mt: '2vh', mb: '2vh', backgroundColor: theme.palette.primary.main }}
               >
-                Log in
+                {isLoading ?  <CircularProgress color="inherit" size={24} />: 'Log in'}
               </Button>
               <Button
                 fullWidth

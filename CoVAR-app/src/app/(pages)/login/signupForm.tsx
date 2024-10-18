@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTheme, ThemeProvider } from '@mui/material/styles';
-import { Container, Box, Typography, TextField, Button, Link, CssBaseline, Card } from '@mui/material';
+import { Container, Box, Typography, TextField, Button, Link, CssBaseline, Card, CircularProgress } from '@mui/material';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import GoogleIcon from "../../../assets/GoogleIcon";
 import { doCreateUserWithEmailAndPassword, doSignInWithGoogle } from '../../../functions/firebase/auth';
@@ -52,6 +52,7 @@ const Signup: React.FC<SignupProps> = ({ toggleForm }) => {
   const theme = useTheme();
   const router = useRouter();
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [emailError, setEmailError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -67,10 +68,10 @@ const Signup: React.FC<SignupProps> = ({ toggleForm }) => {
   useEffect(() => {
     if (error) {
       const timer = setTimeout(() => {
-        setError(''); 
-      }, 5000); 
+        setError('');
+      }, 5000);
 
-      return () => clearTimeout(timer); 
+      return () => clearTimeout(timer);
     }
   }, [error]);
 
@@ -128,20 +129,22 @@ const Signup: React.FC<SignupProps> = ({ toggleForm }) => {
         document.cookie = `accessToken=${response.data.accessToken}`;
         let getUserResponse;
         try {
+          console.log("unauth req");
           getUserResponse = await axios.post(
-            '/api/getUser',
+            '/api/getMeoutthefuckingSidebar',
             { accessToken: localStorage.getItem('accessToken') },
             { headers: { Authorization: `Bearer ${loginResponse.data.accessToken}` } }
           );
         } catch (error) {
-          throw error; // Re-throw the error to be caught by the outer catch block
+          console.log("unauth error");
+          throw error;
         }
         const { role } = getUserResponse.data;
-        if (getUserResponse.status === 200) {
+        if (getUserResponse.status === 201) {
           if (role === "unauthorised") {
-            router.replace('/lounge'); // Navigate to lounge if unauthorised
+            router.replace('/lounge');
           } else {
-            router.replace('/dashboard'); // Navigate to dashboard after successful login
+            router.replace('/dashboard');
           }
         } else {
           throw new Error('Failed to create user in PostgreSQL');
@@ -154,6 +157,7 @@ const Signup: React.FC<SignupProps> = ({ toggleForm }) => {
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setIsLoading(true);
     const data = new FormData(event.currentTarget);
     const email = data.get('email') as string;
     const password = data.get('password') as string;
@@ -173,19 +177,22 @@ const Signup: React.FC<SignupProps> = ({ toggleForm }) => {
       localStorage.setItem('refreshToken', response.data.refreshToken);
       document.cookie = `accessToken=${response.data.accessToken}`;
       if (response.status === 201) {
-          router.replace('/lounge'); 
+        router.replace('/lounge');
+        setIsLoading(false);
       } else {
+        setIsLoading(false);
         throw new Error('Failed to create user in PostgreSQL');
       }
     } catch (error: any) {
       if (error.code === "auth/email-already-in-use") {
+        setIsLoading(false);
         setError('Email is already in use. Please use a different email address.');
       } else {
+        setIsLoading(false);
         setError('Error signing up. Please try again.');
       }
     }
   };
-
 
   return (
     <ThemeProvider theme={theme}>
@@ -354,7 +361,8 @@ const Signup: React.FC<SignupProps> = ({ toggleForm }) => {
                 }}
                 disabled={!isValidPassword || !doPasswordsMatch || !!emailError}
               >
-                Sign Up
+                {isLoading ?  <CircularProgress color="inherit" size={24} />: 'Sign Up'}
+                
               </Button>
               <Button
                 fullWidth

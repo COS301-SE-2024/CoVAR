@@ -11,6 +11,7 @@ interface FileUploadProps {
 
 const FileUpload: React.FC<FileUploadProps> = ({ onFileSubmit, client, organization }) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [cooldown, setCooldown] = useState(false);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files && event.target.files[0];
@@ -20,6 +21,8 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileSubmit, client, organizat
   };
 
   const handleSubmitFile = async () => {
+    setCooldown(true);
+    setTimeout(() => setCooldown(false), 5000);
     if (!selectedFile) {
       return;
     }
@@ -38,7 +41,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileSubmit, client, organizat
             fileContent: base64File,
             filename: selectedFile.name,
           }, {
-            headers: { 
+            headers: {
               Authorization: `Bearer ${token}`,
             },
           });
@@ -57,8 +60,21 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileSubmit, client, organizat
     setSelectedFile(null); // Reset selected file
   };
 
+  //If disabled true then return loading spinner
+  if (cooldown) {
+    return (
+      <Paper sx={uploadBoxStyles}>
+        <Typography variant="h6">
+          Uploading...
+        </Typography>
+      </Paper>
+    );
+  }
+
+
   return (
     <Paper sx={uploadBoxStyles}>
+
       {!selectedFile && (
         <>
           <Typography variant="h6">
@@ -66,7 +82,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileSubmit, client, organizat
           </Typography>
           <input
             type="file"
-            accept=".pdf,.csv,.xml,.nessus" 
+            accept=".pdf,.csv,.xml,.nessus"
             onChange={handleFileChange}
             style={{ display: 'none' }}
             id="file-upload"
@@ -87,6 +103,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileSubmit, client, organizat
             variant="contained"
             sx={{ ...uploadButtonStyles, marginTop: 2 }}
             onClick={handleSubmitFile}
+
           >
             Submit File
           </Button>

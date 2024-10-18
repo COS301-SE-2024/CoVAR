@@ -27,6 +27,7 @@ import DownloadIcon from '@mui/icons-material/Download';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
+import { Loader } from '@/styles/conflictStyle';
 
 interface FileUpload {
   upload_id: number;
@@ -55,56 +56,119 @@ const OrganizationEvaluation: React.FC = () => {
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [reportNames, setReportNames] = useState<string[]>([]);
   const [snackbarOpenInvalid, setSnackbarOpenInvalid] = useState(false);
-
+  const [lastReportId, setLastReportId] = useState<number>(0);
+  const [snackbarOpenMaxUpload, setSnackbarOpenMaxUpload] = useState(false);
+  const [snackbarOpenNoAccess, setSnackbarOpenNoAccess] = useState(false);
+  const [unauthorized, setUnauthorized] = useState(false);
+  const [loading, setLoading] = useState(true); // Track loading state
 
   useEffect(() => {
     const fetchInitialUploads = async () => {
       try {
         if (organizationName) {
-          const data = await fetchUploadsOrganization(organizationName);
-          setUploads(data);
-          const inReportIds = data.filter((upload: FileUpload) => upload.in_report).map((upload: FileUpload) => upload.upload_id);
-          setReportIds(inReportIds);
+          try {
+            const data = await fetchUploadsOrganization(organizationName);
+            setUploads(data);
+
+            const inReportIds = data
+              .filter((upload: FileUpload) => upload.in_report)
+              .map((upload: FileUpload) => upload.upload_id);
+            setReportIds(inReportIds);
+          } catch (error: any) {
+            // Handle specific API errors
+            if (error.response) {
+              const status = error.response.status;
+
+              if (status === 401) {
+                setSnackbarOpenNoAccess(true); // Unauthorized access
+                setUnauthorized(true);
+                console.error('Unauthorized: Please check your permissions.');
+              } else if (status === 404) {
+                setSnackbarOpenNoAccess(true); // Client not found
+                setUnauthorized(true);
+                console.error('Client not found.');
+              } else {
+                console.error('Error generating reports:', error);
+              }
+            } else {
+              console.error('Network or server error:', error);
+            }
+          }
         }
       } catch (error: any) {
+
         if (error.response?.status === 403) {
+          console.error('Forbidden: Redirecting to login.');
           redirectToLogin();
+        } else {
+          console.error('Unexpected error:', error);
         }
+      } finally {
+        setLoading(false);
       }
     };
+
     fetchInitialUploads();
   }, [organizationName, redirectToLogin]);
 
   useEffect(() => {
+
     const fetchInitialReports = async () => {
       try {
         if (reportIds.length > 0) {
-          const fetchedReports = await fetchReports(reportIds);
-          setReports(fetchedReports);
+          try {
+            const fetchedReports = await fetchReports(reportIds);
+            setReports(fetchedReports);
+          } catch (error) {
+            setSnackbarOpenInvalid(true);
+            //make sure reportNames.length is not 0
+            if (reportNames.length > 0) {
+              handleRemove(lastReportId, reportNames[reportNames.length - 1]);
+            } else {
+              handleRemove(lastReportId, '');
+            }
+            console.error('Error generating reports:', error);
+          }
         } else {
           setReports([]);
         }
       } catch (error) {
         setSnackbarOpenInvalid(true);
+
         console.error('Error generating reports:', error);
       }
     };
     fetchInitialReports();
+
   }, [reportIds]);
 
   const handleFileSubmit = async () => {
+
+    if (uploads.length >= 6) {
+      setSnackbarOpenMaxUpload(true);
+      return;
+    }
+
     try {
       if (organizationName) {
-        const data = await fetchUploadsOrganization(organizationName);
-        setUploads(data);
-        const inReportIds = data.filter((upload: FileUpload) => upload.in_report).map((upload: FileUpload) => upload.upload_id);
-        setReportIds(inReportIds);
+        try {
+          const data = await fetchUploadsOrganization(organizationName);
+          setUploads(data);
+          const inReportIds = data.filter((upload: FileUpload) => upload.in_report).map((upload: FileUpload) => upload.upload_id);
+          setReportIds(inReportIds);
+        }
+        catch (error) {
+          setSnackbarOpenInvalid(true);
+          console.error('Error generating reports:', error);
+        }
       }
     } catch (error: any) {
       if (error.response?.status === 403) {
         redirectToLogin();
       }
     }
+
+
   };
 
   const handleRemove = async (upload_id: number, fileName: string) => {
@@ -121,26 +185,52 @@ const OrganizationEvaluation: React.FC = () => {
   };
 
 
-  
+
 
   const handleToggle = async (upload_id: number, fileName: string) => {
+    // Create local copies of the state for updates
+    let updatedReportNames = [...reportNames];
+    let updatedReportIds = [...reportIds];
+
+
     try {
       if (reportIds.includes(upload_id)) {
-        await handleToggleReport(upload_id);
-        setReportNames(reportNames.filter(name => name !== fileName));
-        setReportIds(reportIds.filter(id => id !== upload_id));
-      } else {
-        if (reportIds.length < 2) {
+        // Attempt to remove the report
+        try {
           await handleToggleReport(upload_id);
-          setReportNames(reportNames.filter(name => name !== fileName));
-          setReportIds([...reportIds, upload_id]);
+          // Remove from local copy
+          updatedReportNames = updatedReportNames.filter(name => name !== fileName);
+          updatedReportIds = updatedReportIds.filter(id => id !== upload_id);
+        } catch (error) {
+          setSnackbarOpenInvalid(true);
+          console.error('Error updating report status:', error);
+          return;
+        }
+      } else {
+
+        if (reportIds.length < 2) {
+          setLastReportId(upload_id);
+          try {
+            await handleToggleReport(upload_id);
+            // Add to local copy
+            updatedReportNames.push(fileName);
+            updatedReportIds.push(upload_id);
+          } catch (error) {
+            setSnackbarOpenInvalid(true);
+            console.error('Error updating report status:', error);
+            return;
+          }
         } else {
           setSnackbarOpen(true);
+          return; // Exit early if limit reached
         }
       }
+      // Update the state only after successful API calls
+      setReportNames(updatedReportNames);
+      setReportIds(updatedReportIds);
     } catch (error) {
       setSnackbarOpenInvalid(true);
-      console.error('Error updating report status:', error);
+      console.error('Error in handleToggle:', error);
     }
   };
 
@@ -148,10 +238,63 @@ const OrganizationEvaluation: React.FC = () => {
     setSnackbarOpen(false);
   };
 
-
   const handleCloseSnackbarInvalid = () => {
     setSnackbarOpenInvalid(false);
   };
+
+  const handleCloseSnackbarMaxUpload = () => {
+    setSnackbarOpenMaxUpload(false);
+  }
+
+  const handleCloseSnackbarNoAccess = () => {
+    setSnackbarOpenNoAccess(false);
+  }
+
+  if (loading) {
+    return (
+      <Box
+        sx={{
+          ...mainContentStyles,
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          width: '100%',
+          height: '100%',
+        }}
+      >
+        <Loader />
+      </Box>
+    );
+  }
+
+  if (unauthorized) {
+    return (
+      <Container maxWidth={false} sx={{ ...mainContentStyles, paddingTop: 8, width: '100vw' }}>
+        <Box
+          sx={{
+            ...mainContentStyles,
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            width: '100%',
+            height: '100%',
+          }}
+        >
+          <Typography variant="h4">Page does not exist</Typography>
+        </Box>
+
+      </Container>
+    );
+  }
+
 
   return (
     <Container maxWidth={false} sx={{ ...mainContentStyles, paddingTop: 8, width: '100vw' }}>
@@ -166,6 +309,15 @@ const OrganizationEvaluation: React.FC = () => {
         message="Cannot add more than 2 reports"
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
       />
+
+      <Snackbar
+        open={snackbarOpenMaxUpload}
+        autoHideDuration={1000}
+        onClose={handleCloseSnackbarMaxUpload}
+        message="Cannot upload more than 6 files"
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      />
+
       <Snackbar
         sx={{
           width: '100%',
@@ -174,7 +326,7 @@ const OrganizationEvaluation: React.FC = () => {
         open={snackbarOpenInvalid}
         autoHideDuration={1000}
         onClose={handleCloseSnackbarInvalid}
-        message="Invalid Report Format"
+        message="Invalid Report Format, File Removed."
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
       />
       <Grid container spacing={2}>
@@ -188,7 +340,7 @@ const OrganizationEvaluation: React.FC = () => {
                 Organisation: {organizationName}
               </Typography>
             )}
-            <FileUpload onFileSubmit={handleFileSubmit} organization={organizationName} />
+            <FileUpload onFileSubmit={handleFileSubmit} organization={organizationName ?? undefined} />
           </Paper>
           <Box mt={2} /> {/* Gap between upload files and uploaded files */}
           <Paper sx={{ padding: 4, textAlign: 'center', overflowY: 'auto', height: '40vh' }}>
@@ -238,22 +390,22 @@ const OrganizationEvaluation: React.FC = () => {
           </Paper>
         </Grid>
         <Grid item xs={6}>
-          <Paper sx={{ 
-            overflowY: 'scroll', 
+          <Paper sx={{
+            overflowY: 'scroll',
             height: 'calc(80vh + 16px)',
             '&::-webkit-scrollbar': {
-                width: '0.2vw', 
+              width: '0.2vw',
             },
             '&::-webkit-scrollbar-thumb': {
-                backgroundColor: 'gray', 
-                borderRadius: '0.4vw',
+              backgroundColor: 'gray',
+              borderRadius: '0.4vw',
             },
             '&::-webkit-scrollbar-track': {
-                backgroundColor: 'transparent', 
+              backgroundColor: 'transparent',
             },
-            scrollbarWidth: 'thin', 
-            scrollbarColor: 'gray transparent', 
-            }}>
+            scrollbarWidth: 'thin',
+            scrollbarColor: 'gray transparent',
+          }}>
 
             <ReportPreview reports={reports.slice(0, 3)} reportIds={reportIds} client={organizationName ?? ''} reportNames={reportNames} />
 

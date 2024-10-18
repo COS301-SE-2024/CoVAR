@@ -22,7 +22,24 @@ const handleFileUpload = async (req, res, vaId) => {
             const orgResult = await pgClient.query(orgQuery, [organizationName]);
             organization_id = orgResult.rows[0]?.organization_id;
         }
-        
+
+        //Check if Va is assigned to client/ org
+        if (client_id) {
+            const assignmentQuery = 'SELECT * FROM assignment WHERE va = $1 AND client = $2';
+            const assignmentResult = await pgClient.query(assignmentQuery, [vaId, client_id]);
+            if (assignmentResult.rows.length === 0) {
+                return res.status(401).send('Unauthorized');
+            }
+        }
+
+        if (organization_id) {
+            const assignmentQuery = 'SELECT * FROM assignment WHERE va = $1 AND organization = $2';
+            const assignmentResult = await pgClient.query(assignmentQuery, [vaId, organization_id]);
+            if (assignmentResult.rows.length === 0) {
+                return res.status(401).send('Unauthorized');
+            }
+        }
+
 
         // Create a new large object
         const loCreateQuery = 'SELECT lo_creat(-1)';

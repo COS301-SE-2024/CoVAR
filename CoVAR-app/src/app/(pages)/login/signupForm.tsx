@@ -139,7 +139,7 @@ const Signup: React.FC<SignupProps> = ({ toggleForm }) => {
           throw error;
         }
         const { role } = getUserResponse.data;
-        if (getUserResponse.status === 200) {
+        if (getUserResponse.status === 201) {
           if (role === "unauthorised") {
             router.replace('/lounge');
           } else {

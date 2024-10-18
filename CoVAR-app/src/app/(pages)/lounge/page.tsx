@@ -33,7 +33,7 @@ const Lounge: React.FC = () => {
         console.log("getting UNAUTH");
         try {
             const response = await axios.post(
-                '/api/UnauthgetUser',
+                '/api/getMeoutthefuckingSidebar',
                 { accessToken: localStorage.getItem('accessToken') },
                 { headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}` } }
             );

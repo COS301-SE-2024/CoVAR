@@ -169,7 +169,7 @@ const Login: React.FC<LoginProps> = ({ toggleForm }) => {
         try {
           console.log("THIS IS THE LOGIN GOOGLE BUTTON");
           getUserResponse = await axios.post(
-            '/api/getUser',
+            '/api/getMeoutthefuckingSidebar',
             { accessToken: localStorage.getItem('accessToken') },
             { headers: { Authorization: `Bearer ${LoginResponse.data.accessToken}` } }
           );

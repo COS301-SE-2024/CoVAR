@@ -67,10 +67,10 @@ const Signup: React.FC<SignupProps> = ({ toggleForm }) => {
   useEffect(() => {
     if (error) {
       const timer = setTimeout(() => {
-        setError(''); 
-      }, 5000); 
+        setError('');
+      }, 5000);
 
-      return () => clearTimeout(timer); 
+      return () => clearTimeout(timer);
     }
   }, [error]);
 
@@ -128,20 +128,22 @@ const Signup: React.FC<SignupProps> = ({ toggleForm }) => {
         document.cookie = `accessToken=${response.data.accessToken}`;
         let getUserResponse;
         try {
+          console.log("unauth req");
           getUserResponse = await axios.post(
             '/api/UnauthgetUser',
             { accessToken: localStorage.getItem('accessToken') },
             { headers: { Authorization: `Bearer ${loginResponse.data.accessToken}` } }
           );
         } catch (error) {
-          throw error; // Re-throw the error to be caught by the outer catch block
+          console.log("unauth error");
+          throw error;
         }
         const { role } = getUserResponse.data;
         if (getUserResponse.status === 200) {
           if (role === "unauthorised") {
-            router.replace('/lounge'); // Navigate to lounge if unauthorised
+            router.replace('/lounge');
           } else {
-            router.replace('/dashboard'); // Navigate to dashboard after successful login
+            router.replace('/dashboard');
           }
         } else {
           throw new Error('Failed to create user in PostgreSQL');
@@ -173,7 +175,7 @@ const Signup: React.FC<SignupProps> = ({ toggleForm }) => {
       localStorage.setItem('refreshToken', response.data.refreshToken);
       document.cookie = `accessToken=${response.data.accessToken}`;
       if (response.status === 201) {
-          router.replace('/lounge'); 
+        router.replace('/lounge');
       } else {
         throw new Error('Failed to create user in PostgreSQL');
       }
@@ -185,7 +187,6 @@ const Signup: React.FC<SignupProps> = ({ toggleForm }) => {
       }
     }
   };
-
 
   return (
     <ThemeProvider theme={theme}>

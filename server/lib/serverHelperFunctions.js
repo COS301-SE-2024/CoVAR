@@ -43,12 +43,12 @@ async function isClient(pgClient, UserId){
 async function isUnauthorised(pgClient, UserId){
     const Unauthorised = await pgClient.query('SELECT role FROM users WHERE user_id = $1', [UserId]);
     if (Unauthorised.rows.length === 0) {
-        return { isClient: false, error: 'User not found' };
+        return { isUnauthorised: false, error: 'User not found' };
     }
     if (Unauthorised.rows[0].role !== 'unauthorised') {
-        return { isClient: false, error: 'Not authorized' };
+        return { isUnauthorised: false, error: 'Not authorized' };
     }
-    return { Unauthorised: true };
+    return { isUnauthorised: true };
 }
 async function getOrganizationId(pgClient, UserId) {
     const organizationIdResult = await pgClient.query('SELECT organization_id FROM users WHERE user_id = $1', [UserId]);

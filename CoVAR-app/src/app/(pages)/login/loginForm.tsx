@@ -132,6 +132,7 @@ const Login: React.FC<LoginProps> = ({ toggleForm }) => {
   
 
   const signInWithGoogle = async () => {
+    console.log("THIS IS THE LOGIN GOOGLE BUTTON");
     if (!isSigningIn) {
       setIsSigningIn(true);
       try {
@@ -166,6 +167,7 @@ const Login: React.FC<LoginProps> = ({ toggleForm }) => {
         document.cookie = `accessToken=${response.data.accessToken}`;
         let getUserResponse;
         try {
+          console.log("THIS IS THE LOGIN GOOGLE BUTTON");
           getUserResponse = await axios.post(
             '/api/getUser',
             { accessToken: localStorage.getItem('accessToken') },

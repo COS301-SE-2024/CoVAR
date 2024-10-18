@@ -16,7 +16,7 @@ import { iconStyles, logoStyles, logoutButtonStyles, sidebarItemStyles, sidebarS
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { getUserRole } from '@/functions/requests';
+import { getAnyUserRole } from '@/functions/requests';
 import { doSignOut } from '../functions/firebase/auth';
 import HelpDialog from './(pages)/help/helpDialog';
 import { Switch } from '@mui/material';
@@ -48,7 +48,8 @@ const Sidebar: React.FC = () => {
     try {
       const accessToken = localStorage.getItem('accessToken');
       if (accessToken) {
-        const data = await getUserRole(accessToken);
+        console.log("IM IN THE FUCKING SIDEBAR");
+        const data = await getAnyUserRole(accessToken);
         setRole(data.role);
       }
     } catch (error:any) {

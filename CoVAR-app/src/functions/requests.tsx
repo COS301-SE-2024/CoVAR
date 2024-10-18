@@ -246,6 +246,15 @@ export const getUserRole = async (accessToken: string) => {
     return await handleRequest(request);
 };
 
+export const getAnyUserRole = async (accessToken: string) => {
+    const request = {
+        method: 'post',
+        url: '/api/getMeoutthefuckingSidebar',
+        data: { accessToken },
+        headers: { Authorization: `Bearer ${accessToken}` },
+    };
+    return await handleRequest(request);
+};
 export const fetchUsersByOrg = async (orgId: string, accessToken: string) => {
     const request = {
         method: 'post',

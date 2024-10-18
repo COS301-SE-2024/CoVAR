@@ -324,7 +324,7 @@ router.put('/uploads/inReport/:upload_id', authenticateToken, async (req, res) =
 router.get('/uploads/organization/:organizationName', authenticateToken, async (req, res) => {
     const token = req.headers['authorization'].split(' ')[1];
     const decodedToken = verifyToken(token);
-    const id = decodedToken.user_id;
+    const vaId = decodedToken.user_id;
     const { organizationName } = req.params;
 
     try {
@@ -340,28 +340,39 @@ router.get('/uploads/organization/:organizationName', authenticateToken, async (
 
         const organizationId = orgResult.rows[0].organization_id;
 
+        // Check if the VA ID is assigned to the client in the assignment table
+        const assignmentResult = await pgClient.query(
+            'SELECT * FROM assignment WHERE va = $1 AND organization = $2',
+            [vaId, organizationId]
+        );
+
+        if (assignmentResult.rows.length === 0) {
+            return res.status(401).send('Unauthorized');
+        }
+
         // Fetch uploads for the organization UUID
         const uploads = await pgClient.query(
             'SELECT * FROM raw_uploads WHERE va = $1 AND organization = $2',
-            [id, organizationId]
+            [vaId, organizationId]
         );
 
-        res.send(uploads.rows);
+        res.status(200).send(uploads.rows);
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server Error');
     }
 });
 
-// Get all uploads for a specific client assigned to logged in VA
+
+// Get all uploads for a specific client assigned to logged-in VA
 router.get('/uploads/client/:clientName', authenticateToken, async (req, res) => {
     const token = req.headers['authorization'].split(' ')[1];
     const decodedToken = verifyToken(token);
-    const id = decodedToken.user_id;
+    const vaId = decodedToken.user_id;
     const { clientName } = req.params;
 
     try {
-        // Get the UUID for the clientName
+        // Check if the client exists in the users table
         const clientResult = await pgClient.query(
             'SELECT user_id FROM users WHERE username = $1',
             [clientName]
@@ -373,13 +384,23 @@ router.get('/uploads/client/:clientName', authenticateToken, async (req, res) =>
 
         const clientId = clientResult.rows[0].user_id;
 
-        // Fetch uploads for the client UUID
-        const uploads = await pgClient.query(
-            'SELECT * FROM raw_uploads WHERE va = $1 AND client = $2',
-            [id, clientId]
+        // Check if the VA ID is assigned to the client in the assignment table
+        const assignmentResult = await pgClient.query(
+            'SELECT * FROM assignment WHERE va = $1 AND client = $2',
+            [vaId, clientId]
         );
 
-        res.send(uploads.rows);
+        if (assignmentResult.rows.length === 0) {
+            return res.status(401).send('Unauthorized');
+        }
+
+        // Fetch uploads for the client assigned to the VA
+        const uploads = await pgClient.query(
+            'SELECT * FROM raw_uploads WHERE va = $1 AND client = $2',
+            [vaId, clientId]
+        );
+
+        res.status(200).send(uploads.rows);
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server Error');

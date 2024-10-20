@@ -1,7 +1,7 @@
 const express = require('express');
 const handleFileUpload = require('../lib/pipe');
 const { authenticateToken, verifyToken } = require('../lib/securityFunctions');
-
+const { isVA ,isAdmin} = require('../lib/serverHelperFunctions');
 const { parse } = require('csv-parse');
 const stream = require('stream');
 const pgClient = require('../lib/postgres');
@@ -13,8 +13,13 @@ const router = express.Router();
 
 // Get file content in raw_uploads table
 router.get('/uploads/file/:loid', authenticateToken, async (req, res) => {
+    const userId = req.user.user_id;
+    const VAResult =  await isVA(pgClient,userId);
+    const adminResult = await isAdmin(pgClient,userId);
+    if(!VAResult.isVA && !adminResult.isAdmin){
+        return res.status(403).send('Not authorized as VA or admin');
+    }
     const { loid } = req.params;
-
     try {
         await pgClient.query('BEGIN');
 
@@ -41,12 +46,23 @@ router.post('/uploads', authenticateToken, async (req, res) => {
     const token = req.headers['authorization'].split(' ')[1];
     const decodedToken = verifyToken(token);
     const vaId = decodedToken.user_id;
-
+    const userId = req.user.user_id;
+    const VAResult =  await isVA(pgClient,userId);
+    const adminResult = await isAdmin(pgClient,userId);
+    if(!VAResult.isVA && !adminResult.isAdmin){
+        return res.status(403).send('Not authorized as VA or admin');
+    }
     await handleFileUpload(req, res, vaId);
 });
 
 //remove file from raw_uploads table
 router.delete('/uploads/:upload_id', authenticateToken, async (req, res) => {
+    const userId = req.user.user_id;
+    const VAResult =  await isVA(pgClient,userId);
+    const adminResult = await isAdmin(pgClient,userId);
+    if(!VAResult.isVA && !adminResult.isAdmin){
+        return res.status(403).send('Not authorized as VA or admin');
+    }
     const { upload_id } = req.params;
 
     try {
@@ -76,11 +92,13 @@ router.delete('/uploads/:upload_id', authenticateToken, async (req, res) => {
     }
 });
 
-//For greenbone
-// Generate a report from a single CSV file content in raw_uploads table and return as JSON
-
-//Todo : Add every header from both greenbone and nessus and only display if its not empty ""
 router.get('/uploads/generateSingleReport/:upload_id', authenticateToken, async (req, res) => {
+    const userId = req.user.user_id;
+    const VAResult =  await isVA(pgClient,userId);
+    const adminResult = await isAdmin(pgClient,userId);
+    if(!VAResult.isVA && !adminResult.isAdmin){
+        return res.status(403).send('Not authorized as VA or admin');
+    }
     const { upload_id } = req.params;
 
     try {
@@ -102,79 +120,88 @@ router.get('/uploads/generateSingleReport/:upload_id', authenticateToken, async 
 
         const fileSignature = fileContent.toString('utf8', 0, 100).trim();
 
+        // .NESSUS FILE
         if (fileSignature.startsWith('<?xml')) {
-            xml2js.parseString(fileContent, { explicitArray: false }, (err, result) => {
-                if (err) {
-                    console.error('Error parsing XML:', err);
-                    return res.status(500).send('Error processing XML');
+
+            const parser = new xml2js.Parser({ explicitArray: false, mergeAttrs: true });
+
+            try {
+                const result = await parser.parseStringPromise(fileContent);
+                const records = [];
+
+                const report = result.NessusClientData_v2.Report;
+                if (!report) {
+                    throw new Error("Invalid XML format: Missing <Report> root element.");
                 }
 
-                // Extract ReportItem elements
-                const allItems = findAllReportItems(result);
+                const reportHosts = Array.isArray(report.ReportHost) ? report.ReportHost : [report.ReportHost];
+                
+                for (const host of reportHosts) {
+                    const ip = host.name;
+                
 
-                // Filter out ReportItems where risk_factor is "None"
-                const filteredItems = allItems.filter(item => item.risk_factor && item.risk_factor.toLowerCase() !== 'none');
+                    let reportItems = host.ReportItem;
+                    if (!reportItems) continue;
 
-                // Rename fields in the filtered items
-                const renamedItems = filteredItems.map(item => {
-                    const {
-                        $: {
+                    //if single item, put in array
+                    if (!Array.isArray(reportItems)) {
+                        reportItems = [reportItems];
+                    }
+
+                    for (const item of reportItems) {
+                        //left is field name in xml
+                        const {
                             port: Port,
-                            // svc_name: svc_name,
                             protocol: portProtocol,
-                            // pluginID: pluginID,
                             pluginName: nvtName,
-                            // pluginFamily: PluginFamily
-                        },
-                        cve: CVEs = '',
-                        // cvss3_base_score: CVSS3BaseScore,
-                        // cvss3_vector: CVSS3Vector,
-                        cvss_base_score: CVSS,
-                        // cvss_vector: CVSSVector,
-                        description: specificResult,
-                        // fname: FileName,
-                        // plugin_modification_date: PluginModificationDate,
-                        // plugin_publication_date: PluginPublicationDate,
-                        // plugin_type: PluginType,
-                        risk_factor: Severity,
-                        // script_version: ScriptVersion,
-                        // see_also: SeeAlso,
-                        solution: Solution,
-                        // synopsis: Synopsis,
-                        // plugin_output: PluginOutput
-                    } = item;
-                    const IP = "";
-                    const Summary = "";
-                    const nvtOid = "";
-                    const taskId = "";
-                    const taskName = "";
-                    const Timestamp = "";
-                    const resultId = "";
-                    const Impact = "";
-                    const affectedSoftwareOs = "";
-                    const vulnerabilityInsight = "";
-                    const vulnerabilityDetectionMethod = "";
-                    const productDetectionResult = "";
-                    const BIDs = "";
-                    const CERTs = "";
-                    const otherReferences = "";
-                    const Hostname = "";
-                    const solutionType = "";
+                            cvss_base_score: CVSS,
+                            description: specificResult,
+                            risk_factor: Severity,
+                            solution: Solution,
+                            
+                        } = item;
+                        const IP = ip;
+                        const Summary = "";
+                        const nvtOid = "";
+                        const taskId = "";
+                        const taskName = "";
+                        const Timestamp = "";
+                        const resultId = "";
+                        const Impact = "";
+                        const affectedSoftwareOs = "";
+                        const vulnerabilityInsight = "";
+                        const vulnerabilityDetectionMethod = "";
+                        const productDetectionResult = "";
+                        const BIDs = "";
+                        const CERTs = "";
+                        const otherReferences = "";
+                        const Hostname = "";
+                        const solutionType = "";
+                        const CVEs = "";
+                        const type = "Nessus";
 
-                    return {
-                        IP, Hostname, Port, portProtocol, CVSS, Severity, solutionType, nvtName,
-                        Summary, specificResult, nvtOid, CVEs, taskId, taskName, Timestamp,
-                        resultId, Impact, Solution, affectedSoftwareOs, vulnerabilityInsight,
-                        vulnerabilityDetectionMethod, productDetectionResult, BIDs, CERTs, otherReferences
-                    };
-                });
+                        if (Severity && Severity !== 'None') {
+                            records.push({
+                                IP, Hostname, Port, portProtocol, CVSS, Severity, solutionType, nvtName,
+                                Summary, specificResult, nvtOid, CVEs, taskId, taskName, Timestamp,
+                                resultId, Impact, Solution, affectedSoftwareOs, vulnerabilityInsight,
+                                vulnerabilityDetectionMethod, productDetectionResult, BIDs, CERTs, otherReferences, type
+                            });
+                        }
 
-                // Respond with the filtered and renamed JSON data
-                return res.json(renamedItems);
-            });
+                    }
+                }
 
-        } else {
-            // Handle CSV file
+                res.json(records);
+
+
+            } catch (error) {
+                console.error("Error parsing XML:", error);
+                throw error;
+            }
+
+
+        } else {  // Handle either nessus or greenbone CSV file
             const records = [];
             const parser = parse({
                 columns: true,
@@ -188,7 +215,7 @@ router.get('/uploads/generateSingleReport/:upload_id', authenticateToken, async 
             parser.on('readable', function () {
                 let record;
                 while ((record = parser.read()) !== null) {
-                    // Process record based on expected headers
+                    //NESSUS CSV
                     if (record['Plugin ID']) {
                         const {
                             // 'Plugin ID': pluginID,
@@ -222,16 +249,18 @@ router.get('/uploads/generateSingleReport/:upload_id', authenticateToken, async 
                         const otherReferences = "";
                         const Hostname = "";
                         const solutionType = "";
+                        const type = "Nessus";
 
                         if (Severity && Severity !== 'None') {
                             records.push({
                                 IP, Hostname, Port, portProtocol, CVSS, Severity, solutionType, nvtName,
                                 Summary, specificResult, nvtOid, CVEs, taskId, taskName, Timestamp,
                                 resultId, Impact, Solution, affectedSoftwareOs, vulnerabilityInsight,
-                                vulnerabilityDetectionMethod, productDetectionResult, BIDs, CERTs, otherReferences
+                                vulnerabilityDetectionMethod, productDetectionResult, BIDs, CERTs, otherReferences, type
                             });
                         }
                     } else {
+                        //GREENBONE CSV
                         const {
                             IP, Hostname, Port, 'Port Protocol': portProtocol, CVSS, Severity, 'Solution Type': solutionType,
                             'NVT Name': nvtName, Summary, 'Specific Result': specificResult, 'NVT OID': nvtOid,
@@ -240,13 +269,14 @@ router.get('/uploads/generateSingleReport/:upload_id', authenticateToken, async 
                             'Vulnerability Detection Method': vulnerabilityDetectionMethod, 'Product Detection Result': productDetectionResult,
                             BIDs, CERTs, 'Other References': otherReferences
                         } = record;
+                        const type = "OpenVAS";
 
                         if (IP || Hostname || Port) {
                             records.push({
                                 IP, Hostname, Port, portProtocol, CVSS, Severity, solutionType, nvtName,
                                 Summary, specificResult, nvtOid, CVEs, taskId, taskName, Timestamp,
                                 resultId, Impact, Solution, affectedSoftwareOs, vulnerabilityInsight,
-                                vulnerabilityDetectionMethod, productDetectionResult, BIDs, CERTs, otherReferences
+                                vulnerabilityDetectionMethod, productDetectionResult, BIDs, CERTs, otherReferences, type
                             });
                         }
                     }
@@ -271,35 +301,16 @@ router.get('/uploads/generateSingleReport/:upload_id', authenticateToken, async 
     }
 });
 
-// Helper function to find all ReportItem elements in the parsed JSON
-function findAllReportItems(obj) {
-    let items = [];
-
-    function recurse(current) {
-        if (Array.isArray(current)) {
-            current.forEach(recurse);
-        } else if (current && typeof current === 'object') {
-            Object.keys(current).forEach(key => {
-                if (key === 'ReportItem') {
-                    if (Array.isArray(current[key])) {
-                        items = items.concat(current[key]);
-                    } else {
-                        items.push(current[key]);
-                    }
-                } else {
-                    recurse(current[key]);
-                }
-            });
-        }
-    }
-
-    recurse(obj);
-    return items;
-}
 
 
 // Toggle the value in_report to true/false for a specific file
 router.put('/uploads/inReport/:upload_id', authenticateToken, async (req, res) => {
+    const userId = req.user.user_id;
+    const VAResult =  await isVA(pgClient,userId);
+    const adminResult = await isAdmin(pgClient,userId);
+    if(!VAResult.isVA && !adminResult.isAdmin){
+        return res.status(403).send('Not authorized as VA or admin');
+    }
     const { upload_id } = req.params;
 
     try {
@@ -339,9 +350,15 @@ router.put('/uploads/inReport/:upload_id', authenticateToken, async (req, res) =
 
 // Get all uploads for a specific organization assigned to logged in VA
 router.get('/uploads/organization/:organizationName', authenticateToken, async (req, res) => {
+    const userId = req.user.user_id;
+    const VAResult =  await isVA(pgClient,userId);
+    const adminResult = await isAdmin(pgClient,userId);
+    if(!VAResult.isVA && !adminResult.isAdmin){
+        return res.status(403).send('Not authorized as VA or admin');
+    }
     const token = req.headers['authorization'].split(' ')[1];
     const decodedToken = verifyToken(token);
-    const id = decodedToken.user_id;
+    const vaId = decodedToken.user_id;
     const { organizationName } = req.params;
 
     try {
@@ -357,28 +374,45 @@ router.get('/uploads/organization/:organizationName', authenticateToken, async (
 
         const organizationId = orgResult.rows[0].organization_id;
 
+        // Check if the VA ID is assigned to the client in the assignment table
+        const assignmentResult = await pgClient.query(
+            'SELECT * FROM assignment WHERE va = $1 AND organization = $2',
+            [vaId, organizationId]
+        );
+
+        if (assignmentResult.rows.length === 0) {
+            return res.status(401).send('Unauthorized');
+        }
+
         // Fetch uploads for the organization UUID
         const uploads = await pgClient.query(
             'SELECT * FROM raw_uploads WHERE va = $1 AND organization = $2',
-            [id, organizationId]
+            [vaId, organizationId]
         );
 
-        res.send(uploads.rows);
+        res.status(200).send(uploads.rows);
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server Error');
     }
 });
 
-// Get all uploads for a specific client assigned to logged in VA
+
+// Get all uploads for a specific client assigned to logged-in VA
 router.get('/uploads/client/:clientName', authenticateToken, async (req, res) => {
+    const userId = req.user.user_id;
+    const VAResult =  await isVA(pgClient,userId);
+    const adminResult = await isAdmin(pgClient,userId);
+    if(!VAResult.isVA && !adminResult.isAdmin){
+        return res.status(403).send('Not authorized as VA or admin');
+    }
     const token = req.headers['authorization'].split(' ')[1];
     const decodedToken = verifyToken(token);
-    const id = decodedToken.user_id;
+    const vaId = decodedToken.user_id;
     const { clientName } = req.params;
 
     try {
-        // Get the UUID for the clientName
+        // Check if the client exists in the users table
         const clientResult = await pgClient.query(
             'SELECT user_id FROM users WHERE username = $1',
             [clientName]
@@ -390,13 +424,23 @@ router.get('/uploads/client/:clientName', authenticateToken, async (req, res) =>
 
         const clientId = clientResult.rows[0].user_id;
 
-        // Fetch uploads for the client UUID
-        const uploads = await pgClient.query(
-            'SELECT * FROM raw_uploads WHERE va = $1 AND client = $2',
-            [id, clientId]
+        // Check if the VA ID is assigned to the client in the assignment table
+        const assignmentResult = await pgClient.query(
+            'SELECT * FROM assignment WHERE va = $1 AND client = $2',
+            [vaId, clientId]
         );
 
-        res.send(uploads.rows);
+        if (assignmentResult.rows.length === 0) {
+            return res.status(401).send('Unauthorized');
+        }
+
+        // Fetch uploads for the client assigned to the VA
+        const uploads = await pgClient.query(
+            'SELECT * FROM raw_uploads WHERE va = $1 AND client = $2',
+            [vaId, clientId]
+        );
+
+        res.status(200).send(uploads.rows);
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server Error');
@@ -406,8 +450,15 @@ router.get('/uploads/client/:clientName', authenticateToken, async (req, res) =>
 
 // Endpoint to generate report
 router.post('/uploads/generateReport', authenticateToken, async (req, res) => {
+    const userId = req.user.user_id;
+    const VAResult =  await isVA(pgClient,userId);
+    const adminResult = await isAdmin(pgClient,userId);
+    if(!VAResult.isVA && !adminResult.isAdmin){
+        return res.status(403).send('Not authorized as VA or admin');
+    }
     const { finalReport, name, type } = req.body;
-    
+    console.log("finalReport:",finalReport, "name:", name, "type:", type);
+
     if (!finalReport || finalReport.length === 0) {
         return res.status(400).json({ error: 'Reports or report IDs are missing' });
     }

@@ -1,0 +1,15 @@
+FROM python:3.9-slim
+
+# Set environment variables for Flask
+ENV FLASK_APP=app.py
+ENV FLASK_ENV=development
+
+WORKDIR /app
+
+COPY requirements.txt requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY . .
+
+# Run the Flask application in debug mode
+CMD ["python", "app.py"]

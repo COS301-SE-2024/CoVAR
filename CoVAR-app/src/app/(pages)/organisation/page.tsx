@@ -1,11 +1,16 @@
 'use client'
-import { useEffect, useState, useCallback } from 'react';
-import { Button, Card, CardContent, CircularProgress, TextField, Typography } from '@mui/material';
+import { useEffect, useState, useCallback, useRef } from 'react';
+import { Button, Card, CardContent, CircularProgress, TextField, Typography, IconButton} from '@mui/material';
 import { Box } from '@mui/system';
-import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
-import { getUserRole, fetchUsersByOrg, removeUser, addUser, deleteOrganisation, createOrganisation, changeOrganisationName, leaveOrganisation } from '../../../functions/requests';
-import { buttonStyles, cardStyles, headingBoxStyles, mainContentStyles, textFieldStyles } from '../../../styles/organisationStyle';
+import { DataGrid, GridColDef, GridRenderCellParams, GridAlignment } from '@mui/x-data-grid';
+import { getUserRole, fetchUsersByOrg, removeUser, deleteOrganisation, createOrganisation, changeOrganisationName, leaveOrganisation, inviteMember, fetchInvites, acceptInvite, rejectInvite, getOwner } from '../../../functions/requests';
+import { boxStylesOrg, buttonStyles, cardStyles, headingBoxStyles, mainContentStyles, textFieldStyles } from '../../../styles/organisationStyle';
 import { useRouter } from 'next/navigation';
+import AcceptIcon from '@mui/icons-material/Check'; 
+import RejectIcon from '@mui/icons-material/Close';
+import { useTheme } from '@mui/material/styles';
+import { Loader } from '@/styles/conflictStyle';
+
 type User = {
     id: string;
     email: string;
@@ -13,7 +18,16 @@ type User = {
     createdAt?: string;
 };
 
+type Invite = {
+    invite_id: string;
+    organization_name: string;
+    user_id: string;
+    invite_status: string;
+  };
+  
+
 const Organisation = () => {
+    const theme = useTheme();
     const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
     const [newMemberEmail, setNewMemberEmail] = useState('');
@@ -25,11 +39,15 @@ const Organisation = () => {
     const [isInOrg, setIsInOrg] = useState<string | null>(null);
     const [username, setUsername] = useState<string | null>(null);
     const [ownerId, setOwnerId] = useState<string | null>(null);
-    const [addMemberMessage, setAddMemberMessage] = useState<string | null>(null);
+    const [ownerEmail, setOwnerEmail] = useState<string | null>(null);
+    const [inviteMemberMessage, setInviteMemberMessage] = useState<string | null>(null);
     const [changeNameMessage, setChangeNameMessage] = useState<string | null>(null);
     const [disbandOrgMessage, setDisbandOrgMessage] = useState<string | null>(null);
+    const [leaveOrgMessage, setLeaveOrgMessage] = useState<string | null>(null);
     const [createOrgErrorMessage, setCreateOrgErrorMessage] = useState<string | null>(null);
     const [isChangeNameButtonDisabled, setIsChangeNameButtonDisabled] = useState(true);
+    const [invites, setInvites]  = useState<Invite[]>([]);
+    const pollingRef = useRef<NodeJS.Timeout | null>(null);
 
     const router = useRouter();
     
@@ -103,6 +121,29 @@ const Organisation = () => {
         }
     }, [confirmLeaveOrganisationName, confirmDisbandOrganisationName, organisationName]);
 
+
+    const fetchOwnerEmail = useCallback(async () => {
+        if (isInOrg) {
+            try {
+                const accessToken = localStorage.getItem('accessToken');
+                if (accessToken) {
+                    const response = await getOwner(isInOrg, accessToken);
+                    const ownerEmail = response.username;
+                    setOwnerEmail(ownerEmail);
+                }
+            } catch (error:any) {
+                console.error('Error fetching owner email:', error);
+                if (error.response?.status === 403) {
+                    redirectToLogin();
+                }
+            }
+        }
+    }, [isInOrg, redirectToLogin]);
+
+    useEffect(() => {
+        fetchOwnerEmail();
+    }, [isInOrg, fetchOwnerEmail]);
+
     const handleRemoveUser = async (user: User) => {
         try {
             const accessToken = localStorage.getItem('accessToken');
@@ -110,6 +151,8 @@ const Organisation = () => {
                 const status = await removeUser(isInOrg, ownerId, user.email, accessToken);
                 if (status === 200) {
                     setUsers(users.filter((u) => u.id !== user.id));
+                    await fetchUserRole(); 
+                    await fetchUsersList();
                 }
             }
         } catch (error:any) {
@@ -126,36 +169,172 @@ const Organisation = () => {
             if (accessToken && isInOrg && username) {
                 const status = await leaveOrganisation(isInOrg, username, accessToken);
                 if (status === 200) {
+                    console.log('Successfully left organisation');
                     setIsInOrg(null);
                     setOrganisationName('');
+                    setDisbandOrgMessage('Successfully left organisation');
+                    setUsers([]); 
+                    setTimeout(() => setLeaveOrgMessage(null), 10000);
+                    await getInvites();
                 }
             }
-        } catch (error) {
-            console.error('Error leaving organisation:', error);
-        }
-    };
-
-
-    const handleAddMember = async () => {
-        try {
-            const accessToken = localStorage.getItem('accessToken');
-            if (accessToken && isInOrg && ownerId) {
-                await addUser(isInOrg, ownerId, newMemberEmail, accessToken);
-                setNewMemberEmail('');
-                fetchUsersList();
-                setAddMemberMessage('Member added successfully.');
-                setTimeout(() => setAddMemberMessage(null), 10000);
-            }
         } catch (error:any) {
-            console.error('Error adding member:', error);
-            setAddMemberMessage('Error adding member.');
-            setTimeout(() => setAddMemberMessage(null), 10000);
-              
-                          if(error.response?.status === 403) {
+            setLeaveOrgMessage('Error leaving organisation.');
+            setTimeout(() => setLeaveOrgMessage(null), 10000);
+            if(error.response?.status === 403) {
                 redirectToLogin();
             }
         }
     };
+
+    const handleDeleteOrganisation = async () => {
+        try {
+            const accessToken = localStorage.getItem('accessToken');
+            if (accessToken && isInOrg) {
+                const status = await deleteOrganisation(
+                    isInOrg,
+                    confirmDisbandOrganisationName,
+                    accessToken
+                );
+                if (status === 200) {
+                    setIsInOrg(null);
+                    setOrganisationName('');
+                    setConfirmDisbandOrganisationName('');
+                    setDisbandOrgMessage('Organisation disbanded successfully');
+                    setUsers([]); 
+                    setTimeout(() => setDisbandOrgMessage(null), 10000);
+                    await getInvites();
+                }
+            }
+        } catch (error:any) {
+            setDisbandOrgMessage('Error disbanding organisation.');
+            setTimeout(() => setDisbandOrgMessage(null), 10000);
+            if(error.response?.status === 403) {
+                redirectToLogin();
+            }
+        }
+    };
+
+
+   
+    const handleSendInvite = async () => {
+        try {
+            const accessToken = localStorage.getItem('accessToken');
+            if (accessToken && isInOrg && ownerId) {
+                const status = await inviteMember(isInOrg, ownerId, newMemberEmail, accessToken);
+                console.log('Status:', status);
+                if (status === 200) {
+                    setNewMemberEmail('');
+                    setInviteMemberMessage('Invite sent successfully.');
+                    setTimeout(() => setInviteMemberMessage(null), 10000);
+                }
+            }
+        } catch (error:any) {
+            if (error.response?.status === 403) {
+                redirectToLogin();
+            } 
+            if (error.response && error.response.data) {
+                setInviteMemberMessage(error.response.data);
+            } else {
+                setInviteMemberMessage('Error sending invite.');
+            }
+            setTimeout(() => setInviteMemberMessage(null), 10000);
+
+            if (error.response?.status === 403) {
+                redirectToLogin();
+            } 
+        }
+    };
+    
+
+    const getInvites = useCallback(async () => {
+        try {
+            const accessToken = localStorage.getItem('accessToken');
+            if (accessToken && username) {
+                const inviteData = await fetchInvites(username, accessToken);
+                setInvites(inviteData); 
+            }
+        } catch (error:any) {
+            console.error('Error fetching invites:', error);
+
+            if (error.response?.status === 403) {
+                redirectToLogin();
+            } 
+        }
+    },  [username, redirectToLogin])
+
+    const handleAcceptInvite = async (inviteId: string) => {
+        try {
+            const accessToken = localStorage.getItem('accessToken');
+            if (accessToken && inviteId) {
+                const response = await acceptInvite(inviteId, accessToken); 
+                getInvites(); 
+                await fetchUserRole(); 
+                await fetchUsersList();
+                setInviteMemberMessage('Invite accepted successfully.');
+                setTimeout(() => setInviteMemberMessage(null), 10000);
+            }
+        } catch (error: any) {
+            console.error('Error accepting invite:', error);
+            setInviteMemberMessage('Error accepting invite.');
+            setTimeout(() => setInviteMemberMessage(null), 10000);
+    
+            if (error.response?.status === 403) {
+                redirectToLogin();
+            }
+        }
+    };
+
+    const handleRejectInvite = async (inviteId: string) => {
+        try {
+            const accessToken = localStorage.getItem('accessToken');
+            if (accessToken && inviteId) {
+                const response = await rejectInvite(inviteId, accessToken); 
+                getInvites(); 
+                setInviteMemberMessage('Invite rejected successfully.');
+                setTimeout(() => setInviteMemberMessage(null), 10000);
+            }
+        } catch (error: any) {
+            console.error('Error rejecting invite:', error);
+            setInviteMemberMessage('Error rejecting invite.');
+            setTimeout(() => setInviteMemberMessage(null), 10000);
+    
+            if (error.response?.status === 403) {
+                redirectToLogin();
+            }
+        }
+    };
+
+    const startPolling = useCallback(() => {
+        if (!pollingRef.current) {
+            pollingRef.current = setInterval(() => {
+                getInvites();
+            }, 5000); 
+        }
+    }, [getInvites]);
+
+    const stopPolling = useCallback(() => {
+        if (pollingRef.current) {
+            clearInterval(pollingRef.current);
+            pollingRef.current = null;
+        }
+    }, []);
+
+
+    useEffect(() => {
+        if (!isInOrg) {
+            getInvites(); 
+            startPolling(); // Start polling for invites
+        } else {
+            stopPolling(); // Stop polling if the user is in an organization
+        }
+
+        // Cleanup function to stop polling on unmount or when isInOrg changes
+        return () => {
+            stopPolling();
+        };
+    }, [isInOrg, getInvites, startPolling, stopPolling]);
+
 
     const handleChangeOrganisationName = async () => {
         try {
@@ -185,32 +364,6 @@ const Organisation = () => {
         }
     };
 
-    const handleDeleteOrganisation = async () => {
-        try {
-            const accessToken = localStorage.getItem('accessToken');
-            if (accessToken && isInOrg) {
-                const status = await deleteOrganisation(
-                    isInOrg,
-                    confirmDisbandOrganisationName,
-                    accessToken
-                );
-                if (status === 200) {
-                    setIsInOrg(null);
-                    setOrganisationName('');
-                    setConfirmDisbandOrganisationName('');
-                    setDisbandOrgMessage('Organisation disbanded successfully');
-                    setUsers([]); 
-                    setTimeout(() => setDisbandOrgMessage(null), 10000);
-                }
-            }
-        } catch (error:any) {
-            setDisbandOrgMessage('Error disbanding organisation.');
-            setTimeout(() => setDisbandOrgMessage(null), 10000);
-            if(error.response?.status === 403) {
-                redirectToLogin();
-            }
-        }
-    };
     
 
     const handleCreateNewOrganisation = async () => {
@@ -241,41 +394,87 @@ const Organisation = () => {
     
 
     const columns: GridColDef[] = [
-        { field: 'email', headerName: 'Email', flex: 1, headerAlign: 'left', resizable: false },
         {
+            field: 'email',
+            headerName: 'Email',
+            flex: 1,
+            headerAlign: 'left' as GridAlignment, 
             resizable: false,
-            field: 'actions',
-            headerName: 'Actions',
-            flex: 0.5,
-            headerAlign: 'left',
-            align: 'left',
-            disableColumnMenu: true,
             renderCell: (params: GridRenderCellParams) => (
-                <Button
-                    variant="contained"
-                    sx={{
-                        backgroundColor: '#EE1D52',
-                        color: '#CAD2C5',
-                        width: '110px',
-                        '&:hover': {
-                            backgroundColor: '#D11C45',
-                        },
-                    }}
-                    onClick={() => handleRemoveUser(params.row)}
-                    disabled={!isOwner || params.row.email === username}
-                >
-                    Remove
-                </Button>
+                <span style={{ color: params.row.email === username ? (theme.palette.mode === 'light' ? '#006A4E' : '#7AAFA5') : 'inherit' }}>
+                    {params.row.email}
+                </span>
             ),
         },
+        {
+            field: 'role',
+            headerName: 'Role',
+            flex: 1,
+            headerAlign: 'left' as GridAlignment, 
+            renderCell: (params: GridRenderCellParams) => {
+                const isOwner = params.row.email === ownerEmail; 
+                return (
+                    <span
+                        style={{
+                            fontWeight: isOwner ? 'bold' : 'normal',
+                            color: params.row.email === username ? (theme.palette.mode === 'light' ? '#006A4E' : '#7AAFA5') : 'inherit',
+                        }}
+                    >
+                        {isOwner ? 'Owner' : 'Member'} 
+                    </span>
+                );
+            },
+        },
+        ...(isOwner ? [
+            {
+                resizable: false,
+                field: 'actions',
+                headerName: 'Actions',
+                flex: 0.5,
+                headerAlign: 'left' as GridAlignment, 
+                align: 'left' as GridAlignment, 
+                disableColumnMenu: true,
+                renderCell: (params: GridRenderCellParams) => (
+                    <Button
+                        variant="contained"
+                        sx={{
+                            backgroundColor: '#EE1D52',
+                            color: '#CAD2C5',
+                            width: '110px',
+                            '&:hover': {
+                                backgroundColor: '#D11C45',
+                            },
+                        }}
+                        onClick={() => handleRemoveUser(params.row)}
+                        disabled={params.row.email === username}
+                    >
+                        Remove
+                    </Button>
+                ),
+            },
+        ] : []),
     ];
+    
+    
+    
+    
 
     if (loading) {
         return (
-            <Box sx={mainContentStyles}>
-                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-                    <CircularProgress />
-                </Box>
+            <Box sx={{
+                ...boxStylesOrg,
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                width: '100%',
+                height: '100%',
+
+            }}>
+                <Loader />
             </Box>
         );
     }
@@ -288,49 +487,115 @@ const Organisation = () => {
                         You are not part of an organisation
                     </Typography>
                 </Box>
-                <Card sx={cardStyles}>
-                    <CardContent>
-                        <Typography variant="h6" color="text.primary">
-                            Create Organisation?
-                        </Typography>
-                        <TextField
-                            required
-                            margin="normal"
-                            fullWidth
-                            id="new-organisation-name"
-                            label="Organisation Name"
-                            name="new-organisation-name"
-                            autoComplete="organisation-name"
-                            InputLabelProps={{ sx: { color: 'text.primary' } }}
-                            InputProps={{ sx: { color: 'text.primary' } }}
-                            value={organisationName}
-                            onChange={(e) => setOrganisationName(e.target.value)}
-                            sx={textFieldStyles}
-                        />
-                        <Button
-                            variant="contained"
-                            sx={buttonStyles}
-                            onClick={handleCreateNewOrganisation}
-                        >
-                            Create Organisation
-                        </Button>
-                        {createOrgErrorMessage && (
-                        <Box sx={{ display: 'flex', justifyContent: 'center', width: '100%', mb: 4 }}>
-                            <Typography
-                                variant="body2"
-                                color="error.main"
-                                sx={{ 
-                                    whiteSpace: 'nowrap',
-                                }}
-                            >
-                                {createOrgErrorMessage}
-                            </Typography>
-                        </Box>
-                    )}
+    
+                <Box sx={{ display: 'flex', justifyContent: 'center', gap: 20}}>
+                        <Card sx={cardStyles}>
+                            <CardContent>
+                                <Typography variant="h6" color="text.primary">
+                                    Create Organisation
+                                </Typography>
+                                <TextField
+                                    required
+                                    margin="normal"
+                                    fullWidth
+                                    id="new-organisation-name"
+                                    label="Organisation Name"
+                                    name="new-organisation-name"
+                                    autoComplete="organisation-name"
+                                    InputLabelProps={{ sx: { color: 'text.primary' } }}
+                                    InputProps={{ sx: { color: 'text.primary' } }}
+                                    value={organisationName}
+                                    onChange={(e) => setOrganisationName(e.target.value)}
+                                    sx={textFieldStyles}
+                                />
+                                <Button variant="contained" sx={buttonStyles} onClick={handleCreateNewOrganisation}>
+                                    Create Organisation
+                                </Button>
+                                {createOrgErrorMessage && (
+                                    <Box sx={{ display: 'flex', justifyContent: 'center', width: '100%', mb: 4 }}>
+                                        <Typography variant="body2" color="error.main">
+                                            {createOrgErrorMessage}
+                                        </Typography>
+                                    </Box>
+                                )}
+                            </CardContent>
+                        </Card>
+
+                        {invites.length > 0 && (
+                            <Card sx={cardStyles}>
+                                <CardContent>
+                                    <Typography variant="h6" color="text.primary" sx={{ mb: 2 }}>
+                                        Pending Invites
+                                    </Typography>
+                                    <Box
+                                    sx={{
+                                        maxHeight: '15vh',
+                                        overflowY: 'auto',
+                                        '&::-webkit-scrollbar': {
+                                            width: '0.2vw', 
+                                        },
+                                        '&::-webkit-scrollbar-thumb': {
+                                            backgroundColor: 'gray', 
+                                            borderRadius: '0.4vw',
+                                        },
+                                        '&::-webkit-scrollbar-track': {
+                                            backgroundColor: 'transparent', 
+                                        },
+                                        scrollbarWidth: 'thin', 
+                                        scrollbarColor: 'gray transparent', 
+                                    }}
+                                >
+                                        {invites.map((invite) => (
+                                            <Box
+                                            key={invite.invite_id}
+                                            data-testid={`invite-box-${invite.organization_name}`} 
+                                                sx={{
+                                                     mb: 2, 
+                                                     display: 'flex', 
+                                                     alignItems: 'center', 
+                                                     border: `1px solid ${theme.palette.mode === 'light' ? 'silver' : 'rgb(102, 114, 119)'}`, 
+                                                     borderRadius: 1, p: 1 
+                                                    }}
+                                            >
+                                                <Typography color="text.primary" sx={{ flexGrow: 1 }}>
+                                                    {invite.organization_name}
+                                                </Typography>
+                                                <IconButton
+                                                    color="error"
+                                                    onClick={() => handleRejectInvite(invite.invite_id)}
+                                                    data-testid={`rejectInvite-${invite.organization_name}`}
+                                                    sx={{
+                                                        ml: 1,
+                                                        border: `1px solid ${theme.palette.mode === 'light' ? 'lightgray' : 'rgb(102, 114, 119)'}`, 
+                                                        borderRadius: '50%', 
+                                                        '&:hover': { backgroundColor: 'rgba(211, 28, 69, 0.1)' }
+                                                    }} 
+                                                >
+                                                    <RejectIcon />
+                                                </IconButton>
+                                                <IconButton
+                                                    color="primary"
+                                                    onClick={() => handleAcceptInvite(invite.invite_id)}
+                                                    data-testid={`acceptInvite-${invite.organization_name}`}
+                                                    sx={{
+                                                        ml: 1,
+                                                        border: `1px solid ${theme.palette.mode === 'light' ? 'lightgray' : 'rgb(102, 114, 119)'}`, 
+                                                        borderRadius: '50%', 
+                                                        '&:hover': { backgroundColor: 'rgba(0, 150, 255, 0.1)' },
+                                                        '& svg': {color: theme.palette.mode === 'light' ? 'inherit' : 'rgb(76, 175, 80)', }
+                                                    }} 
+                                                >
+                                                    <AcceptIcon />
+                                                </IconButton>
+                                            </Box>
+                                        ))}
+                                    </Box>
+                                </CardContent>
+                            </Card>
+)}
 
 
-                    </CardContent>
-                </Card>
+                </Box>
             </Box>
         );
     }
@@ -404,7 +669,7 @@ const Organisation = () => {
                     <Card sx={cardStyles}>
                         <CardContent>
                             <Typography variant="h6" color="text.primary">
-                                Add a Member
+                                Invite a Member
                             </Typography>
                             <TextField
                                 required
@@ -420,21 +685,21 @@ const Organisation = () => {
                                 onChange={(e) => setNewMemberEmail(e.target.value)}
                                 sx={textFieldStyles}
                             />
-                            <Button variant="contained" sx={buttonStyles} onClick={handleAddMember}>
-                                Add Member
+                            <Button variant="contained" sx={buttonStyles} onClick={handleSendInvite}>
+                                Invite Member
                             </Button>
                             <Box sx={{ mt: 1, textAlign: 'center' }}>
-                            {addMemberMessage && (
+                            {inviteMemberMessage && (
                                 <Typography
                                     variant="body2"
-                                    color={addMemberMessage.startsWith('Error') ? 'error.main' : 'success.main'}
+                                    color={inviteMemberMessage === 'Invite sent successfully.' ? 'success.main'  : 'error.main'}
                                     sx={{ 
                                         display: 'inline-block',
                                         whiteSpace: 'nowrap',
                                         mb: 4  
                                     }}
                                 >
-                                    {addMemberMessage}
+                                    {inviteMemberMessage}
                                 </Typography>
                             )}
                             </Box>
@@ -572,6 +837,21 @@ const Organisation = () => {
                             >
                                 Leave Organisation
                             </Button>
+                            <Box sx={{ mt: 1, textAlign: 'center' }}>
+                            {leaveOrgMessage && (
+                                <Typography
+                                    variant="body2"
+                                    color={leaveOrgMessage.startsWith('Error') ? 'error.main' : 'success.main'}
+                                    sx={{ 
+                                        display: 'inline-block',
+                                        whiteSpace: 'nowrap',
+                                        mb: 4  
+                                    }}
+                                >
+                                    {leaveOrgMessage}
+                                </Typography>    
+                            )}
+                            </Box>
                     </CardContent>
                 </Card>
                 </Box>

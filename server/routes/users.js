@@ -1,6 +1,6 @@
 const express = require('express');
-const { authenticateToken, generateToken, verifyToken, generateRefreshToken } = require('../lib/securityFunctions');
-const { isOwner,isAdmin } = require('../lib/serverHelperFunctions');
+const { authenticateToken, generateToken, verifyToken, generateRefreshToken , authenticateWhiteList, authenticateAllToken} = require('../lib/securityFunctions');
+const { isOwner,isAdmin,isVA } = require('../lib/serverHelperFunctions');
 const pgClient = require('../lib/postgres');
 
 const router = express.Router();
@@ -12,14 +12,115 @@ router.get('/users/all', authenticateToken, async (req, res) => {
         if(!adminResult.isAdmin){
             return res.status(403).send('Not authorized as admin');
         }
-        const users = await pgClient.query("SELECT u.user_id, u.username, u.role, o.name AS organization FROM users u LEFT JOIN organizations o ON u.organization_id = o.organization_id;");
+        const users = await pgClient.query("SELECT u.user_id, u.username, u.role, u.created_at, o.name AS organization FROM users u LEFT JOIN organizations o ON u.organization_id = o.organization_id;");
         res.send(users.rows);
     } catch (err) {
         console.error('Error fetching users:', err);
         res.status(500).send('Server Error');
     }
 });
+router.post('/UnauthgetUser', authenticateWhiteList, async (req, res) => {
+    console.log('Getting unauth user');
+    const token = req.body.accessToken;
+    if(!token){
+        return res.status(400).send('Token is required');
+    }
+    try {
+        console.log('Token:', token);
+        const decodedToken = verifyToken(token);
+        //console.log('Decoded token in getUSer:', decodedToken);
+        const userId = decodedToken.user_id;
 
+        const userQuery = 'SELECT * FROM users WHERE user_id = $1';
+        const userResult = await pgClient.query(userQuery, [userId]);
+
+        if (userResult.rows.length === 0) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        let orgName = null;
+        let owner = { isOwner: false };
+
+        // Check if the user is associated with an organization
+        if (userResult.rows[0].organization_id !== null) {
+            const orgQuery = 'SELECT name FROM organizations WHERE organization_id = $1';
+            const orgResult = await pgClient.query(orgQuery, [userResult.rows[0].organization_id]);
+            
+            if (orgResult.rows.length > 0) {
+                orgName = orgResult.rows[0].name;
+                // Check if user is an owner of the organization
+                owner = await isOwner(pgClient, orgName, userResult.rows[0].user_id);
+            } else {
+                console.error('Organization not found');
+            }
+        }
+
+        const user = {
+            user_id: userResult.rows[0].user_id,
+            username: userResult.rows[0].username,
+            role: userResult.rows[0].role,
+            organization_id: userResult.rows[0].organization_id,
+            orgName: orgName, // Include organization name in response
+            owner: owner.isOwner
+        };
+
+        res.status(201).json(user);
+    } catch (err) {
+        console.error('Error fetching user:', err);
+        res.status(500).json({ error: 'Server Error' });
+    }
+});
+router.post('/getMeoutthefuckingSidebar', authenticateAllToken, async (req, res) => {
+    console.log('Getting user');
+    const token = req.body.accessToken;
+    if(!token){
+        return res.status(400).send('Token is required');
+    }
+    try {
+        console.log('Token:', token);
+        const decodedToken = verifyToken(token);
+        //console.log('Decoded token in getUSer:', decodedToken);
+        const userId = decodedToken.user_id;
+
+        const userQuery = 'SELECT * FROM users WHERE user_id = $1';
+        const userResult = await pgClient.query(userQuery, [userId]);
+
+        if (userResult.rows.length === 0) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        let orgName = null;
+        let owner = { isOwner: false };
+
+        // Check if the user is associated with an organization
+        if (userResult.rows[0].organization_id !== null) {
+            const orgQuery = 'SELECT name FROM organizations WHERE organization_id = $1';
+            const orgResult = await pgClient.query(orgQuery, [userResult.rows[0].organization_id]);
+            
+            if (orgResult.rows.length > 0) {
+                orgName = orgResult.rows[0].name;
+                // Check if user is an owner of the organization
+                owner = await isOwner(pgClient, orgName, userResult.rows[0].user_id);
+            } else {
+                console.error('Organization not found');
+            }
+        }
+
+        const user = {
+            user_id: userResult.rows[0].user_id,
+            username: userResult.rows[0].username,
+            role: userResult.rows[0].role,
+            organization_id: userResult.rows[0].organization_id,
+            orgName: orgName, // Include organization name in response
+            owner: owner.isOwner
+        };
+
+        res.status(201).json(user);
+    } catch (err) {
+        console.error('Error fetching user:', err);
+        res.status(500).json({ error: 'Server Error' });
+    }
+});
 router.post('/getUser', authenticateToken, async (req, res) => {
     console.log('Getting user');
     const token = req.body.accessToken;
@@ -309,6 +410,11 @@ router.get('/users/unauthorized', authenticateToken, async (req, res) => {
 
 // Endpoint to change role from unauthorized to client using username
 router.patch('/users/authorize', authenticateToken, async (req, res) => {
+    const userId = req.user.user_id;
+    const adminResult =  await isAdmin(pgClient,userId);
+    if(!adminResult.isAdmin){
+        return res.status(403).send('Not authorized as admin');
+    }
     const { username } = req.body;
     try {
         // Check if the user exists and has the role 'unauthorised'
@@ -336,6 +442,11 @@ router.patch('/users/authorize', authenticateToken, async (req, res) => {
 
 // Get all clients assigned to logged in VA
 router.get('/users/assigned_clients', authenticateToken, async (req, res) => {
+    const userId = req.user.user_id;
+    const VAResult =  await isVA(pgClient,userId);
+    if(!VAResult.isVA){
+        return res.status(403).send('Not authorized as VA');
+    }
     const token = req.headers['authorization'].split(' ')[1];
     const decodedToken = verifyToken(token);
     const id = decodedToken.user_id;
@@ -348,5 +459,50 @@ router.get('/users/assigned_clients', authenticateToken, async (req, res) => {
         res.status(500).send('Server Error');
     }
 });
+
+// Get all organizations assigned to the logged-in VA
+router.get('/users/assigned_organizations', authenticateToken, async (req, res) => {
+    const token = req.headers['authorization'].split(' ')[1];
+    const decodedToken = verifyToken(token);
+    const id = decodedToken.user_id;
+    
+    try {
+        const organizations = await pgClient.query(
+            `SELECT * FROM organizations 
+            WHERE organization_id IN (SELECT organization FROM assignment WHERE va = $1)`, 
+            [id]
+        );
+        res.send(organizations.rows);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
+});
+
+
+// Check if email exists in the database
+router.post('/users/checkEmailExists', async (req, res) => {
+    const { email } = req.body;
+    if (!email) {
+        return res.status(400).send('Email is required');
+    }
+    try {
+        // Query the database to see if the email exists
+        const query = 'SELECT * FROM users WHERE username = $1';
+        const result = await pgClient.query(query, [email]);
+        
+        if (result.rows.length === 0) {
+            // Email not found
+            return res.status(404).send('Email not found');
+        }
+        // Email found
+        res.status(200).send('Email exists');
+    } catch (err) {
+        console.error('Error checking email:', err);
+        res.status(500).send('Server Error');
+    }
+});
+
+
 
 module.exports = router;

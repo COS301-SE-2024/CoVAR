@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: 'postgres:latest'
+    image: 'postgres:16'
     environment:
       - POSTGRES_PASSWORD=${PG_PASSWORD}
       - POSTGRES_USER=${PG_USER}

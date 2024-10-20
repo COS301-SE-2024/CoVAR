@@ -15,6 +15,7 @@ cypress/reports
 
 # Docker artifacts
 Dockerfile
+Dockerfile.dev
 docker-compose.yml
 .dockerignore
 

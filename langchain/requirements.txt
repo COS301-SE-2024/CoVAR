@@ -1,0 +1,14 @@
+langchain
+langchain_openai
+langchain-ollama
+langchain-google-genai
+transformers
+torch
+flask  
+requests
+python-dotenv
+openai
+PyJWT
+cryptography
+gunicorn 
+

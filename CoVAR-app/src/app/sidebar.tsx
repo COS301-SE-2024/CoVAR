@@ -9,13 +9,14 @@ import LockIcon from '@mui/icons-material/Lock';
 import SettingsIcon from '@mui/icons-material/Settings';
 import { Box, Button, List, ListItem, ListItemIcon, ListItemText, Typography, useTheme } from '@mui/material';
 import React, { useCallback, useContext, useEffect, useState } from 'react';
+import BubbleChartIcon from '@mui/icons-material/BubbleChart';
 
 import { useThemeContext } from '../styles/customThemeProvider';
 import { iconStyles, logoStyles, logoutButtonStyles, sidebarItemStyles, sidebarStyles } from '../styles/sidebarStyle';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { getUserRole } from '@/functions/requests';
+import { getAnyUserRole } from '@/functions/requests';
 import { doSignOut } from '../functions/firebase/auth';
 import HelpDialog from './(pages)/help/helpDialog';
 import { Switch } from '@mui/material';
@@ -47,7 +48,8 @@ const Sidebar: React.FC = () => {
     try {
       const accessToken = localStorage.getItem('accessToken');
       if (accessToken) {
-        const data = await getUserRole(accessToken);
+        console.log("IM IN THE FUCKING SIDEBAR");
+        const data = await getAnyUserRole(accessToken);
         setRole(data.role);
       }
     } catch (error:any) {
@@ -104,7 +106,7 @@ const Sidebar: React.FC = () => {
   return (
     <Box sx={sidebarStyles}>
       <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', ...logoStyles }}>
-        <LockIcon sx={{ fontSize: '14', marginRight: 1, color: theme.palette.primary.main }} /> CoVAR
+        <LockIcon sx={{ fontSize: '20', marginRight: 1, color: theme.palette.primary.main }} /> CoVAR
       </Typography>
       <List>
         <Link href='/dashboard'>
@@ -126,6 +128,28 @@ const Sidebar: React.FC = () => {
             <ListItemText primary="Dashboard" />
           </ListItem>
         </Link>
+        {role === "client" && (
+          <Link href='/vendorGraph'>
+            <ListItem
+              test-id="vendorGraphLink"
+              sx={{
+                ...sidebarItemStyles,
+                backgroundColor: isActive('/vendorGraph') ? theme.palette.primary.main : 'inherit',
+                color: isActive('/vendorGraph') ? 'white' : theme.palette.text.primary,
+                borderRadius: '10px',
+                '&:hover': {
+                  backgroundColor: theme.palette.action.hover,
+                  color: theme.palette.text.primary,
+                },
+              }}
+            >
+              <ListItemIcon sx={{ ...iconStyles, color: isActive('/vendorGraph') ? 'white' : theme.palette.text.primary }}>
+                <BubbleChartIcon />
+              </ListItemIcon>
+              <ListItemText primary="Vendor Graph" />
+            </ListItem>
+          </Link>
+        )}
         {(role === "va" || role === "admin") && (
           <Link href='/evaluate'>
             <ListItem

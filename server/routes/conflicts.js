@@ -2,12 +2,16 @@ const express = require('express');
 const stringSimilarity = require('string-similarity');
 const { authenticateToken } = require('../lib/securityFunctions');
 const router = express.Router();
-
+const { isVA,isAdmin } = require('../lib/serverHelperFunctions');
+const pgClient = require('../lib/postgres');
 function matchSentences(list1, list2) {
-    //remove duplicates.
-    list1 = list1.filter((item, index, self) => index === self.findIndex((t) => (t.nvtName === item.nvtName && t.port === item.port)));
-    list2 = list2.filter((item, index, self) => index === self.findIndex((t) => (t.nvtName === item.nvtName && t.port === item.port)));
-
+    // Remove duplicates based on nvtName, Port, and IP
+    list1 = list1.filter((item, index, self) =>
+        index === self.findIndex((t) => t.nvtName === item.nvtName && t.port === item.port && t.IP === item.IP)
+    );
+    list2 = list2.filter((item, index, self) =>
+        index === self.findIndex((t) => t.nvtName === item.nvtName && t.port === item.port && t.IP === item.IP)
+    );
 
     const matches = [];
     const unmatchedList1 = [];
@@ -18,11 +22,14 @@ function matchSentences(list1, list2) {
         let bestMatch = { target: null, score: 0 };
 
         unmatchedList2.forEach((item2) => {
-            const nvtName2 = item2.nvtName;
-            const similarity = stringSimilarity.compareTwoStrings(nvtName1, nvtName2);
+            // Check if both Port and IP match before comparing nvtName
+            if (item1.port === item2.port && item1.IP === item2.IP) {
+                const nvtName2 = item2.nvtName;
+                const similarity = stringSimilarity.compareTwoStrings(nvtName1, nvtName2);
 
-            if (similarity > bestMatch.score) {
-                bestMatch = { target: item2, score: similarity };
+                if (similarity > bestMatch.score) {
+                    bestMatch = { target: item2, score: similarity };
+                }
             }
         });
 
@@ -42,7 +49,14 @@ function matchSentences(list1, list2) {
     };
 }
 
+
 router.post('/conflicts/match', authenticateToken, async (req, res) => {
+    const userId = req.user.user_id;
+    const VAResult =  await isVA(pgClient,userId);
+    const adminResult = await isAdmin(pgClient,userId);
+    if(!VAResult.isVA && !adminResult.isAdmin){
+        return res.status(403).send('Not authorized as VA or admin');
+    }
     const { listUploads } = req.body;
 
     if (!listUploads || listUploads.length === 0 || listUploads.length > 2) {
@@ -57,7 +71,7 @@ router.post('/conflicts/match', authenticateToken, async (req, res) => {
 
     const [list1, list2] = listUploads;
 
-    const { matches, unmatchedList1, unmatchedList2 } = matchSentences(list1, list2);
+    const { matches, unmatchedList1, unmatchedList2 } =  matchSentences(list1, list2);
     res.json({ matches, unmatchedList1, unmatchedList2 });
 });
 

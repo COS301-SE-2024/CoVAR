@@ -11,6 +11,7 @@ interface FileUploadProps {
 
 const FileUpload: React.FC<FileUploadProps> = ({ onFileSubmit, client, organization }) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [cooldown, setCooldown] = useState(false);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files && event.target.files[0];
@@ -20,6 +21,8 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileSubmit, client, organizat
   };
 
   const handleSubmitFile = async () => {
+    setCooldown(true);
+    setTimeout(() => setCooldown(false), 5000);
     if (!selectedFile) {
       return;
     }
@@ -38,11 +41,12 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileSubmit, client, organizat
             fileContent: base64File,
             filename: selectedFile.name,
           }, {
-            headers: { 
+            headers: {
               Authorization: `Bearer ${token}`,
             },
           });
           onFileSubmit();
+          setSelectedFile(null); // Reset file after successful upload
         } catch (err) {
           console.error('Error uploading file:', err);
         }
@@ -52,23 +56,44 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileSubmit, client, organizat
     };
   };
 
+  const handleCancelUpload = () => {
+    setSelectedFile(null); // Reset selected file
+  };
+
+  //If disabled true then return loading spinner
+  if (cooldown) {
+    return (
+      <Paper sx={uploadBoxStyles}>
+        <Typography variant="h6">
+          Uploading...
+        </Typography>
+      </Paper>
+    );
+  }
+
+
   return (
     <Paper sx={uploadBoxStyles}>
-      <Typography variant="h6">
-        Upload a Vulnerability Assessment
-      </Typography>
-      <input
-        type="file"
-        accept=".pdf,.csv,.xml,.nessus" 
-        onChange={handleFileChange}
-        style={{ display: 'none' }}
-        id="file-upload"
-      />
-      <label htmlFor="file-upload">
-        <Button variant="contained" component="span" sx={uploadButtonStyles}>
-          Upload File
-        </Button>
-      </label>
+
+      {!selectedFile && (
+        <>
+          <Typography variant="h6">
+            Upload a Vulnerability Assessment
+          </Typography>
+          <input
+            type="file"
+            accept=".pdf,.csv,.xml,.nessus"
+            onChange={handleFileChange}
+            style={{ display: 'none' }}
+            id="file-upload"
+          />
+          <label htmlFor="file-upload">
+            <Button variant="contained" component="span" sx={uploadButtonStyles}>
+              Upload File
+            </Button>
+          </label>
+        </>
+      )}
       {selectedFile && (
         <>
           <Typography variant="body2">
@@ -78,8 +103,17 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileSubmit, client, organizat
             variant="contained"
             sx={{ ...uploadButtonStyles, marginTop: 2 }}
             onClick={handleSubmitFile}
+
           >
             Submit File
+          </Button>
+          <Button
+            variant="outlined"
+            color="secondary"
+            onClick={handleCancelUpload}
+            sx={{ marginTop: 2 }}
+          >
+            Cancel Upload
           </Button>
         </>
       )}
